@@ -27,6 +27,12 @@ TextStyle semiboldText = GoogleFonts.openSans(
   color: defaultTextColor,
 );
 
+TextStyle boldText = GoogleFonts.openSans(
+  fontSize: 20,
+  fontWeight: FontWeight.w700,
+  color: defaultTextColor,
+);
+
 TextStyle blackText = GoogleFonts.openSans(
   fontSize: 24,
   fontWeight: FontWeight.w900,
