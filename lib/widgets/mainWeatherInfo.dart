@@ -84,5 +84,4 @@ class MainWeatherInfor extends StatelessWidget{
       );
     });
   }
-
 }
