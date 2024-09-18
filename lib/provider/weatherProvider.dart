@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/config.dart';
 import 'package:flutter_application_1/models/additionalWeatherData.dart';
 import 'package:flutter_application_1/models/geocode.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
@@ -13,7 +13,7 @@ import '../models/hourlyWeather.dart';
 import '../models/weather.dart';
 
 class Weatherprovider with ChangeNotifier {
-  String apiKey = dotenv.env['API_WEATHER_KEY'] ?? 'default_api_key';
+  String apiKey = Config.api_weather_key;
   late Weather weather;
   late AdditionalWeatherData additionalWeatherData;
   LatLng? currentLocation;
@@ -92,7 +92,7 @@ class Weatherprovider with ChangeNotifier {
       notifyListeners();
     }
   }
-
+  // ! Check ok
   Future<void> getCurrentWeather(LatLng location) async {
     Uri url = Uri.parse(
       'https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&units=metric&appid=$apiKey',
@@ -109,11 +109,12 @@ class Weatherprovider with ChangeNotifier {
     }
   }
 
+  // không được 
   Future<void> getDailyWeather(LatLng location) async {
     isLoading = true;
     notifyListeners();
     Uri url = Uri.parse(
-      'ttps://api.openweathermap.org/data/2.5/onecall?lat=${location.latitude}&lon=${location.longitude}&units=metric&exclude=minutely,current&appid=$apiKey',
+      'https://api.openweathermap.org/data/2.5/onecall?lat=${location.latitude}&lon=${location.longitude}&units=metric&exclude=minutely,current&appid=$apiKey',
     );
     try{
       final response = await http.get(url);
