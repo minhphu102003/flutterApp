@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 class Dailyweather with ChangeNotifier {
   final double temp;
@@ -12,9 +12,9 @@ class Dailyweather with ChangeNotifier {
   final String condition;
   final DateTime date;
   final String precipitation;
-  final double uvi;
+  final double rainVolume;
   final int clouds;
-  final int huminity;
+  final int humidity;
 
   Dailyweather({
     required this.temp, 
@@ -27,28 +27,28 @@ class Dailyweather with ChangeNotifier {
     required this.weatherCategory, 
     required this.condition, 
     required this.date, 
-    required this.precipitation, 
-    required this.uvi, 
+    required this.precipitation,
+    required this.rainVolume,
     required this.clouds, 
-    required this.huminity
+    required this.humidity
   });
 
-  static Dailyweather fromDailyJson(dynamic json){
+  static Dailyweather fromDailyJson(dynamic json) {
     return Dailyweather(
-      temp: (json['temp']['day']).toDouble(), 
-      tempMin: (json['temp']['min']).toDouble(), 
-      tempMax: (json['temp']['max']).toDouble(), 
-      tempMorning: (json['feels_like']['morn']).toDouble(), 
-      tempDay: (json['feels_like']['day']).toDouble(), 
-      tempEvening: (json['feels_like']['eve']).toDouble(), 
-      tempNight: (json['feels_like']['night']).toDouble(), 
-      weatherCategory: json['weather'][0]['main'], 
-      condition: json['weather'][0]['description'], 
-      date: DateTime.fromMillisecondsSinceEpoch(json['dt']*1000,isUtc: true), 
-      precipitation: ((json['pop']).toDouble()*100).toStringAsFixed(0), 
-      uvi: (json['uvi']).toDouble(), 
-      clouds: json['clouds'], 
-      huminity: json['huminity']
+      temp: (json['temp']['day']).toDouble(),
+      tempMin: (json['temp']['min']).toDouble(),
+      tempMax: (json['temp']['max']).toDouble(),
+      tempMorning: (json['temp']['morn']).toDouble(),
+      tempDay: (json['temp']['day']).toDouble(),
+      tempEvening: (json['temp']['eve']).toDouble(),
+      tempNight: (json['temp']['night']).toDouble(),
+      weatherCategory: json['weather'][0]['main'],
+      condition: json['weather'][0]['description'],
+      date: DateTime.fromMillisecondsSinceEpoch(json['dt'] * 1000, isUtc: true),
+      precipitation: ((json['pop']).toDouble() * 100).toStringAsFixed(0),
+      rainVolume: json.containsKey('rain') ? (json['rain']).toDouble() : 0.0,
+      clouds: json['clouds'],
+      humidity: json['humidity'],
     );
   }
 }

@@ -56,7 +56,7 @@ class MainWeatherDetail extends StatelessWidget {
                         color: Colors.white,
                       ),
                       title: 'Precipitation',
-                      data: '${weatherProv.additionalWeatherData.precipitation}',
+                      data: '${weatherProv.dailyWeather[0].precipitation}',
                     ),
                     const VerticalDivider(
                       thickness: 1.0,
@@ -69,9 +69,9 @@ class MainWeatherDetail extends StatelessWidget {
                         PhosphorIconsRegular.sun,
                         color: Colors.white,
                       ),
-                      title: 'UV index',
+                      title: 'Rain Volume',
                       data: uviValueToString(
-                        weatherProv.additionalWeatherData.uvi,
+                        weatherProv.dailyWeather[0].rainVolume,
                       ),
                     ),
                   ],
@@ -106,7 +106,7 @@ class MainWeatherDetail extends StatelessWidget {
                       color: Colors.white,
                     ),
                     title: 'Huminity',
-                    data: '${weatherProv.weather.huminity}%',
+                    data: '${weatherProv.weather.humidity}%',
                   ),
                   const VerticalDivider(
                     thickness: 1.0,
@@ -120,7 +120,7 @@ class MainWeatherDetail extends StatelessWidget {
                       color: Colors.white,
                     ),
                     title: 'Cloudiness',
-                    data: '${weatherProv.additionalWeatherData.clouds}%',
+                    data: '${weatherProv.dailyWeather[0].clouds}%',
                   )
                 ],
               ),

@@ -10,7 +10,7 @@ class Weather with ChangeNotifier {
   final int pressure;
   final String description;
   final String weatherCategory;
-  final int huminity;
+  final int humidity;
   final double windSpeed;
   String city;
   final String countryCode;
@@ -25,7 +25,7 @@ class Weather with ChangeNotifier {
     required this.pressure,
     required this.description,
     required this.weatherCategory,
-    required this.huminity,
+    required this.humidity,
     required this.windSpeed,
     required this.city,
     required this.countryCode
@@ -37,12 +37,12 @@ class Weather with ChangeNotifier {
       tempMax: (json['main']['temp_max']).toDouble(), 
       tempMin: (json['main']['temp_min']).toDouble(), 
       lat: json['coord']['lat'], 
-      long: json['coord']['long'], 
+      long: json['coord']['lon'], 
       feelsLike: (json['main']['feels_like']).toDouble(), 
       pressure: json['main']['pressure'], 
       description: json['weather'][0]['description'], 
       weatherCategory: json['weather'][0]['main'], 
-      huminity: json['main']['huminity'], 
+      humidity: json['main']['humidity'], 
       windSpeed: (json['wind']['speed']).toDouble(), 
       city: json['name'], 
       countryCode: json['sys']['country']

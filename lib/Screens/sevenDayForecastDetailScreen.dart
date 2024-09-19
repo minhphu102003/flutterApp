@@ -209,12 +209,12 @@ class _SevenDayForecastDetailState extends State<SevenDayForecastDetail> {
                           data: '${_selectedWeather.clouds}%',
                         ),
                         _ForecastDetailInfoTile(
-                          title: 'UV Index',
+                          title: 'Rain Volume',
                           icon: const PhosphorIcon(
                             PhosphorIconsRegular.sun,
                             color: Colors.white,
                           ),
-                          data: uviValueToString(_selectedWeather.uvi),
+                          data: uviValueToString(_selectedWeather.rainVolume),
                         ),
                         _ForecastDetailInfoTile(
                           title: 'Precipitation',
@@ -230,7 +230,7 @@ class _SevenDayForecastDetailState extends State<SevenDayForecastDetail> {
                             PhosphorIconsRegular.thermometerSimple,
                             color: Colors.white,
                           ),
-                          data: '${_selectedWeather.huminity}%',
+                          data: '${_selectedWeather.humidity}%',
                         ),
                       ],
                     ),
