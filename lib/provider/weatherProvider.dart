@@ -215,7 +215,7 @@ class Weatherprovider with ChangeNotifier {
       print(e);
       isSearchError = true;
     } finally {
-      isLoading = true;
+      isLoading = false;
       notifyListeners();
     }
   }

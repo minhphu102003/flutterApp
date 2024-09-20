@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/Screens/mapScreen.dart';
 import 'package:provider/provider.dart';
 
 import './provider/weatherProvider.dart';
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget{
         title: 'Flutter Weather',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          appBarTheme: AppBarTheme(
+          appBarTheme: const AppBarTheme(
             backgroundColor: Colors.white,
             iconTheme: IconThemeData(color: Colors.blue),
             elevation: 0,
@@ -31,7 +32,7 @@ class MyApp extends StatelessWidget{
           visualDensity: VisualDensity.adaptivePlatformDensity,
           colorScheme: ColorScheme.fromSwatch().copyWith(secondary: Colors.white),
         ),
-        home: HomeScreen(),
+        home: MapScreen(),
         onGenerateRoute: (setting){
           final argument = setting.arguments;
           if(setting.name == SevenDayForecastDetail.routeName){
