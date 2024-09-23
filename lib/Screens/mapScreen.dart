@@ -7,6 +7,7 @@ import 'package:material_floating_search_bar_2/material_floating_search_bar_2.da
 import '../widgets/searchBar.dart';
 
 class MapScreen extends StatefulWidget {
+  static const routeName = '/mapScreen';
   @override
   _MapScreenState createState() => _MapScreenState();
 }
@@ -22,10 +23,50 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _onWeatherButtonPressed() {
+    // Lấy kích thước màn hình
+    final screenSize = MediaQuery.of(context).size;
+    // Tính toán vị trí của button
+    final buttonOffset = Offset(10.0, screenSize.height * 0.15);
+
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const HomeScreen(),
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const HomeScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = 0.0;
+          const end = 1.0;
+          const curve = Curves.easeInOut;
+
+          // Điều chỉnh vị trí bắt đầu phóng theo buttonOffset
+          var scaleAnimation = Tween<double>(begin: begin, end: end).animate(
+            CurvedAnimation(
+              parent: animation,
+              curve: curve,
+            ),
+          );
+
+          var opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+            CurvedAnimation(
+              parent: animation,
+              curve: curve,
+            ),
+          );
+
+          // Tính toán offset cho màn hình mới
+          var scaleTransform = Matrix4.identity()
+            ..scale(scaleAnimation.value);
+
+          return Transform(
+            transform: scaleTransform,
+            alignment:
+                Alignment.topLeft, // Hoặc điều chỉnh để phù hợp với yêu cầu
+            child: FadeTransition(
+              opacity: opacityAnimation,
+              child: child,
+            ),
+          );
+        },
       ),
     );
   }
