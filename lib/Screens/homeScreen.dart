@@ -4,8 +4,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:material_floating_search_bar_2/material_floating_search_bar_2.dart';
 import 'package:provider/provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-
-
 import 'package:flutter_application_1/Screens/locationError.dart';
 
 import '../provider/weatherProvider.dart';
@@ -16,10 +14,10 @@ import '../widgets/sevenDayForecast.dart';
 import '../widgets/mainWeatherDetail.dart';
 import '../widgets/mainWeatherInfo.dart';
 import '../widgets/twentyFourHourForecast.dart';
-
 import 'requestError.dart';
 
-class HomeScreen extends StatefulWidget{
+// Lớp HomeScreen là màn hình chính của ứng dụng thời tiết
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
@@ -28,68 +26,76 @@ class HomeScreen extends StatefulWidget{
   }
 }
 
-class _HomeScreenState extends State<HomeScreen>{
-  FloatingSearchBarController fsc = FloatingSearchBarController();
+class _HomeScreenState extends State<HomeScreen> {
+  FloatingSearchBarController fsc = FloatingSearchBarController(); // Controller cho thanh tìm kiếm
 
   @override
   void initState() {
     super.initState();
-    requestWeather();
+    requestWeather(); // Gọi hàm yêu cầu dữ liệu thời tiết khi khởi tạo
   }
 
+  // Yêu cầu dữ liệu thời tiết từ Weatherprovider
   Future<void> requestWeather() async {
     await Provider.of<Weatherprovider>(context, listen: false)
-      .getWeatherData(context);
+        .getWeatherData(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    return  Scaffold(
-      body: Consumer<Weatherprovider>(builder: (context, weatherProv, _){
-        if(!weatherProv.isLoading && ! weatherProv.isLocationSeviceEnable) {
-          return const LocationServiceErrorDisplay();
-        }
-        if(!weatherProv.isLoading &&
-          weatherProv.locationPermission != LocationPermission.always &&
-          weatherProv.locationPermission != LocationPermission.whileInUse) {
-          return const LocationPermissionErrrorDisplay();
-        }
-        
-        if(weatherProv.isRequestError) return const RequestErrorDisplay();
+    return Scaffold(
+      body: Consumer<Weatherprovider>(
+        builder: (context, weatherProv, _) {
+          // Kiểm tra trạng thái và hiển thị lỗi nếu cần
+          if (!weatherProv.isLoading && !weatherProv.isLocationSeviceEnable) {
+            return const LocationServiceErrorDisplay(); // Hiển thị lỗi nếu dịch vụ vị trí bị tắt
+          }
+          if (!weatherProv.isLoading &&
+              weatherProv.locationPermission != LocationPermission.always &&
+              weatherProv.locationPermission != LocationPermission.whileInUse) {
+            return const LocationPermissionErrrorDisplay(); // Hiển thị lỗi nếu không có quyền truy cập vị trí
+          }
 
-        if(weatherProv.isSearchError) return SearchErrorDisplay(fsc: fsc);
+          if (weatherProv.isRequestError) return const RequestErrorDisplay(); // Hiển thị lỗi yêu cầu nếu có
 
-        return Stack(
-          children: [
-            ListView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(12.0).copyWith(
-                top: kToolbarHeight +
-                  MediaQuery.viewPaddingOf(context).top +
-                  24.0,
+          if (weatherProv.isSearchError) return SearchErrorDisplay(fsc: fsc); // Hiển thị lỗi tìm kiếm nếu có
+
+          return Stack(
+            children: [
+              // Giao diện chính hiển thị thông tin thời tiết
+              ListView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(12.0).copyWith(
+                  top: kToolbarHeight +
+                      MediaQuery.viewPaddingOf(context).top +
+                      24.0,
+                ),
+                children: [
+                  const WeatherInfoHeader(), // Header thông tin thời tiết
+                  const SizedBox(height: 16.0),
+                  MainWeatherInfor(), // Thông tin thời tiết chính
+                  const SizedBox(height: 16.0),
+                  MainWeatherDetail(), // Chi tiết thời tiết
+                  const SizedBox(height: 24.0),
+                  const TwentyFourHourForecast(), // Dự báo thời tiết 24 giờ
+                  const SizedBox(height: 18.0),
+                  const SevenDayForecast(), // Dự báo thời tiết 7 ngày
+                ],
               ),
-              children: [
-                const WeatherInfoHeader(),
-                const SizedBox(height: 16.0,),
-                MainWeatherInfor(),
-                const SizedBox(height: 16.0,),
-                MainWeatherDetail(),
-                const SizedBox(height: 24.0,),
-                const TwentyFourHourForecast(),
-                const SizedBox(height: 18.0,),
-                const SevenDayForecast(),
-              ],
-            ),
-            CustomSearchBar(fsc: fsc),
-          ],
-        );
-      }),
+              // Thanh tìm kiếm
+              CustomSearchBar(fsc: fsc),
+            ],
+          );
+        },
+      ),
     );
   }
 }
 
-class CustomSearchBar extends StatefulWidget{
-  final FloatingSearchBarController fsc;
+// Lớp CustomSearchBar để tạo thanh tìm kiếm
+class CustomSearchBar extends StatefulWidget {
+  final FloatingSearchBarController fsc; // Controller cho thanh tìm kiếm
+
   const CustomSearchBar({
     super.key,
     required this.fsc,
@@ -102,6 +108,7 @@ class CustomSearchBar extends StatefulWidget{
 }
 
 class _CustomSearchBarState extends State<CustomSearchBar> {
+  // Danh sách gợi ý thành phố cho người dùng
   List<String> _citiesSuggestion = [
     'New York',
     'Tokyo',
@@ -112,35 +119,34 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
     'Wellington'
   ];
 
-
   @override
   Widget build(BuildContext context) {
     return FloatingSearchBar(
       controller: widget.fsc,
-      hint: 'Search...',
+      hint: 'Search...', // Gợi ý tìm kiếm
       clearQueryOnClose: false,
       scrollPadding: const EdgeInsets.only(top: 16.0, bottom: 56.0),
       transitionDuration: const Duration(milliseconds: 400),
       borderRadius: BorderRadius.circular(16.0),
       transitionCurve: Curves.easeInOut,
-      accentColor: primaryBlue,
+      accentColor: primaryBlue, // Màu sắc chủ đạo của thanh tìm kiếm
       hintStyle: regularText,
       queryStyle: regularText,
       physics: const BouncingScrollPhysics(),
       elevation: 2.0,
-      debounceDelay: const Duration(milliseconds: 500),
+      debounceDelay: const Duration(milliseconds: 500), // Thời gian trễ trước khi tìm kiếm
       onQueryChanged: (query) {},
       onSubmitted: (query) async {
-        widget.fsc.close();
+        widget.fsc.close(); // Đóng thanh tìm kiếm khi tìm kiếm xong
         await Provider.of<Weatherprovider>(context, listen: false)
-          .searchWeather(query);
+            .searchWeather(query); // Tìm kiếm thời tiết theo tên thành phố
       },
       transition: CircularFloatingSearchBarTransition(),
       actions: [
         const FloatingSearchBarAction(
           showIfOpened: false,
           child: PhosphorIcon(
-            PhosphorIconsBold.magnifyingGlass,
+            PhosphorIconsBold.magnifyingGlass, // Biểu tượng tìm kiếm
             color: primaryBlue,
           ),
         ),
@@ -148,19 +154,19 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
           showIfClosed: false,
           showIfOpened: true,
           icon: const PhosphorIcon(
-            PhosphorIconsBold.x,
+            PhosphorIconsBold.x, // Biểu tượng xóa tìm kiếm
             color: primaryBlue,
           ),
-          onTap: (){
-            if(widget.fsc.query.isEmpty){
-              widget.fsc.close();
-            }else{
-              widget.fsc.clear();
+          onTap: () {
+            if (widget.fsc.query.isEmpty) {
+              widget.fsc.close(); // Đóng thanh tìm kiếm nếu không có truy vấn
+            } else {
+              widget.fsc.clear(); // Xóa truy vấn nếu có
             }
           },
         )
       ],
-      builder: (context, transition){
+      builder: (context, transition) {
         return ClipRRect(
           borderRadius: BorderRadius.circular(8.0),
           child: Material(
@@ -175,18 +181,18 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
                 String data = _citiesSuggestion[index];
                 return InkWell(
                   onTap: () async {
-                    widget.fsc.query = data;
-                    widget.fsc.close();
-                    await Provider.of<Weatherprovider>(context,listen: false)
-                      .searchWeather(data);
+                    widget.fsc.query = data; // Cập nhật truy vấn thành phố được chọn
+                    widget.fsc.close(); // Đóng thanh tìm kiếm
+                    await Provider.of<Weatherprovider>(context, listen: false)
+                        .searchWeather(data); // Tìm kiếm thời tiết theo thành phố
                   },
                   child: Container(
                     padding: const EdgeInsets.all(22.0),
                     child: Row(
                       children: [
-                        const PhosphorIcon(PhosphorIconsFill.mapPin),
-                        const SizedBox(width: 22.0,),
-                        Text(data, style: mediumText,)
+                        const PhosphorIcon(PhosphorIconsFill.mapPin), // Biểu tượng vị trí
+                        const SizedBox(width: 22.0),
+                        Text(data, style: mediumText,) // Tên thành phố
                       ],
                     ),
                   ),

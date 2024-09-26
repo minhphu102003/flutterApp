@@ -10,23 +10,28 @@ import 'package:flutter_application_1/theme/colors.dart';
 
 import '../helper/utils.dart';
 
+// Widget MainWeatherDetail hiển thị thông tin thời tiết chính, 
+// bao gồm nhiệt độ cảm nhận, lượng mưa, tốc độ gió, độ ẩm và độ mây.
 class MainWeatherDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Consumer<Weatherprovider>(builder: (context, weatherProv, _){
-      if(weatherProv.isLoading){
+    // Sử dụng Consumer để lấy dữ liệu từ Weatherprovider
+    return Consumer<Weatherprovider>(builder: (context, weatherProv, _) {
+      // Kiểm tra trạng thái loading, nếu đang tải thì hiển thị CustomShimmer
+      if (weatherProv.isLoading) {
         return CustomShimmer(
           height: 132.0,
           borderRadius: BorderRadius.circular(16.0),
         );
       }
+      // Khi dữ liệu đã sẵn sàng, hiển thị thông tin thời tiết
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         decoration: BoxDecoration(
           color: backgroundWhite,
           borderRadius: BorderRadius.circular(16.0),
         ),
-        child:  Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
@@ -34,6 +39,7 @@ class MainWeatherDetail extends StatelessWidget {
               child: IntrinsicHeight(
                 child: Row(
                   children: [
+                    // Hiển thị thông tin cảm nhận nhiệt độ
                     DetailInfoTile(
                       icon: const PhosphorIcon(
                         PhosphorIconsRegular.thermometerSimple,
@@ -41,8 +47,8 @@ class MainWeatherDetail extends StatelessWidget {
                       ),
                       title: 'Feels Like',
                       data: weatherProv.isCelsius
-                      ? '${weatherProv.weather.feelsLike.toStringAsFixed(1)}°'
-                      : '${weatherProv.weather.feelsLike.toFahrenheit().toStringAsFixed(1)}°',
+                        ? '${weatherProv.weather.feelsLike.toStringAsFixed(1)}°' // Nhiệt độ cảm nhận
+                        : '${weatherProv.weather.feelsLike.toFahrenheit().toStringAsFixed(1)}°', // Chuyển đổi sang Fahrenheit
                     ),
                     const VerticalDivider(
                       thickness: 1.0,
@@ -50,13 +56,14 @@ class MainWeatherDetail extends StatelessWidget {
                       endIndent: 4.0,
                       color: backgroundBlue,
                     ),
+                    // Hiển thị lượng mưa
                     DetailInfoTile(
                       icon: const PhosphorIcon(
                         PhosphorIconsRegular.drop,
                         color: Colors.white,
                       ),
                       title: 'Precipitation',
-                      data: '${weatherProv.dailyWeather[0].precipitation}',
+                      data: '${weatherProv.dailyWeather[0].precipitation}', // Lượng mưa trong ngày
                     ),
                     const VerticalDivider(
                       thickness: 1.0,
@@ -64,6 +71,7 @@ class MainWeatherDetail extends StatelessWidget {
                       endIndent: 4.0,
                       color: backgroundBlue,
                     ),
+                    // Hiển thị lượng mưa (Rain Volume)
                     DetailInfoTile(
                       icon: const PhosphorIcon(
                         PhosphorIconsRegular.sun,
@@ -72,7 +80,7 @@ class MainWeatherDetail extends StatelessWidget {
                       title: 'Rain Volume',
                       data: uviValueToString(
                         weatherProv.dailyWeather[0].rainVolume,
-                      ),
+                      ), // Hàm chuyển đổi giá trị lượng mưa
                     ),
                   ],
                 ),
@@ -86,13 +94,14 @@ class MainWeatherDetail extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
               child: Row(
                 children: [
+                  // Hiển thị thông tin tốc độ gió
                   DetailInfoTile(
                     icon: const PhosphorIcon(
                       PhosphorIconsRegular.wind,
                       color: Colors.white,
                     ),
                     title: 'Wind',
-                    data: '${weatherProv.weather.windSpeed} m/s',
+                    data: '${weatherProv.weather.windSpeed} m/s', // Tốc độ gió
                   ),
                   const VerticalDivider(
                     thickness: 1.0,
@@ -100,13 +109,14 @@ class MainWeatherDetail extends StatelessWidget {
                     endIndent: 4.0,
                     color: backgroundBlue,
                   ),
+                  // Hiển thị độ ẩm
                   DetailInfoTile(
                     icon: const PhosphorIcon(
                       PhosphorIconsRegular.dropHalfBottom,
                       color: Colors.white,
                     ),
-                    title: 'Huminity',
-                    data: '${weatherProv.weather.humidity}%',
+                    title: 'Humidity',
+                    data: '${weatherProv.weather.humidity}%', // Độ ẩm
                   ),
                   const VerticalDivider(
                     thickness: 1.0,
@@ -114,13 +124,14 @@ class MainWeatherDetail extends StatelessWidget {
                     endIndent: 4.0,
                     color: backgroundBlue,
                   ),
+                  // Hiển thị độ mây
                   DetailInfoTile(
                     icon: const PhosphorIcon(
                       PhosphorIconsRegular.cloud,
                       color: Colors.white,
                     ),
                     title: 'Cloudiness',
-                    data: '${weatherProv.dailyWeather[0].clouds}%',
+                    data: '${weatherProv.dailyWeather[0].clouds}%', // Độ mây
                   )
                 ],
               ),
@@ -132,11 +143,11 @@ class MainWeatherDetail extends StatelessWidget {
   }
 }
 
-
-class DetailInfoTile extends StatelessWidget{
-  final String title;
-  final String data;
-  final Widget icon;
+// Widget DetailInfoTile dùng để hiển thị thông tin thời tiết chi tiết với icon
+class DetailInfoTile extends StatelessWidget {
+  final String title; // Tiêu đề thông tin
+  final String data; // Dữ liệu thông tin
+  final Widget icon; // Icon đại diện cho thông tin
 
   const DetailInfoTile({
     super.key,
@@ -151,6 +162,7 @@ class DetailInfoTile extends StatelessWidget{
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          // Hiển thị icon trong vòng tròn
           CircleAvatar(backgroundColor: primaryBlue, child: icon,),
           const SizedBox(width: 8.0,),
           Expanded(
@@ -158,12 +170,13 @@ class DetailInfoTile extends StatelessWidget{
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Hiển thị tiêu đề
                 FittedBox(child: Text(title, style: lightText,),),
                 FittedBox(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(minWidth: 1.0),
                     child: Text(
-                      data,
+                      data, // Hiển thị dữ liệu
                       style: mediumText,
                       maxLines: 1,
                     ),

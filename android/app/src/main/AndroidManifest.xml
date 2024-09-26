@@ -17,10 +17,6 @@
         <!-- [https://github.com/mohannadofficial/food_delivery] -->
         <!-- API_KEY =AIzaSyBUAo27swRQ3uXFDEPrFifwP1lhzX14mF8 -->
 
-        <!-- Key sử dụng được -->
-        <!-- [https://github.com/jamydevelop/Flutter-GoogleMaps-DemoApp] -->
-        <!-- API_KEY =AIzaSyBORkg64fXwJmhSpquT-1IvUe1NNG7uyEw -->
-
         <meta-data android:name="com.google.android.geo.API_KEY"
         android:value="AIzaSyBORkg64fXwJmhSpquT-1IvUe1NNG7uyEw"/>
 

@@ -1,28 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../provider/weatherProvider.dart';
 
-class LocationError extends StatefulWidget{
+// Widget LocationError hiển thị thông báo lỗi khi dịch vụ vị trí (GPS) bị tắt.
+// Kèm theo đó là một nút bấm để người dùng bật lại dịch vụ vị trí.
+class LocationError extends StatefulWidget {
   @override
+  // Tạo State tương ứng cho Widget LocationError.
   // ignore: library_private_types_in_public_api
   _LocationErrorState createState() => _LocationErrorState();
 }
 
-class _LocationErrorState extends State<LocationError>{
-
+class _LocationErrorState extends State<LocationError> {
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          // Hiển thị icon báo lỗi vị trí.
           const Icon(
             Icons.location_off,
             color: Colors.black,
             size: 75,
           ),
           const SizedBox(height: 10,),
+          // Thông báo vị trí đang bị tắt.
           const Text(
             'Your location is disabled',
             style: TextStyle(
@@ -43,6 +46,7 @@ class _LocationErrorState extends State<LocationError>{
               ),
             ),
           ),
+          // Nút "Enable Location" để yêu cầu người dùng bật dịch vụ vị trí.
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).primaryColor,
@@ -50,9 +54,11 @@ class _LocationErrorState extends State<LocationError>{
               padding: const EdgeInsets.symmetric(horizontal: 50),
             ),
             child: const Text('Enable Location'),
+            // Khi nhấn nút, ứng dụng sẽ thử lấy dữ liệu thời tiết bằng cách gọi hàm getWeatherData.
             onPressed: () async {
+              // Gọi phương thức getWeatherData từ WeatherProvider để cập nhật thông tin thời tiết.
               await Provider.of<Weatherprovider>(context, listen: false)
-                .getWeatherData(context);
+                  .getWeatherData(context);
             },
           )
         ],
