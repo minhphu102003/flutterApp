@@ -18,3 +18,7 @@ samples, guidance on mobile development, and a full API reference.
 
 Thiếu Muốn vẽ biểu đồ thời tiết cho từng ngày cụ thể
 Thiếu ngôn ngữ
+
+main screen [![màn hình chính](image.png)]
+
+weather screen [![màn hình thời tiết](image-1.png)]
