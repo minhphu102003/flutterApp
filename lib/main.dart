@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/Screens/mapScreen.dart';
+import 'package:flutterApp/Screens/mapScreen.dart';
 import 'package:provider/provider.dart';
 
 import './provider/weatherProvider.dart';

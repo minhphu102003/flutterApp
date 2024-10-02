@@ -1,8 +1,8 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/helper/extentisions.dart';
-import 'package:flutter_application_1/provider/weatherProvider.dart';
-import 'package:flutter_application_1/theme/colors.dart';
+import 'package:flutterApp/helper/extentisions.dart';
+import 'package:flutterApp/provider/weatherProvider.dart';
+import 'package:flutterApp/theme/colors.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';

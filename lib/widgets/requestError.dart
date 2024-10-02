@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/provider/weatherProvider.dart';
+import 'package:flutterApp/provider/weatherProvider.dart';
 import 'package:provider/provider.dart';
 
 // Widget hiển thị thông báo lỗi khi không tìm thấy kết quả

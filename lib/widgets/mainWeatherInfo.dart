@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/helper/extentisions.dart';
-import 'package:flutter_application_1/helper/utils.dart';
-import 'package:flutter_application_1/provider/weatherProvider.dart';
-import 'package:flutter_application_1/theme/textStyle.dart';
+import 'package:flutterApp/helper/extentisions.dart';
+import 'package:flutterApp/helper/utils.dart';
+import 'package:flutterApp/provider/weatherProvider.dart';
+import 'package:flutterApp/theme/textStyle.dart';
 import 'package:provider/provider.dart';
 
 import 'customShimer.dart';

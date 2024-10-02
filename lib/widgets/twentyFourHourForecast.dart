@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/helper/extentisions.dart';
-import 'package:flutter_application_1/models/hourlyWeather.dart';
-import 'package:flutter_application_1/provider/weatherProvider.dart';
-import 'package:flutter_application_1/theme/colors.dart';
-import 'package:flutter_application_1/theme/textStyle.dart';
-import 'package:flutter_application_1/widgets/customShimer.dart';
+import 'package:flutterApp/helper/extentisions.dart';
+import 'package:flutterApp/models/hourlyWeather.dart';
+import 'package:flutterApp/provider/weatherProvider.dart';
+import 'package:flutterApp/theme/colors.dart';
+import 'package:flutterApp/theme/textStyle.dart';
+import 'package:flutterApp/widgets/customShimer.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
