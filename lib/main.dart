@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterApp/Screens/mapScreen.dart';
+import 'package:flutterApp/login/sign/login.dart';
+import 'package:flutterApp/login/sign/sign.dart';
 import 'package:provider/provider.dart';
 
 import './provider/weatherProvider.dart';
@@ -38,7 +40,8 @@ class MyApp extends StatelessWidget {
                 ColorScheme.fromSwatch().copyWith(secondary: Colors.white),
           ),
           // Màn hình khởi đầu của ứng dụng là MapScreen
-          home: MapScreen(),
+          home: Sign()
+          ,
           
           // Cấu hình cho việc điều hướng trong ứng dụng
           onGenerateRoute: (setting) {
