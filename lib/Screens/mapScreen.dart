@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/widgets/mapSample.dart';
-import 'package:flutter_application_1/widgets/buttonWeather.dart';
-import 'package:flutter_application_1/Screens/homeScreen.dart';
+import 'package:flutterApp/widgets/mapSample.dart';
+import 'package:flutterApp/widgets/buttonWeather.dart';
+import 'package:flutterApp/Screens/homeScreen.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:material_floating_search_bar_2/material_floating_search_bar_2.dart';
 import '../widgets/searchBar.dart';
