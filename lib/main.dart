@@ -1,8 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/Screens/mapScreen.dart';
+import 'package:flutterApp/Screens/mapScreen.dart';
+import 'package:flutterApp/login/sign/login.dart';
+import 'package:flutterApp/login/sign/sign.dart';
+import 'package:flutterApp/bottom/bottomnav.dart';
+import 'package:flutterApp/bottom/key.dart';
+import 'package:flutterApp/bottom/profile.dart';
+import 'package:flutterApp/dulich/dulich.dart';
 import 'package:provider/provider.dart';
-
 import './provider/weatherProvider.dart';
 import 'Screens/homeScreen.dart';
 import 'Screens/sevenDayForecastDetailScreen.dart';
@@ -38,7 +43,8 @@ class MyApp extends StatelessWidget {
                 ColorScheme.fromSwatch().copyWith(secondary: Colors.white),
           ),
           // Màn hình khởi đầu của ứng dụng là MapScreen
-          home: MapScreen(),
+          home: BottomNav()
+          ,
           
           // Cấu hình cho việc điều hướng trong ứng dụng
           onGenerateRoute: (setting) {

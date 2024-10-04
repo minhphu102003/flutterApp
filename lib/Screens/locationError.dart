@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/theme/colors.dart';
+import 'package:flutterApp/theme/colors.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
