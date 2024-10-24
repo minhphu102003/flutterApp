@@ -10,7 +10,6 @@ import 'Screens/homeScreen.dart';
 import 'Screens/sevenDayForecastDetailScreen.dart';
 
 void main() { 
-  // Hàm main khởi chạy ứng dụng Flutter
   runApp(
     MyApp(),
   );
