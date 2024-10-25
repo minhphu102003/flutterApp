@@ -6,13 +6,14 @@ import 'package:flutterApp/login/sign/sign.dart';
 import 'package:flutterApp/bottom/bottomnav.dart';
 import 'package:flutterApp/bottom/key.dart';
 import 'package:flutterApp/bottom/profile.dart';
-import 'package:flutterApp/dulich/dulich.dart';
+import 'package:flutterApp/pages/dulich.dart';
 import 'package:provider/provider.dart';
 import './provider/weatherProvider.dart';
 import 'Screens/homeScreen.dart';
 import 'Screens/sevenDayForecastDetailScreen.dart';
+import 'dart:convert'; // Thêm thư viện này để dùng json.decode
 
-void main() { 
+void main() {
   // Hàm main khởi chạy ứng dụng Flutter
   runApp(
     MyApp(),
@@ -42,9 +43,8 @@ class MyApp extends StatelessWidget {
             colorScheme:
                 ColorScheme.fromSwatch().copyWith(secondary: Colors.white),
           ),
-          // Màn hình khởi đầu của ứng dụng là MapScreen
-          home: BottomNav()
-          ,
+          // Màn hình khởi đầu của ứng dụng là BottomNav
+          home: BottomNav(),
           
           // Cấu hình cho việc điều hướng trong ứng dụng
           onGenerateRoute: (setting) {
@@ -141,6 +141,42 @@ class MyApp extends StatelessWidget {
             // Mặc định điều hướng về HomeScreen nếu không có route phù hợp
             return MaterialPageRoute(builder: (_) => HomeScreen());
           }),
+    );
+  }
+}
+
+// Màn hình MapScreen với routeName được định nghĩa
+class MapScreen extends StatelessWidget {
+  static const routeName = '/map'; // Thêm routeName cho MapScreen
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Map Screen'),
+      ),
+      body: Center(child: Text('Map Screen Content')),
+    );
+  }
+}
+
+// Đảm bảo màn hình SevenDayForecastDetail cũng có routeName
+class SevenDayForecastDetail extends StatelessWidget {
+  static const routeName = '/sevenDayForecastDetail';
+
+  final int initialIndex;
+
+  SevenDayForecastDetail({required this.initialIndex});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('7-Day Forecast'),
+      ),
+      body: Center(
+        child: Text('Forecast for Day $initialIndex'),
+      ),
     );
   }
 }

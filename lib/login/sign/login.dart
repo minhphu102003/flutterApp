@@ -104,7 +104,7 @@ class _LoginState extends State<Login> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => MapScreen()));
+                                      builder: (context) => Map()));
                             },
                             child: Center(
                                 child: Text(
