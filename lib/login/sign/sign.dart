@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutterApp/Screens/mapScreen.dart';
 import 'package:flutterApp/login/sign/login.dart';
 import 'package:flutterApp/widgets/customTextFormField.dart';
 import 'package:flutterApp/helper/validators.dart';
+import 'package:flutterApp/widgets/customDialog.dart';
+import 'package:flutterApp/models/auth.dart';
+import 'package:flutterApp/services/apiRespone.dart';
+import 'package:flutterApp/services/authService.dart';
+import 'package:flutterApp/theme/colors.dart';
 
 class Sign extends StatefulWidget {
   const Sign({super.key});
@@ -13,9 +17,31 @@ class Sign extends StatefulWidget {
 
 class _SignState extends State<Sign> {
   final _formKey = GlobalKey<FormState>();
-  String? name;
+  String? username;
   String? email;
   String? password;
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  void showCustomDialog(BuildContext context, String title, String message, IconData typeIcon, Color color){
+    showDialog(
+      context: context, 
+      builder: (BuildContext context){
+        return CustomDialog(
+          title: title, message: message, typeIcon: typeIcon, color: color
+        );
+      }
+    );
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,15 +77,17 @@ class _SignState extends State<Sign> {
                       CustomTextFormField(
                         hintText: "Name",
                         validator: nameValidator,
+                        controller: nameController,
                         prefixIcon: Icon(Icons.person),
                         onChanged: (value){
-                          name = value;
+                          username = value;
                         },
                       ),
                       const SizedBox(height: 30.0),
                       CustomTextFormField(
                         hintText: "Email",
                         validator: emailValidator,
+                        controller: emailController,
                         prefixIcon: Icon(Icons.email),
                         onChanged: (value){
                           email = value;
@@ -70,6 +98,7 @@ class _SignState extends State<Sign> {
                         hintText: "Password",
                         obscureText: true,
                         validator: passwordValidator,
+                        controller: passwordController,
                         prefixIcon: Icon(Icons.lock),
                         onChanged: (value){
                           password = value;
@@ -77,17 +106,43 @@ class _SignState extends State<Sign> {
                       ),
                       const SizedBox(height: 30.0),
                       GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           FocusScope.of(context).unfocus();
                           if (_formKey.currentState!.validate()) {
-                            
-                            // Nếu form hợp lệ, điều hướng đến MapScreen
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(builder: (context) => MapScreen()),
-                            // );
+                            print(username);
+                            print(email);
+                            print(password);
+                            ApiResponse<AuthToken?> apiResponse = await AuthService().signUp(
+                              username!,
+                              email!, 
+                              password!
+                            );
+                            if(apiResponse.error == null){
+                              nameController.clear();
+                              emailController.clear();
+                              passwordController.clear();
+                              showCustomDialog(
+                                context,
+                                'Notify',
+                                'Registration successful!',
+                                Icons.notifications,
+                                successColor,
+                              );
+                              Navigator.push(
+                                context, 
+                                MaterialPageRoute(
+                                  builder: (context) => Login(),
+                                ));
+                            }else{
+                              showCustomDialog(
+                                context, 
+                                'Error', 
+                                apiResponse.error!, 
+                                Icons.error, 
+                                failureColor
+                              );
+                            }
                           }
-                          // Không cần setState ở đây vì Form tự động xử lý thông báo lỗi
                         },
                         child: Container(
                           width: MediaQuery.of(context).size.width,
@@ -96,7 +151,7 @@ class _SignState extends State<Sign> {
                             color: Color(0xFF273671),
                             borderRadius: BorderRadius.circular(30),
                           ),
-                          child: Center(
+                          child: const Center(
                             child: Text(
                               "Sign Up",
                               style: TextStyle(
@@ -112,8 +167,8 @@ class _SignState extends State<Sign> {
                   ),
                 ),
               ),
-              SizedBox(height: 40.0),
-              Text(
+              const SizedBox(height: 40.0),
+              const Text(
                 "or LogIn with",
                 style: TextStyle(
                   color: Color(0xFF273671),

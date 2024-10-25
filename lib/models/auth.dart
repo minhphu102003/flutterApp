@@ -31,7 +31,7 @@ class AuthToken {
         phone: json["phone"] ?? '',
         roles: List<String>.from(json["roles"]?.map((x) => x) ?? []), 
         token: json["token"] ?? '',
-      );
+  );
 
   Map<String, dynamic> toMap() => {
         "success": success,

@@ -7,11 +7,13 @@ class CustomTextFormField extends StatefulWidget {
   final bool obscureText;
   final Icon prefixIcon;
   final ValueChanged<String>? onChanged;
+  final TextEditingController? controller;
 
   const CustomTextFormField({
     required this.hintText,
     required this.validator,
     required this.prefixIcon,
+    this.controller,
     this.onChanged,
     this.obscureText = false,
     Key? key,
@@ -60,6 +62,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
       children: [
         TextFormField(
           focusNode: focusNode,
+          controller: widget.controller,
           validator: (value) {
             final validationResult = widget.validator(value);
             if (validationResult != null) {
