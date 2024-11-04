@@ -24,15 +24,19 @@ class _SignState extends State<Sign> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  void showCustomDialog(BuildContext context, String title, String message, IconData typeIcon, Color color){
+  void showCustomDialog(BuildContext context, String title, String message,
+      IconData typeIcon, Color color, VoidCallback onDialogClose) {
     showDialog(
-      context: context, 
-      builder: (BuildContext context){
-        return CustomDialog(
-          title: title, message: message, typeIcon: typeIcon, color: color
-        );
-      }
-    );
+        context: context,
+        builder: (BuildContext context) {
+          return CustomDialog(
+            title: title,
+            message: message,
+            typeIcon: typeIcon,
+            color: color,
+            onDialogClose: onDialogClose,
+          );
+        });
   }
 
   @override
@@ -79,7 +83,7 @@ class _SignState extends State<Sign> {
                         validator: nameValidator,
                         controller: nameController,
                         prefixIcon: Icon(Icons.person),
-                        onChanged: (value){
+                        onChanged: (value) {
                           username = value;
                         },
                       ),
@@ -89,7 +93,7 @@ class _SignState extends State<Sign> {
                         validator: emailValidator,
                         controller: emailController,
                         prefixIcon: Icon(Icons.email),
-                        onChanged: (value){
+                        onChanged: (value) {
                           email = value;
                         },
                       ),
@@ -100,7 +104,7 @@ class _SignState extends State<Sign> {
                         validator: passwordValidator,
                         controller: passwordController,
                         prefixIcon: Icon(Icons.lock),
-                        onChanged: (value){
+                        onChanged: (value) {
                           password = value;
                         },
                       ),
@@ -112,41 +116,43 @@ class _SignState extends State<Sign> {
                             print(username);
                             print(email);
                             print(password);
-                            ApiResponse<AuthToken?> apiResponse = await AuthService().signUp(
-                              username!,
-                              email!, 
-                              password!
-                            );
-                            if(apiResponse.error == null){
+                            ApiResponse<AuthToken?> apiResponse =
+                                await AuthService()
+                                    .signUp(username!, email!, password!);
+                            if (apiResponse.error == null) {
                               nameController.clear();
                               emailController.clear();
                               passwordController.clear();
                               showCustomDialog(
-                                context,
-                                'Notify',
-                                'Registration successful!',
-                                Icons.notifications,
-                                successColor,
-                              );
-                              Navigator.push(
-                                context, 
-                                MaterialPageRoute(
-                                  builder: (context) => Login(),
-                                ));
-                            }else{
+                                  context,
+                                  'Notify',
+                                  'Registration successful!',
+                                  Icons.notifications,
+                                  successColor, () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => Login(),
+                                    ));
+                              });
+                            } else {
                               showCustomDialog(
-                                context, 
-                                'Error', 
-                                apiResponse.error!, 
-                                Icons.error, 
-                                failureColor
-                              );
+                                  context,
+                                  'Error',
+                                  apiResponse.error!,
+                                  Icons.error,
+                                  failureColor,
+                                  (){
+                                    // Sau khi đóng thông báo thì không thực hiện hành động gì
+                                  }
+                                );
                             }
                           }
                         },
                         child: Container(
                           width: MediaQuery.of(context).size.width,
-                          padding: EdgeInsets.symmetric(vertical: 13.0, horizontal: 30.0),
+                          padding: EdgeInsets.symmetric(
+                              vertical: 13.0, horizontal: 30.0),
                           decoration: BoxDecoration(
                             color: Color(0xFF273671),
                             borderRadius: BorderRadius.circular(30),
@@ -180,24 +186,34 @@ class _SignState extends State<Sign> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset("assets/images/google.png", height: 45, width: 45, fit: BoxFit.cover),
+                  Image.asset("assets/images/google.png",
+                      height: 45, width: 45, fit: BoxFit.cover),
                   SizedBox(width: 30.0),
-                  Image.asset("assets/images/apple1.png", height: 50, width: 50, fit: BoxFit.cover),
+                  Image.asset("assets/images/apple1.png",
+                      height: 50, width: 50, fit: BoxFit.cover),
                 ],
               ),
               SizedBox(height: 40.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("Already have an account?", style: TextStyle(color: Color(0xFF8c8e98), fontSize: 18.0, fontWeight: FontWeight.w500)),
-                  SizedBox(width: 5.0),
+                  const Text("Already have an account?",
+                      style: TextStyle(
+                          color: Color(0xFF8c8e98),
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.w500)),
+                  const SizedBox(width: 5.0),
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => Login()));
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) => Login()));
                     },
-                    child: Text(
+                    child: const Text(
                       "LogIn",
-                      style: TextStyle(color: Color(0xFF273671), fontSize: 20.0, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                          color: Color(0xFF273671),
+                          fontSize: 20.0,
+                          fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],

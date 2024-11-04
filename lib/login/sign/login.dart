@@ -25,12 +25,12 @@ class _LoginState extends State<Login> {
   final TextEditingController passwordController = TextEditingController();
 
   void showCustomDialog(BuildContext context, String title, String message,
-      IconData typeIcon, Color color) {
+      IconData typeIcon, Color color, VoidCallback onDialogClose) {
     showDialog(
         context: context,
         builder: (BuildContext context) {
           return CustomDialog(
-              title: title, message: message, typeIcon: typeIcon, color: color);
+              title: title, message: message, typeIcon: typeIcon, color: color, onDialogClose: onDialogClose, );
         });
   }
 
@@ -105,6 +105,9 @@ Widget build(BuildContext context) {
                               apiResponse.error!,
                               Icons.error,
                               failureColor,
+                              (){
+                                // Ở đây không cần làm gì 
+                              }
                             );
                           }
                         }

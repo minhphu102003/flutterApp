@@ -5,6 +5,7 @@ class CustomDialog extends StatefulWidget{
   final String message;
   final IconData typeIcon;
   final Color color;
+  final VoidCallback onDialogClose;
 
   const CustomDialog({
     super.key,
@@ -12,6 +13,7 @@ class CustomDialog extends StatefulWidget{
     required this.message,
     required this.typeIcon,
     required this.color,
+    required this.onDialogClose,
   });
 
   @override
@@ -45,6 +47,7 @@ class _CustomDialogState extends State<CustomDialog>{
               buttonColor = Colors.grey; // Thay đổi màu sắc khi button được nhấn
             });
             Navigator.of(context).pop();
+            widget.onDialogClose();
           },
           style: TextButton.styleFrom(
             foregroundColor: buttonColor, // Sử dụng màu động cho button

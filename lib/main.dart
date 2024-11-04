@@ -39,9 +39,7 @@ class MyApp extends StatelessWidget {
                 ColorScheme.fromSwatch().copyWith(secondary: Colors.white),
           ),
           // Màn hình khởi đầu của ứng dụng là MapScreen
-          home: Sign()
-          ,
-          
+          home: Sign(),
           // Cấu hình cho việc điều hướng trong ứng dụng
           onGenerateRoute: (setting) {
             // Lấy argument truyền vào cho route
