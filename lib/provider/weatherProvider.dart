@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/config.dart';
-import 'package:flutter_application_1/models/additionalWeatherData.dart';
-import 'package:flutter_application_1/models/geocode.dart';
+import 'package:flutterApp/config.dart';
+import 'package:flutterApp/models/additionalWeatherData.dart';
+import 'package:flutterApp/models/geocode.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
