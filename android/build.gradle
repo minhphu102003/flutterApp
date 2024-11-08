@@ -2,6 +2,19 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        
+        // Thêm cấu hình Mapbox Maven repository ở đây
+        maven {
+            url 'https://api.mapbox.com/downloads/v2/releases/maven'
+            authentication {
+                basic(BasicAuthentication)
+            }
+            credentials {
+                // Sử dụng token từ gradle.properties
+                username = 'mapbox'
+                password = project.hasProperty('MAPBOX_DOWNLOADS_TOKEN') ? project.MAPBOX_DOWNLOADS_TOKEN : ""
+            }
+        }
     }
 }
 

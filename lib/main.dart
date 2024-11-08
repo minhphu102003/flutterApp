@@ -44,7 +44,8 @@ class MyApp extends StatelessWidget {
                 ColorScheme.fromSwatch().copyWith(secondary: Colors.white),
           ),
           // Màn hình khởi đầu của ứng dụng là BottomNav
-          home: BottomNav(),
+          home: BottomNav()
+          ,
           
           // Cấu hình cho việc điều hướng trong ứng dụng
           onGenerateRoute: (setting) {
