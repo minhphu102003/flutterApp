@@ -7,12 +7,14 @@ plugins {
 
 android {
     namespace = "com.example.flutter_application_1"
+    // namespace = "com.mapbox.mapboxgl"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     defaultConfig {
         applicationId = "com.example.flutter_application_1"
-        minSdk = 20
+        // namespace = "com.mapbox.mapboxgl"
+        minSdk = 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

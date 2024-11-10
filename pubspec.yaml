@@ -62,7 +62,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   curved_navigation_bar: ^1.0.6
   image_picker:
-  mapbox_gl: ^0.16.0
+  # mapbox_gl: ^0.16.0
+  mapbox_maps_flutter: ^2.3.0
 
 
   
