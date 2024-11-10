@@ -23,12 +23,14 @@ class Map extends StatefulWidget {
 class _MapState extends State<Map> {
   LatLng _currentLocation = LatLng(37.7749, -122.4194); // Vị trí mặc định
   bool _locationLoaded = false;
-  double _zoomLevel = 19.5; // Mức zoom mặc định
+  double _zoomLevel = 14.0; // Mức zoom mặc định
   late MapController _mapController; // Khởi tạo MapController
   bool _mapReady = false; // Kiểm tra bản đồ đã sẵn sàng chưa
-  TextEditingController _searchController =
-      TextEditingController(); // Controller cho thanh tìm kiếm
-  List<String> _suggestions = []; // Danh sách gợi ý tự động hoàn thành
+  TextEditingController _searchController = TextEditingController(); // Controller cho thanh tìm kiếm
+  List<String> _suggestions = [];
+  LatLng? _searchedLocation;
+  List<LatLng> _routePolyline = []; // Danh sách điểm polyline của tuyến đường
+  List<String> _routeInstructions = []; // Biến lưu thông tin hướng dẫn chi tiết
 
   @override
   void initState() {
@@ -78,7 +80,7 @@ class _MapState extends State<Map> {
   }
 
   Future<void> _searchLocation(String query) async {
-    // Gọi API Mapbox để lấy toạ độ từ địa chỉ
+    // Gọi API Mapbox để lấy tọa độ từ địa chỉ
     final url =
         'https://api.mapbox.com/geocoding/v5/mapbox.places/$query.json?access_token=pk.eyJ1IjoibGV2cGh1b2N0aGluaCIsImEiOiJjbTJva29zcWkwZ256MnFzZnQwb2o0ZHI3In0.ohOhkig08r5vOgSMgb-WZg';
 
@@ -94,9 +96,10 @@ class _MapState extends State<Map> {
 
         // Di chuyển bản đồ tới vị trí đã tìm thấy
         setState(() {
-          _currentLocation = latLng;
+          _searchedLocation = latLng;
         });
         _mapController.move(latLng, _zoomLevel);
+        _getRoute(_currentLocation, latLng);
       } else {
         print('No results found for the address.');
       }
@@ -136,8 +139,6 @@ class _MapState extends State<Map> {
       });
     }
   }
-
-  // Định nghĩa hàm _onWeatherButtonPressed
   void _onWeatherButtonPressed() {
     // Lấy kích thước màn hình
     final screenSize = MediaQuery.of(context).size;
@@ -186,6 +187,42 @@ class _MapState extends State<Map> {
     );
   }
 
+  Future<void> _getRoute(LatLng start, LatLng destination) async {
+    // Gọi API Mapbox Directions để lấy tuyến đường
+    final url =
+        'https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${destination.longitude},${destination.latitude}?geometries=geojson&steps=true&access_token=pk.eyJ1IjoibGV2cGh1b2N0aGluaCIsImEiOiJjbTJva29zcWkwZ256MnFzZnQwb2o0ZHI3In0.ohOhkig08r5vOgSMgb-WZg';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['routes'].isNotEmpty) {
+        final route = data['routes'][0]['geometry']['coordinates'] as List;
+        List<LatLng> polylinePoints =
+            route.map((point) => LatLng(point[1], point[0])).toList();
+
+        // Lấy thông tin hướng dẫn từ tất cả các bước
+        final legs = data['routes'][0]['legs'] as List;
+        List<String> instructions = [];
+        for (var leg in legs) {
+          final steps = leg['steps'] as List;
+          for (var step in steps) {
+            instructions.add(step['maneuver']['instruction'].toString());
+          }
+        }
+
+        setState(() {
+          _routePolyline = polylinePoints;
+          _routeInstructions = instructions;
+        });
+      } else {
+        print('No route data found in the response.');
+      }
+    } else {
+      print('Failed to load route: ${response.statusCode}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -208,11 +245,33 @@ class _MapState extends State<Map> {
                     TileLayer(
                       urlTemplate:
                           "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibGV2cGh1b2N0aGluaCIsImEiOiJjbTJva29zcWkwZ256MnFzZnQwb2o0ZHI3In0.ohOhkig08r5vOgSMgb-WZg",
-                      additionalOptions: const {
-                        'accessToken':
-                            'pk.eyJ1IjoibGV2cGh1b2N0aGluaCIsImEiOiJjbTJva29zcWkwZ256MnFzZnQwb2o0ZHI3In0.ohOhkig08r5vOgSMgb-WZg',
-                        'id': 'mapbox.mapbox-streets-v8',
-                      },
+                    ),
+                    if (_routePolyline.isNotEmpty)
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: _routePolyline,
+                            strokeWidth: 4.0,
+                            color: Colors.blue, // Màu của tuyến đường
+                          ),
+                        ],
+                      ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: _currentLocation,
+                          width: 30.0,
+                          height: 30.0,
+                          child: Icon(Icons.my_location, color: Colors.red),
+                        ),
+                        if (_searchedLocation != null)
+                          Marker(
+                            point: _searchedLocation!,
+                            width: 30.0,
+                            height: 30.0,
+                            child: Icon(Icons.location_pin, color: Colors.blue),
+                          ),
+                      ],
                     ),
                   ],
                 )
@@ -227,7 +286,7 @@ class _MapState extends State<Map> {
               padding: EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20), // Góc bo tròn
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black12,
@@ -270,9 +329,44 @@ class _MapState extends State<Map> {
             ),
           ),
 
+          // Hiển thị hướng dẫn chi tiết
+          if (_routeInstructions.isNotEmpty)
+            Positioned(
+              bottom: 100,
+              left: 10,
+              right: 10,
+              child: Container(
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 5,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hướng dẫn chi tiết',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    ..._routeInstructions.map((instruction) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Text(instruction),
+                        )),
+                  ],
+                ),
+              ),
+            ),
+
           // Hiển thị gợi ý dưới thanh tìm kiếm
           Positioned(
-            top: 100, // Điều chỉnh để gợi ý xuất hiện dưới thanh tìm kiếm
+            top: 100,
             left: 10,
             right: 10,
             child: _suggestions.isNotEmpty
@@ -281,7 +375,6 @@ class _MapState extends State<Map> {
                       maxHeight: 200,
                     ),
                     color: Colors.white,
-                    width: double.infinity,
                     child: ListView.builder(
                       shrinkWrap: true,
                       itemCount: _suggestions.length,
@@ -295,8 +388,6 @@ class _MapState extends State<Map> {
                   )
                 : SizedBox.shrink(),
           ),
-
-          // Icon thời tiết đặt dưới thanh tìm kiếm
           Positioned(
             top: 160, // Đưa icon xuống dưới thanh tìm kiếm
             left: 20,
