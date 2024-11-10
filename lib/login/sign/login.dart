@@ -9,6 +9,7 @@ import 'package:flutterApp/models/auth.dart';
 import 'package:flutterApp/services/apiRespone.dart';
 import 'package:flutterApp/widgets/customDialog.dart';
 import 'package:flutterApp/theme/colors.dart';
+import "package:flutterApp/bottom/bottomnav.dart";
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -96,7 +97,7 @@ Widget build(BuildContext context) {
                             passwordController.clear();
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => MapScreen()),
+                              MaterialPageRoute(builder: (context) => BottomNav()),
                             );
                           } else {
                             showCustomDialog(
@@ -132,7 +133,7 @@ Widget build(BuildContext context) {
                     const SizedBox(height: 20.0),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => MapScreen()));
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => BottomNav()));
                       },
                       child: Container(
                         width: MediaQuery.of(context).size.width / 3,
