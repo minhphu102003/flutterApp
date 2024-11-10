@@ -2,7 +2,8 @@ import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterApp/Screens/mapScreen.dart';
 import 'package:flutterApp/bottom/profile.dart';
-import 'package:flutterApp/dulich/dulich.dart';
+import 'package:flutterApp/pages/camera.dart';
+import 'package:flutterApp/pages/dulich.dart';
 
 
 
@@ -16,17 +17,20 @@ class BottomNav extends StatefulWidget {
 class _BottomNavState extends State<BottomNav> {
   late List<Widget> pages;
 
-  late MapScreen Homepage;
+  late Map Homepage;
   late Dulich dulich;
   late Profile profile;
+  late Camera camera;
   int currentTabIndex = 0;
 
   @override
   void initState() {
-    Homepage =  MapScreen();
+    Homepage =  Map();
     dulich = const Dulich();
     profile = const Profile();
-    pages = [Homepage, dulich, profile];
+    camera = const Camera();
+
+    pages = [Homepage, dulich,camera, profile];
     super.initState();
   }
 
@@ -53,9 +57,14 @@ class _BottomNavState extends State<BottomNav> {
               color: Colors.white,
             ),
             Icon(
+              Icons.camera_alt_outlined,
+              color: Colors.white,
+            ),
+             Icon(
               Icons.person_2_outlined,
               color: Colors.white,
             ),
+          
           ]),
           body: pages[currentTabIndex],
     );

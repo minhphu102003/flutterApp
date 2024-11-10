@@ -12,21 +12,21 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_map: ^7.0.2
+  flutter_map: 
   # mapbox_gl: ^0.16.0
   # Đây là một thư viện để làm việc với tọa độ địa lý, cung cấp các lớp đại diện cho tọa độ như 
   # LatLng và các phương thức để tính toán khoảng cách giữa các điểm, tính toán hướng, và các phép biến đổi khác.
-  latlong2: ^0.9.1
+  latlong2: 
 
   # Cung cấp khả năng sử dụng các phông chữ của Google Fonts trong ứng dụng Flutter
   google_fonts: ^6.2.1
 
   # Cung cấp các phương thức để lấy vị trí hiện tại của thiết bị, theo dõi sự thay đổi vị trí và
   # xác định các thông tin địa lý.
-  geolocator: ^9.0.2
+  geolocator: 
 
   # Thư viện để thực hiện các yêu cầu HTTP, thường được sử dụng để gọi các API
-  http: ^1.2.2
+  http: 
 
   # cung cấp khả năng tải và truy cập các biến môi trường từ file .env. Thường được sử
   # dụng để lưu trữ các khóa API hoặc thông tin cấu hình bí mật.
@@ -64,6 +64,7 @@ dependencies:
   shared_preferences: ^2.3.2
   curved_navigation_bar: ^1.0.6
   image_picker:
+
 
 
   
