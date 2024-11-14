@@ -50,7 +50,6 @@ class MyApp extends StatelessWidget {
           onGenerateRoute: (setting) {
             // Lấy argument truyền vào cho route
             final argument = setting.arguments;
-            print(setting.name);
             
             // Điều hướng đến màn hình chi tiết dự báo thời tiết 7 ngày
             if (setting.name == SevenDayForecastDetail.routeName) {

@@ -4,69 +4,113 @@ import 'package:flutterApp/Screens/mapScreen.dart';
 import 'package:flutterApp/bottom/profile.dart';
 import 'package:flutterApp/pages/camera.dart';
 import 'package:flutterApp/pages/dulich.dart';
-
-
+import 'package:flutterApp/pages/notification.dart';
 
 class BottomNav extends StatefulWidget {
   const BottomNav({super.key});
 
   @override
-  State<BottomNav> createState() => _BottomNavState();
+  State<BottomNav> createState() => BottomNavState();
 }
 
-class _BottomNavState extends State<BottomNav> {
+class BottomNavState extends State<BottomNav> {
   late List<Widget> pages;
 
-  late Map Homepage;
+  late MapScreen Homepage;
   late Dulich dulich;
   late Profile profile;
   late Camera camera;
+  late NotificationCus notification;
+
+  final GlobalKey<CurvedNavigationBarState> _bottomNavigationKey = GlobalKey();
+
+    // GlobalKey cho MapScreen
+  GlobalKey<MapScreenState> mapKey = GlobalKey<MapScreenState>();
+
   int currentTabIndex = 0;
+  int newNotificationCount = 3; // Số lượng thông báo mới
+
+void navigateToMap(double longitude, double latitude) {
+  mapKey.currentState?.updateLocation(longitude, latitude);
+  setState(() {
+    currentTabIndex = 0;
+    // Cập nhật tọa độ mà không thay đổi key
+  });
+  _bottomNavigationKey.currentState?.setPage(currentTabIndex);
+}
+
 
   @override
   void initState() {
-    Homepage =  Map();
+    super.initState();
+    Homepage = MapScreen(key: mapKey);
     dulich = const Dulich();
     profile = const Profile();
     camera = const Camera();
+    notification = const NotificationCus();
 
-    pages = [Homepage, dulich,camera, profile];
-    super.initState();
+    pages = [Homepage, dulich, camera, notification, profile];
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: CurvedNavigationBar(
-          height: 65,
-          backgroundColor: const Color(0xfff2f2f2),
-          color: const Color.fromARGB(255, 7, 157, 226),
-          animationDuration: const Duration(milliseconds: 500),
-          onTap: (int index) {
-            setState(() {
-              currentTabIndex = index;
-            });
-          },
-          items: const [
-            Icon(
-              Icons.home_outlined,
-              color: Colors.white,
-            ),
-            Icon(
-              Icons.beach_access_outlined,
-              color: Colors.white,
-            ),
-            Icon(
-              Icons.camera_alt_outlined,
-              color: Colors.white,
-            ),
-             Icon(
-              Icons.person_2_outlined,
-              color: Colors.white,
-            ),
-          
-          ]),
-          body: pages[currentTabIndex],
+        key: _bottomNavigationKey,
+        height: 65,
+        backgroundColor: Colors.transparent,
+        color: const Color.fromARGB(255, 7, 157, 226),
+        animationDuration: const Duration(milliseconds: 500),
+        onTap: (int index) {
+          setState(() {
+            currentTabIndex = index;
+            if (index == 3) {
+              newNotificationCount = 0; // Reset when opening the notification screen
+            }
+          });
+        },
+        items: [
+          const Icon(Icons.home_outlined, color: Colors.white),
+          const Icon(Icons.beach_access_outlined, color: Colors.white),
+          const Icon(Icons.camera_alt_outlined, color: Colors.white),
+          Stack(
+            clipBehavior: Clip.none, // Allow overflow
+            children: [
+              const Icon(Icons.notifications_on_outlined, color: Colors.white),
+              if (newNotificationCount > 0)
+                Positioned(
+                  right: -5, // Adjust position if needed
+                  top: -5,
+                  child: Container(
+                    padding: const EdgeInsets.all(1),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child: Text(
+                      '$newNotificationCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const Icon(Icons.person_2_outlined, color: Colors.white),
+        ],
+      ),
+      body: IndexedStack(
+        index: currentTabIndex, // Keep the current screen
+        children: pages,
+      ),
     );
   }
 }
+
