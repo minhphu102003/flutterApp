@@ -31,6 +31,8 @@ class _MapState extends State<Map> {
   LatLng? _searchedLocation;
   List<LatLng> _routePolyline = []; // Danh sách điểm polyline của tuyến đường
   List<String> _routeInstructions = []; // Biến lưu thông tin hướng dẫn chi tiết
+  String _travelTime = "";
+  String _transportMode = "driving";
 
   @override
   void initState() {
@@ -188,40 +190,46 @@ class _MapState extends State<Map> {
   }
 
   Future<void> _getRoute(LatLng start, LatLng destination) async {
-    // Gọi API Mapbox Directions để lấy tuyến đường
-    final url =
-        'https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${destination.longitude},${destination.latitude}?geometries=geojson&steps=true&access_token=pk.eyJ1IjoibGV2cGh1b2N0aGluaCIsImEiOiJjbTJva29zcWkwZ256MnFzZnQwb2o0ZHI3In0.ohOhkig08r5vOgSMgb-WZg';
+  final url =
+      'https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${destination.longitude},${destination.latitude}?geometries=geojson&steps=true&access_token=pk.eyJ1IjoibGV2cGh1b2N0aGluaCIsImEiOiJjbTJva29zcWkwZ256MnFzZnQwb2o0ZHI3In0.ohOhkig08r5vOgSMgb-WZg';
 
-    final response = await http.get(Uri.parse(url));
+  final response = await http.get(Uri.parse(url));
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data['routes'].isNotEmpty) {
-        final route = data['routes'][0]['geometry']['coordinates'] as List;
-        List<LatLng> polylinePoints =
-            route.map((point) => LatLng(point[1], point[0])).toList();
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    if (data['routes'].isNotEmpty) {
+      final route = data['routes'][0];
+      final coordinates = route['geometry']['coordinates'] as List;
+      List<LatLng> polylinePoints =
+          coordinates.map((point) => LatLng(point[1], point[0])).toList();
 
-        // Lấy thông tin hướng dẫn từ tất cả các bước
-        final legs = data['routes'][0]['legs'] as List;
-        List<String> instructions = [];
-        for (var leg in legs) {
-          final steps = leg['steps'] as List;
-          for (var step in steps) {
-            instructions.add(step['maneuver']['instruction'].toString());
-          }
+      final legs = route['legs'] as List;
+      List<String> instructions = [];
+      for (var leg in legs) {
+        final steps = leg['steps'] as List;
+        for (var step in steps) {
+          instructions.add(step['maneuver']['instruction'].toString());
         }
-
-        setState(() {
-          _routePolyline = polylinePoints;
-          _routeInstructions = instructions;
-        });
-      } else {
-        print('No route data found in the response.');
       }
+
+      // Kiểm tra duration và tính toán thời gian di chuyển
+      setState(() {
+        _routePolyline = polylinePoints;
+        _routeInstructions = instructions;
+        if (route['duration'] != null) {
+          _travelTime = ((route['duration'] as num) / 60).toStringAsFixed(0) + ' phút';
+        } else {
+          _travelTime = 'Không xác định';
+        }
+      });
     } else {
-      print('Failed to load route: ${response.statusCode}');
+      print('No route data found in the response.');
     }
+  } else {
+    print('Failed to load route: ${response.statusCode}');
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -330,39 +338,7 @@ class _MapState extends State<Map> {
           ),
 
           // Hiển thị hướng dẫn chi tiết
-          if (_routeInstructions.isNotEmpty)
-            Positioned(
-              bottom: 100,
-              left: 10,
-              right: 10,
-              child: Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 5,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hướng dẫn chi tiết',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    ..._routeInstructions.map((instruction) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Text(instruction),
-                        )),
-                  ],
-                ),
-              ),
-            ),
+          
 
           // Hiển thị gợi ý dưới thanh tìm kiếm
           Positioned(
@@ -388,6 +364,50 @@ class _MapState extends State<Map> {
                   )
                 : SizedBox.shrink(),
           ),
+          DraggableScrollableSheet(
+            initialChildSize: 0.2,
+            minChildSize: 0.2,
+            maxChildSize: 0.6,
+            builder: (context, scrollController) {
+              return Container(
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: ListView(
+                  controller: scrollController,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Thời gian: $_travelTime',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'Phương tiện: $_transportMode',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    Divider(),
+                    ..._routeInstructions.map((instruction) => ListTile(
+                          leading: Icon(Icons.directions),
+                          title: Text(instruction),
+                        )),
+                  ],
+                ),
+              );
+            },
+          ),
+    
           Positioned(
             top: 160, // Đưa icon xuống dưới thanh tìm kiếm
             left: 20,
