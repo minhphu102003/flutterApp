@@ -29,6 +29,20 @@ class MapScreenState extends State<MapScreen> {
   LatLng? _searchedLocation;
   List<LatLng> _routePolyline = [];
   List<String> _routeInstructions = [];
+  String _travelTime = "";
+  String _transportMode = "driving";
+  bool _showRouteInstructions = true; // Biến kiểm soát việc hiển thị instructions
+
+  // Các phương thức khác
+
+  // Xử lý khi người dùng nhấn dấu x trong thanh tìm kiếm
+  void _clearSearch() {
+    setState(() {
+      _searchController.clear();
+      _suggestions.clear();
+      _showRouteInstructions = false; // Ẩn widget instructions khi xóa tìm kiếm
+    });
+  }
 
   @override
   void initState() {
@@ -89,12 +103,15 @@ Future<void> _initializeLocation() async {
     }
   }
 
+
   Future<void> _getRoute(LatLng start, LatLng destination) async {
     List<LatLng> polylinePoints = await MapApiService.getRoute(start, destination);
     List<String> instructions = await MapApiService.getRouteInstructions(start, destination);
+    String travelTime = await MapApiService.getTravelTime(start, destination);
     setState(() {
       _routePolyline = polylinePoints;
       _routeInstructions = instructions;
+      _travelTime = travelTime; 
     });
   }
 
@@ -120,7 +137,7 @@ Future<void> _initializeLocation() async {
         children: [
           _locationLoaded ? _buildMap() : const Center(child: CircularProgressIndicator()),
           _buildSearchBar(),
-          if (_routeInstructions.isNotEmpty) _buildRouteInstructions(),
+          if (_showRouteInstructions && _routeInstructions.isNotEmpty) _buildRouteInstructions(),
           if (_suggestions.isNotEmpty) _buildSuggestionsList(),
           _buildWeatherIcon(),
           _buildFloatingButtons(),
@@ -200,6 +217,7 @@ Future<void> _initializeLocation() async {
             IconButton(
               icon: const Icon(Icons.search),
               onPressed: () {
+                _showRouteInstructions= true;
                 if (_searchController.text.isNotEmpty) {
                   _searchLocation(_searchController.text);
                 }
@@ -208,7 +226,9 @@ Future<void> _initializeLocation() async {
             IconButton(
               icon: const Icon(Icons.close),
               onPressed: () {
+                _clearSearch();
                 setState(() {
+                  
                   _searchController.clear();
                   _suggestions.clear();
                 });
@@ -221,31 +241,41 @@ Future<void> _initializeLocation() async {
   }
 
   // Build Route Instructions Display
-  Widget _buildRouteInstructions() {
-    return Positioned(
-      bottom: 100,
-      left: 10,
-      right: 10,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
+Widget _buildRouteInstructions() {
+  return DraggableScrollableSheet(
+    initialChildSize: 0.1,  // Hiển thị 10% của widget
+    minChildSize: 0.1,      // Giới hạn tối thiểu là 10% màn hình
+    maxChildSize: 0.7,      // Giới hạn tối đa là 80% màn hình
+    builder: (context, scrollController) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
+          ),
+          child: ListView(
+            controller: scrollController,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(10), // Thêm padding cho title
+                child: Text(
+                  'Detailed Directions $_travelTime',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+              ..._routeInstructions.map((instruction) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    child: Text(instruction, style: TextStyle(fontSize: 15)),
+                  )),
+            ],
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Detailed Directions', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ..._routeInstructions.map((instruction) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text(instruction),
-                )),
-          ],
-        ),
-      ),
-    );
-  }
+      );
+    },
+  );
+}
 
   // Build Suggestions List
   Widget _buildSuggestionsList() {

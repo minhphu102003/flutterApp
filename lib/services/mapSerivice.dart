@@ -45,6 +45,7 @@ class MapApiService {
     return [];
   }
 
+  
   static Future<List<String>> getRouteInstructions(LatLng start, LatLng destination) async {
     final url = '$baseMapBoxDir/${start.longitude},${start.latitude};${destination.longitude},${destination.latitude}?geometries=geojson&steps=true&access_token=$apiMapboxKey';
     final response = await http.get(Uri.parse(url));
@@ -63,5 +64,25 @@ class MapApiService {
       }
     }
     return [];
+  }
+
+    // Phương thức để lấy thời gian di chuyển (travelTime)
+  static Future<String> getTravelTime(LatLng start, LatLng destination) async {
+    final url = '$baseMapBoxDir/${start.longitude},${start.latitude};${destination.longitude},${destination.latitude}?geometries=geojson&steps=true&access_token=$apiMapboxKey';
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['routes'].isNotEmpty) {
+        final route = data['routes'][0];
+        if (route['duration'] != null) {
+          final duration = (route['duration'] as num) / 60;  // Chuyển đổi từ giây sang phút
+          return '${duration.toStringAsFixed(0)} phút'; // Trả về thời gian di chuyển
+        } else {
+          return 'Không xác định';
+        }
+      }
+    }
+    return 'Không xác định'; // Trường hợp không có dữ liệu hoặc lỗi
   }
 }

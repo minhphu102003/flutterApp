@@ -1,10 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutterApp/Screens/mapScreen.dart';
-import 'package:flutterApp/login/sign/login.dart';
-import 'package:flutterApp/login/sign/sign.dart';
-import 'package:flutterApp/bottom/bottomnav.dart';
-import 'package:provider/provider.dart';
+import 'package:flutterApp/services/placeService.dart';
+import 'package:flutterApp/models/place.dart';
 
 class Dulich extends StatefulWidget {
   const Dulich({super.key});
@@ -14,6 +10,102 @@ class Dulich extends StatefulWidget {
 }
 
 class _DulichState extends State<Dulich> {
+  final List<Map<String, dynamic>> categories = [
+    {'name': 'Coffee', 'icon': Icons.coffee, 'value': 'Restaurant'},
+    {'name': 'Hotel', 'icon': Icons.hotel, 'value': 'Hotel'},
+    {'name': 'Restaurant', 'icon': Icons.restaurant, 'value': 'Restaurant'},
+    {'name': 'Museum', 'icon': Icons.museum, 'value': 'Museum'},
+    {
+      'name': 'Tourist destination',
+      'icon': Icons.tour_outlined,
+      'value': 'Tourist destination'
+    },
+  ];
+  bool isSearching = false;
+  List<Place> places = [];
+  List<Place> topPlaces = [];
+  List<Place> placeCurrent = [];
+
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    fetchPlaces(); // Gọi API khi màn hình được tạo
+    fetchTopPlaces();
+  }
+
+  Future<void> fetchPlaces() async {
+    try {
+      final result = await PlaceService().fetchNearestPlaces(
+          latitude: 16.22002123,
+          longitude: 108.2004284); // Thay 'RESTAURANT' bằng loại bạn muốn
+      setState(() {
+        places = result.data;
+      });
+    } catch (e) {
+      print('Error fetching places: $e');
+    }
+  }
+
+  Future<void> fetchTopPlaces() async {
+    try {
+      final result = await PlaceService().fetchNearestPlaces(
+          latitude: 16.22002123,
+          longitude: 108.2004284,
+          maxStar: 5); // Thay 'RESTAURANT' bằng loại bạn muốn
+      setState(() {
+        topPlaces = result.data;
+      });
+    } catch (e) {
+      print('Error fetching places: $e');
+    }
+  }
+
+  Future<void> searchPlaces(String query) async {
+    setState(() {
+      isSearching = true; // Đánh dấu là đang tìm kiếm
+    });
+    try {
+      final result = await PlaceService()
+          .searchPlaces(name: query); // API mới cho tìm kiếm
+      setState(() {
+        placeCurrent = result.data; // Lưu kết quả tìm kiếm vào placeCurrent
+      });
+            if (placeCurrent.isNotEmpty) {
+        _scrollController.animateTo(
+          200.0, // Đặt giá trị này tùy thuộc vào vị trí của phần tử chứa kết quả
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    } catch (e) {
+      print('Error searching places: $e');
+    }
+  }
+
+    Future<void> fetchPlaceByCategory(String type) async {
+    setState(() {
+      isSearching = true; // Đánh dấu là đang tìm kiếm
+    });
+    try {
+      final result = await PlaceService()
+          .fetchNearestPlaces(type: type, longitude: 108.2004284, latitude: 16.22002123); // API mới cho tìm kiếm
+      setState(() {
+        placeCurrent = result.data; // Lưu kết quả tìm kiếm vào placeCurrent
+      });
+      if (placeCurrent.isNotEmpty) {
+        _scrollController.animateTo(
+          200.0, // Đặt giá trị này tùy thuộc vào vị trí của phần tử chứa kết quả
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    } catch (e) {
+      print('Error searching places: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,7 +113,7 @@ class _DulichState extends State<Dulich> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: Center(
+        title: const Center(
           child: Column(
             children: [
               Text(
@@ -49,43 +141,48 @@ class _DulichState extends State<Dulich> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications_none, color: Colors.black),
+            icon: const Icon(Icons.notifications_none, color: Colors.black),
             onPressed: () {},
           )
         ],
       ),
       body: SingleChildScrollView(
+        controller: _scrollController, 
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               // Search bar
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.search, color: Colors.grey),
-                    SizedBox(width: 10),
+                    const Icon(Icons.search, color: Colors.grey),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Search',
                           border: InputBorder.none,
                         ),
+                        onSubmitted: (query) {
+                          searchPlaces(
+                              query); // Gọi hàm tìm kiếm khi người dùng nhấn Enter
+                        },
                       ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               // Categories
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
@@ -98,22 +195,25 @@ class _DulichState extends State<Dulich> {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               // Categories list
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: [
-                    categoryCard('Coffee', Icons.coffee),
-                    categoryCard('Sea', Icons.waves),
-                    categoryCard('Restaurant', Icons.restaurant),
-                    categoryCard('Forest', Icons.park),
-                  ],
+                  children: categories.map((category) {
+                    return categoryCard(
+                      category['name'], 
+                      category['icon'], 
+                      () {
+                        fetchPlaceByCategory(category['value']);
+                      },
+                    );
+                  }).toList(),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               // Top Trips section
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
@@ -126,25 +226,30 @@ class _DulichState extends State<Dulich> {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               // Top Trips list
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: [
-                    tripCard('Bà Nà Hills', 'Đà Nẵng', 'assets/images/ba-na-hills.jpg', 40, 4.5),
-                    tripCard('Công Viên Châu Á', 'Đà Nẵng', 'assets/images/cong-vien-chau-a-tai-xuat-sau-4-thang-tam-dung-hoat-dong-02.jpg', 40, 4.5),
-                    tripCard('Cầu Rồng', 'Đà Nẵng', 'assets/images/cau-rong-da-nang-1-1.jpg', 40, 4.5),
-                  ],
+                  children: topPlaces.map((place) {
+                    return tripCard(
+                      place.name, // Tên địa điểm
+                      'Đà Nẵng', // Đặt cố định thành phố (nếu cần)
+                      place.img, // Đường dẫn ảnh từ API
+                      40, // Giá trị mặc định nếu không có giá
+                      place.star, // Điểm đánh giá
+                    );
+                  }).toList(),
                 ),
               ),
-              SizedBox(height: 20),
+
+              const SizedBox(height: 20),
               // Group Trips section
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Group Trips',
+                    'Near Places',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   Text(
@@ -153,19 +258,63 @@ class _DulichState extends State<Dulich> {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               // Group Trips card in a row (horizontal scrolling)
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: [
-                    tripCard('Trịnh Cà Phê', 'Seelisburg, Norway', 'assets/images/445000712_18031367006093830_4055709656047111081_n.jpg', 60, 4.8),
-                    tripCard('Nam House', 'Đà Nẵng', 'assets/images/ghe-tham-nam-house-coffee-ngoi-nha-co-kinh-giua-long-da-nang-03-1636472374.jpg', 60, 4.8),
-                    tripCard('Tan', 'Đà Nẵng', 'assets/images/03pydqwux8ne1698946307047.jpg', 60, 4.8),
-                  
-                  ],
+                  children: places.map((place) {
+                    return tripCard(
+                      place.name, // Tên địa điểm
+                      'Đà Nẵng', // Đặt cố định thành phố (nếu cần)
+                      place.img, // Đường dẫn ảnh từ API
+                      40, // Giá trị mặc định nếu không có giá
+                      place.star, // Điểm đánh giá
+                    );
+                  }).toList(),
                 ),
               ),
+              isSearching
+                  ? const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Search Result',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'See All',
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ],
+                    )
+                  : Container(),
+              const SizedBox(height: 20),
+              // Show search results or "Not Found"
+              isSearching
+                  ? placeCurrent.isNotEmpty
+                      ? SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: placeCurrent.map((place) {
+                              return tripCard(
+                                place.name,
+                                'Đà Nẵng',
+                                place.img,
+                                40,
+                                place.star,
+                              );
+                            }).toList(),
+                          ),
+                        )
+                      : const Center(
+                          child: Text(
+                            'Not Found',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        )
+                  : Container(),
             ],
           ),
         ),
@@ -173,11 +322,12 @@ class _DulichState extends State<Dulich> {
     );
   }
 
-  // Category Card Widget
-  Widget categoryCard(String title, IconData icon) {
-    return Container(
-      margin: EdgeInsets.only(right: 10),
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+Widget categoryCard(String title, IconData icon, VoidCallback onTap) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      margin: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.blue[50],
         borderRadius: BorderRadius.circular(20),
@@ -185,36 +335,63 @@ class _DulichState extends State<Dulich> {
       child: Row(
         children: [
           Icon(icon, color: Colors.blue),
-          SizedBox(width: 10),
-          Text(title, style: TextStyle(color: Colors.blue)),
+          const SizedBox(width: 10),
+          Text(title, style: const TextStyle(color: Colors.blue)),
         ],
       ),
-    );
-  }
-
+    ),
+  );
+}
   // Trip Card Widget
-  Widget tripCard(String title, String location, String imagePath, double price, double rating) {
+  Widget tripCard(String title, String location, String imagePath, double price,
+      double rating) {
     return Container(
-      margin: EdgeInsets.only(right: 10),
+      margin: const EdgeInsets.only(right: 10),
       width: 180,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.asset(imagePath, height: 120, width: 180, fit: BoxFit.cover),
+            child: Image.network(
+              imagePath,
+              height: 120,
+              width: 180,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.grey[300],
+                  height: 120,
+                  width: 180,
+                  child: const Icon(Icons.broken_image,
+                      size: 50, color: Colors.grey),
+                );
+              },
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  height: 120,
+                  width: 180,
+                  color: Colors.grey[200],
+                  child: const Center(child: CircularProgressIndicator()),
+                );
+              },
+            ),
           ),
-          SizedBox(height: 10),
-          Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          Text(location, style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 10),
+          Text(title,
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(location, style: const TextStyle(color: Colors.grey)),
           Row(
             children: [
-              Text('\$$price/visit', style: TextStyle(color: Colors.green)),
-              Spacer(),
-              Icon(Icons.star, color: Colors.orange, size: 16),
-              Text(rating.toString(), style: TextStyle(fontSize: 16)),
+              Text('\$$price/visit',
+                  style: const TextStyle(color: Colors.green)),
+              const Spacer(),
+              const Icon(Icons.star, color: Colors.orange, size: 16),
+              Text(rating.toString(), style: const TextStyle(fontSize: 16)),
             ],
-          )
+          ),
         ],
       ),
     );

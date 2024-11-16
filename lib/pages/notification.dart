@@ -12,8 +12,8 @@ class NotificationCus extends StatefulWidget {
 class _NotificationCusState extends State<NotificationCus> {
   final List<Map<String, dynamic>> notifications = [
     {
-      'title': 'Thông báo 1',
-      'content': 'Nội dung của thông báo 1 dài hơn tí đi',
+      'title': 'Thông báo kẹt xe',
+      'content': 'Nội dung thông báo kẹt xe của ',
       'img': 'assets/images/traffic_jam.png',
       'status': 'sent',
       'isRead': false,
@@ -23,7 +23,18 @@ class _NotificationCusState extends State<NotificationCus> {
       'latitude': 16.7626, // Example latitude
     },
     {
-      'title': 'Thông báo 2',
+      'title': 'Thông báo kẹt xe',
+      'content': 'Nội dung của thông báo 2.',
+      'img': 'assets/images/traffic_jam.png',
+      'status': 'read',
+      'isRead': true,
+      'timestamp': DateTime.now().subtract(Duration(hours: 2)),
+      'distance': '2.8 km',
+      'longitude': 106.6957,
+      'latitude': 10.7670,
+    },
+        {
+      'title': 'Thông báo kẹt xe',
       'content': 'Nội dung của thông báo 2.',
       'img': 'assets/images/traffic_jam.png',
       'status': 'read',
