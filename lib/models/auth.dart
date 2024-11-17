@@ -23,26 +23,31 @@ class AuthToken {
 
   String toJson() => json.encode(toMap());
 
-  factory AuthToken.fromMap(Map<String, dynamic> json) => AuthToken(
-        success: json["success"] ?? false,
-        userId: json["userId"] ?? '',
-        email: json["email"] ?? '',
-        username: json["username"] ?? '',
-        phone: json["phone"] ?? '',
-        roles: List<String>.from(json["roles"]?.map((x) => x) ?? []), 
-        token: json["token"] ?? '',
-  );
+ factory AuthToken.fromMap(Map<String, dynamic> json) {
+    final data = json['data'] ?? {}; // Dữ liệu thực tế nằm trong `data`
+    return AuthToken(
+      success: json["success"] ?? false,
+      userId: data["userId"] ?? '',
+      email: data["email"] ?? '',
+      username: data["username"] ?? '',
+      phone: data["phone"] ?? '',
+      roles: List<String>.from(data["roles"] ?? []),
+      token: data["token"] ?? '',
+    );
+  }
 
+  // Hàm từ AuthToken -> Map
   Map<String, dynamic> toMap() => {
         "success": success,
-        "userId": userId,
-        "email": email,
-        "username": username,
-        "phone": phone,
-        "roles": List<dynamic>.from(roles.map((x) => x)), // Chuyển đổi danh sách thành JSON
-        "token": token,
+        "data": {
+          "userId": userId,
+          "email": email,
+          "username": username,
+          "phone": phone,
+          "roles": roles,
+          "token": token,
+        },
       };
-
   @override
   String toString() {
     JsonEncoder encoder = const JsonEncoder.withIndent('    ');

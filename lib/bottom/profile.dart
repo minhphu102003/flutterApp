@@ -1,17 +1,13 @@
 import 'dart:io';
-
-import 'package:flutterApp/Screens/mapScreen.dart';
-import 'package:flutterApp/models/weather.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:material_floating_search_bar_2/material_floating_search_bar_2.dart';
-import 'package:provider/provider.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:flutterApp/Screens/locationError.dart';
-import 'package:flutterApp/widgets/support_widget.dart';
-// import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-// import 'package:random_string/random_string.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutterApp/services/accountService.dart'; // Import AccountService
+import 'package:flutterApp/login/sign/login.dart';
+import 'package:flutterApp/widgets/support_widget.dart';
+import 'package:flutterApp/services/authService.dart';
+import 'package:flutterApp/widgets/customDialog.dart';
+import 'package:flutterApp/theme/colors.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -21,278 +17,247 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
-  // String? image, name, email;
-  String name = "Lê Văn Phước Thịnh";
-  String email = "levphuocthinh@dtu.com";
   final ImagePicker _picker = ImagePicker();
+  final AccountService _accountService = AccountService();
+  final AuthService _authService = AuthService();
+
+  String? token;
+  String? name;
+  String? email;
+  String? phone;
   File? selectedImage;
 
-  // Future<void> getthesharedpref() async {
-  //   image = await SharedPreferenceHelper().getUserImage();
-  //   name = await SharedPreferenceHelper().getUserName();
-  //   email = await SharedPreferenceHelper().getUserEmail();
-  //   setState(() {});
-  // }
+  void showCustomDialog(BuildContext context, String title, String message,
+      IconData typeIcon, Color color, VoidCallback onDialogClose) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return CustomDialog(
+            title: title,
+            message: message,
+            typeIcon: typeIcon,
+            color: color,
+            onDialogClose: onDialogClose,
+          );
+        });
+  }
 
-  // uploadItem() async {
-  //   if (selectedImage != null) {
-  //     String addId = randomAlphaNumeric(10);
-  //     Reference firebaseStorageRef =
-  //         FirebaseStorage.instance.ref().child("blogImage").child(addId);
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
 
-  //     final UploadTask task = firebaseStorageRef.putFile(selectedImage!);
-  //     var downloadUrl = await (await task).ref.getDownloadURL();
-  //     await SharedPreferenceHelper().saveUserImage(downloadUrl);
-  //   }
-  // }
+  Future<void> _loadProfile() async {
+    try {
+      // Lấy thông tin profile từ API
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      token = prefs.getString('token');
+      if (token == null) {
+        return; // Token không tồn tại
+      }
+      var response = await _accountService.getProfile();
+      if (response['success']) {
+        setState(() {
+          name = response['data']['username'];
+          email = response['data']['email'];
+          phone = response['data']['phone']?? null;
+        });
+      } else {
+        print('Error: ${response['message']}');
+      }
+    } catch (e) { 
+      print('Failed to load profile: $e');
+    }
+  }
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   getthesharedpref();
-  // }
-
-  Future getImage() async {
+  Future<void> getImage() async {
     var image = await _picker.pickImage(source: ImageSource.gallery);
-
     if (image != null) {
-      // selectedImage = File(image.path);
-      // uploadItem();
       setState(() {
         selectedImage = File(image.path);
       });
     } else {
-      print("don't have image to chose ");
+      print("No image selected.");
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    if (token == null) {
+      return const Login(); // Điều hướng tới màn hình đăng nhập nếu không có token
+    } else if (name == null || email == null) {
+      // Hiển thị chỉ báo tải khi chưa có dữ liệu
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    } else {
+      // Hiển thị giao diện Profile
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: const Color(0xfff2f2f2),
+          centerTitle: true,
+          title: Text(
+            "Profile",
+            style: AppWidget.boldTextFeildStyle().copyWith(
+              fontSize: 24.0,
+            ),
+          ),
+        ),
         backgroundColor: const Color(0xfff2f2f2),
-        centerTitle: true,
-        title: Text(
-          "Profile",
-          style: AppWidget.boldTextFeildStyle().copyWith(
-            fontSize: 24.0,
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Hiển thị avatar hoặc biểu tượng mặc định
+              GestureDetector(
+                onTap: getImage,
+                child: Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(60),
+                    child: selectedImage != null
+                        ? Image.file(
+                            selectedImage!,
+                            height: 150.0,
+                            width: 150.0,
+                            fit: BoxFit.cover,
+                          )
+                        : Icon(
+                            Icons.account_circle,
+                            size: 150.0,
+                            color: Colors.grey,
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20.0),
+              // Hiển thị thông tin tên
+              _buildInfoTile(
+                icon: Icons.person_outline,
+                label: "Name",
+                value: name ?? "",
+              ),
+              const SizedBox(height: 20.0),
+              // Hiển thị thông tin email
+              _buildInfoTile(
+                icon: Icons.mail_outline,
+                label: "Email",
+                value: email ?? "",
+              ),
+              const SizedBox(height: 20.0),
+              _buildInfoTile(
+                icon: Icons.phone_outlined,
+                label: "Phone",
+                value: phone ?? "",
+              ),
+              const SizedBox(height: 20.0),
+              // Nút đăng xuất
+              _buildActionTile(
+                icon: Icons.logout_outlined,
+                label: "Log Out",
+                onTap: () async {
+                  String message = await _authService.logOut();
+                  if (message == 'Logout successful!') {
+                    showCustomDialog(
+                        context,
+                        'Notify',
+                        message,
+                        Icons.notifications,
+                        successColor, () {
+                      setState(() {
+                        token = null;
+                      });
+                    });
+                  } else {
+                      showCustomDialog(
+                        context,
+                        'Notify',
+                        message,
+                        Icons.error,
+                        failureColor, () {
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 20.0),
+              // Nút xóa tài khoản
+              _buildActionTile(
+                icon: Icons.delete_outline,
+                label: "Delete Account",
+                onTap: () {
+                  // Thêm logic xóa tài khoản
+                  print("Delete Account pressed");
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildInfoTile(
+      {required IconData icon, required String label, required String value}) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Material(
+        elevation: 3.0,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.all(10.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 35.0),
+              const SizedBox(width: 10.0),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: AppWidget.lightTextFeildStyle()),
+                  Text(value, style: AppWidget.semiboldTextFeildStyle()),
+                ],
+              ),
+            ],
           ),
         ),
       ),
-      backgroundColor: const Color(0xfff2f2f2),
-      body: name == null
-          ? Center(
-              child: CircularProgressIndicator()) // Thêm một chỉ báo đang tải
-          : Container(
-              child: Column(
-                children: [
-                  selectedImage != null
-                      ? GestureDetector(
-                          onTap: () {
-                            getImage();
-                          },
-                          child: Center(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(
-                                  60), // Đặt bán kính lớn hơn cho hình tròn
-                              child: Image.file(
-                                selectedImage!,
-                                height: 150.0,
-                                width: 150.0,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        )
-                      : GestureDetector(
-                          onTap: () {
-                            getImage();
-                          },
-                          child: Center(
-                            child: ClipRRect(
-                              borderRadius:
-                                  BorderRadius.circular(60), //code toi day roi
-                              child: Center(
-                                child: Icon(
-                                  Icons.account_circle,
-                                  size: 150.0,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                  SizedBox(
-                    height: 20.0,
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(left: 20.0, right: 20.0),
-                    child: Material(
-                      elevation: 3.0,
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: EdgeInsets.only(
-                            left: 10.0, right: 10.0, top: 10.0, bottom: 10.0),
-                        width: MediaQuery.of(context).size.width,
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10)),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.person_outline,
-                              size: 35.0,
-                            ),
-                            SizedBox(
-                              width: 10.0,
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Name",
-                                  style: AppWidget.lightTextFeildStyle(),
-                                ),
-                                Text(
-                                  name!,
-                                  style: AppWidget.semiboldTextFeildStyle(),
-                                )
-                              ],
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 20.0,
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(left: 20.0, right: 20.0),
-                    child: Material(
-                      elevation: 3.0,
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: EdgeInsets.only(
-                            left: 10.0, right: 10.0, top: 10.0, bottom: 10.0),
-                        width: MediaQuery.of(context).size.width,
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10)),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.mail_outline,
-                              size: 35.0,
-                            ),
-                            SizedBox(
-                              width: 10.0,
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Email",
-                                  style: AppWidget.lightTextFeildStyle(),
-                                ),
-                                Text(
-                                  email!,
-                                  style: AppWidget.semiboldTextFeildStyle(),
-                                )
-                              ],
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 20.0,
-                  ),
-                  GestureDetector(
-                    // onTap: ()async{
-                    //   await AuthMethods().SignOut().then((value) {
-                    //     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> Onboarding()));
-                    //   });
-                    // },
-                    child: Container(
-                      margin: EdgeInsets.only(left: 20.0, right: 20.0),
-                      child: Material(
-                        elevation: 3.0,
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          padding: EdgeInsets.only(
-                              left: 10.0, right: 10.0, top: 10.0, bottom: 10.0),
-                          width: MediaQuery.of(context).size.width,
-                          decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10)),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.logout_outlined,
-                                size: 35.0,
-                              ),
-                              SizedBox(
-                                width: 10.0,
-                              ),
-                              Text(
-                                "LogOut",
-                                style: AppWidget.semiboldTextFeildStyle(),
-                              ),
-                              Spacer(),
-                              Icon(Icons.arrow_forward_ios_outlined)
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 20.0,
-                  ),
-                  GestureDetector(
-                    // onTap: ()async{
-                    //   await AuthMethods().deleteuser().then((value){
-                    //     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Onboarding()));
-                    //   });
-                    // },
-                    child: Container(
-                      margin: EdgeInsets.only(left: 20.0, right: 20.0),
-                      child: Material(
-                        elevation: 3.0,
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          padding: EdgeInsets.only(
-                              left: 10.0, right: 10.0, top: 10.0, bottom: 10.0),
-                          width: MediaQuery.of(context).size.width,
-                          decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10)),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.delete_outline,
-                                size: 35.0,
-                              ),
-                              SizedBox(
-                                width: 10.0,
-                              ),
-                              Text(
-                                "Delete Account",
-                                style: AppWidget.semiboldTextFeildStyle(),
-                              ),
-                              Spacer(),
-                              Icon(Icons.arrow_forward_ios_outlined)
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                ],
-              ),
+    );
+  }
+
+  Widget _buildActionTile({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: Material(
+          elevation: 3.0,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.all(10.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
             ),
+            child: Row(
+              children: [
+                Icon(icon, size: 35.0),
+                const SizedBox(width: 10.0),
+                Text(label, style: AppWidget.semiboldTextFeildStyle()),
+                const Spacer(),
+                const Icon(Icons.arrow_forward_ios_outlined),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

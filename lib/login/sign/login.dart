@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutterApp/Screens/mapScreen.dart';
 import 'package:flutterApp/login/sign/forgot_password.dart';
 import 'package:flutterApp/login/sign/sign.dart';
 import 'package:flutterApp/helper/validators.dart';

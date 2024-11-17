@@ -1,23 +1,27 @@
 import 'package:dio/dio.dart';
 import 'package:flutterApp/helper/appConfig.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 class ApiClient {
-  static final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: AppConfig.baseUrl,
-      responseType: ResponseType.json,
-      connectTimeout: Duration(seconds: 10),
-      receiveTimeout: Duration(seconds: 10),
-      validateStatus: (int? code) {
-        return true;
-      },
-    ),
-  );
+  late final Dio _dio;
 
   static final ApiClient instance = ApiClient._internal();
 
-  ApiClient._internal();
+  ApiClient._internal() {
+    String baseUrl = kIsWeb ? AppConfig.baseUrlWeb : AppConfig.baseUrl;
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        responseType: ResponseType.json,
+        connectTimeout: Duration(seconds: 10),
+        receiveTimeout: Duration(seconds: 10),
+        validateStatus: (int? code) {
+          return true;
+        },
+      ),
+    );
+  }
 
   Dio get dio => _dio;
 

@@ -68,6 +68,7 @@ dependencies:
   mapbox_maps_flutter: ^2.3.0
   youtube_player_iframe:
   youtube_player_flutter:
+  universal_io: ^2.2.2
 
   
 

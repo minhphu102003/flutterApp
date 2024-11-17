@@ -2,6 +2,7 @@ import 'package:flutterApp/services/apiClient.dart';
 import 'package:flutterApp/models/auth.dart';
 import 'package:flutterApp/services/apiRespone.dart';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final ApiClient _apiClient = ApiClient.instance;
@@ -14,8 +15,11 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
+        print(response.data);
         final authToken = AuthToken.fromMap(response.data);
+        print("token ${authToken.token}");
         await _apiClient.setToken(authToken.token);
+        await _apiClient.saveToken(authToken.token);
         return ApiResponse<AuthToken>(data: authToken, error: null);
       } else {
         return ApiResponse<AuthToken>(
@@ -100,4 +104,38 @@ class AuthService {
       return 'An error occurred. Please action again!.';
     }
   }
+Future<String> logOut() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+
+  // Kiểm tra token có tồn tại hay không
+  if (token == null) {
+    return 'You are already logged out!';
+  }
+
+  try {
+    // Gửi request logout tới API
+    Response response = await _apiClient.dio.get(
+      '/auth/logout',
+      options: Options(
+        headers: {'x-access-token': token},
+      ),
+    );
+
+    // Nếu logout thành công
+    if (response.statusCode == 200) {
+      // Xóa token khỏi SharedPreferences
+      await prefs.remove('token');
+      return 'Logout successful!';
+    }
+
+    // Nếu có lỗi từ API (nhưng không phải exception)
+    return response.data['message'] ?? 'Logout failed, please try again!';
+  } catch (e) {
+    print('Logout error: $e');
+    return 'An unexpected error occurred, please try again!';
+  }
+}
+
+  
 }
