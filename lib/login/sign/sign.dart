@@ -7,6 +7,7 @@ import 'package:flutterApp/models/auth.dart';
 import 'package:flutterApp/services/apiRespone.dart';
 import 'package:flutterApp/services/authService.dart';
 import 'package:flutterApp/theme/colors.dart';
+import 'package:flutterApp/helper/appConfig.dart';
 
 class Sign extends StatefulWidget {
   const Sign({super.key});
@@ -20,6 +21,7 @@ class _SignState extends State<Sign> {
   String? username;
   String? email;
   String? password;
+  String dirImg = AppConfig.dirImg;
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -60,7 +62,7 @@ class _SignState extends State<Sign> {
               Container(
                   width: MediaQuery.of(context).size.width,
                   child: Image.asset(
-                    "assets/images/6ecaa6adda417ea842eeadc75dce2c4a-removebg-preview.png",
+                    "$dirImg/6ecaa6adda417ea842eeadc75dce2c4a-removebg-preview.png",
                     fit: BoxFit.cover,
                   )),
               const Text(
@@ -186,10 +188,10 @@ class _SignState extends State<Sign> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset("assets/images/google.png",
+                  Image.asset("$dirImg/google.png",
                       height: 45, width: 45, fit: BoxFit.cover),
                   SizedBox(width: 30.0),
-                  Image.asset("assets/images/apple1.png",
+                  Image.asset("$dirImg/apple1.png",
                       height: 50, width: 50, fit: BoxFit.cover),
                 ],
               ),

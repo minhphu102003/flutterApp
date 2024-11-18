@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutterApp/helper/navigation_helpers.dart'; 
+import 'package:flutterApp/helper/navigation_helpers.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutterApp/config.dart';
 import 'package:flutterApp/services/mapSerivice.dart';
+import 'package:flutterApp/widgets/customDialogWeather.dart';
+import 'package:flutterApp/helper/appConfig.dart';
+import 'package:flutterApp/services/weatherService.dart';
 
 class MapScreen extends StatefulWidget {
   final double? longitude;
@@ -19,7 +22,7 @@ class MapScreen extends StatefulWidget {
 class MapScreenState extends State<MapScreen> {
   GlobalKey<MapScreenState> mapKey = GlobalKey<MapScreenState>();
   String apiMapboxKey = Config.api_mapbox_key;
-  LatLng _currentLocation = const LatLng(37.7749, -122.4194); // Default location
+  LatLng _currentLocation = const LatLng(37.7749, -122.4194); 
   bool _locationLoaded = false;
   double _zoomLevel = 16.0;
   late MapController _mapController;
@@ -31,16 +34,17 @@ class MapScreenState extends State<MapScreen> {
   List<String> _routeInstructions = [];
   String _travelTime = "";
   String _transportMode = "driving";
-  bool _showRouteInstructions = true; // Biến kiểm soát việc hiển thị instructions
+  bool _showRouteInstructions = true; 
+  String dirImg = AppConfig.dirImg;
+  bool _isDialogShown = false;
+  final WeatherService _weatherService = WeatherService();
 
-  // Các phương thức khác
 
-  // Xử lý khi người dùng nhấn dấu x trong thanh tìm kiếm
   void _clearSearch() {
     setState(() {
       _searchController.clear();
       _suggestions.clear();
-      _showRouteInstructions = false; // Ẩn widget instructions khi xóa tìm kiếm
+      _showRouteInstructions = false; 
     });
   }
 
@@ -59,6 +63,47 @@ class MapScreenState extends State<MapScreen> {
     _mapController.move(_currentLocation, _zoomLevel);
   }
   }
+
+void showWeatherSuggestion(double longitude, double latitude, BuildContext context) async {
+  try {
+    // Gọi API để lấy thông tin thời tiết
+    Map<String, dynamic> response = await _weatherService.getSuggestion(longitude, latitude);
+    if (response['success'] == true) {
+      String message = response['data'];
+      String weatherCode = response['code'];
+      double temperature = response['temp'];
+
+      List<String> img = [];
+      if (weatherCode.isNotEmpty) {
+        img.add('$dirImg/weather_${weatherCode[0]}.png');
+        if (weatherCode.length > 1) {
+          img.add('$dirImg/weather_second_${weatherCode[1]}.png');
+        }
+      }
+      showDialog(
+        context: context,
+        builder: (context) => CustomDialogWeather(
+          title: "Weather Suggestion",
+          message: message,
+          typeIcon: Icons.wb_sunny_outlined, // Có thể tùy chỉnh dựa trên mã thời tiết
+          color: Colors.orange, // Cũng có thể tùy chỉnh
+          imagePaths: img,
+          temperature: temperature,
+          onDialogClose: () {
+            print("Dialog closed");
+          },
+        ),
+      );
+    } else {
+      // Xử lý khi API trả về không thành công
+      print("Failed to fetch weather suggestion: ${response['message']}");
+    }
+  } catch (e) {
+    // Xử lý lỗi
+    print("Error in fetching weather suggestion: $e");
+
+  }
+}
 
 Future<void> _initializeLocation() async {
   if (widget.longitude != null && widget.latitude != null) {
@@ -154,10 +199,18 @@ Future<void> _initializeLocation() async {
         initialCenter: _currentLocation,
         initialZoom: _zoomLevel,
         onMapReady: () {
-          setState(() {
-            _mapReady = true;
+            setState(() {
+          _mapReady = true;
+
+          if (_currentLocation != null) {
             _mapController.move(_currentLocation, _zoomLevel);
-          });
+          }
+
+          if (!_isDialogShown) {
+            _isDialogShown = true;
+            showWeatherSuggestion(_currentLocation.longitude, _currentLocation.latitude, context);
+          }
+        });
         },
       ),
       children: [

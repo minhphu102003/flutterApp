@@ -4,6 +4,7 @@ import 'package:flutterApp/login/sign/resetPassword.dart';
 import 'package:flutterApp/theme/colors.dart';
 import 'package:flutterApp/services/authService.dart';
 import 'package:flutterApp/widgets/customDialog.dart';
+import 'package:flutterApp/helper/appConfig.dart';
 
 class Verify extends StatefulWidget {
   final String email;
@@ -19,7 +20,7 @@ class Verify extends StatefulWidget {
 class _VerifyState extends State<Verify> {
   final List<TextEditingController> _otpControllers =
       List.generate(6, (_) => TextEditingController());
-
+  String dirImg  = AppConfig.dirImg;
   @override
   void dispose() {
     // Giải phóng bộ nhớ khi không sử dụng nữa
@@ -71,7 +72,7 @@ class _VerifyState extends State<Verify> {
             children: [
               Container(
                   child: Image.asset(
-                "assets/images/6ecaa6adda417ea842eeadc75dce2c4a-removebg-preview.png",
+                "$dirImg/6ecaa6adda417ea842eeadc75dce2c4a-removebg-preview.png",
                 height: 200,
                 width: 200,
                 fit: BoxFit.cover,

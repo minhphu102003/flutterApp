@@ -5,6 +5,7 @@ import 'package:flutterApp/helper/validators.dart';
 import 'package:flutterApp/widgets/customDialog.dart';
 import 'package:flutterApp/theme/colors.dart';
 import 'package:flutterApp/services/authService.dart';
+import 'package:flutterApp/helper/appConfig.dart';
 
 class ForgotPassword extends StatefulWidget {
   const ForgotPassword({super.key});
@@ -17,6 +18,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController emailControler = TextEditingController();
   String? email;
+  String dirImg = AppConfig.dirImg;
 
   void showCustomDialog(BuildContext context, String title, String message,
       IconData typeIcon, Color color, VoidCallback onDialogClose) {
@@ -67,7 +69,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                       MediaQuery.of(context).size.width /
                           2), // Bo tròn với cùng tỷ lệ
                   child: Image.asset(
-                    "assets/images/6ecaa6adda417ea842eeadc75dce2c4a-removebg-preview.png",
+                    "$dirImg/6ecaa6adda417ea842eeadc75dce2c4a-removebg-preview.png",
                     width: MediaQuery.of(context).size.width / 2,
                     height: MediaQuery.of(context).size.width /
                         2, // Chiều cao và chiều rộng bằng nhau

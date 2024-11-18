@@ -9,6 +9,7 @@ import 'package:flutterApp/services/apiRespone.dart';
 import 'package:flutterApp/widgets/customDialog.dart';
 import 'package:flutterApp/theme/colors.dart';
 import "package:flutterApp/bottom/bottomnav.dart";
+import 'package:flutterApp/helper/appConfig.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -23,6 +24,7 @@ class _LoginState extends State<Login> {
   String password = '';
   final TextEditingController emailControler = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  String dirImg = AppConfig.dirImg;
 
   void showCustomDialog(BuildContext context, String title, String message,
       IconData typeIcon, Color color, VoidCallback onDialogClose) {
@@ -51,7 +53,7 @@ Widget build(BuildContext context) {
         Container(
           width: MediaQuery.of(context).size.width,
           child: Image.asset(
-            "assets/images/6ecaa6adda417ea842eeadc75dce2c4a-removebg-preview.png",
+            "$dirImg/6ecaa6adda417ea842eeadc75dce2c4a-removebg-preview.png",
             fit: BoxFit.cover,
           ),
         ),
@@ -181,7 +183,7 @@ Widget build(BuildContext context) {
                       children: [
                         GestureDetector(
                           child: Image.asset(
-                            "assets/images/google.png",
+                            "$dirImg/google.png",
                             height: 45,
                             width: 45,
                             fit: BoxFit.cover,
@@ -191,7 +193,7 @@ Widget build(BuildContext context) {
                         GestureDetector(
                           onTap: () {},
                           child: Image.asset(
-                            "assets/images/apple1.png",
+                            "$dirImg/apple1.png",
                             height: 50,
                             width: 50,
                             fit: BoxFit.cover,

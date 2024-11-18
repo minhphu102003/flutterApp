@@ -3,4 +3,5 @@ class AppConfig {
   static const String baseUrlWeb = 'http://localhost:8000/api/v1';
   static const String baseMapBoxGeo = 'https://api.mapbox.com/geocoding/v5/mapbox.places';
   static const String baseMapBoxDir = 'https://api.mapbox.com/directions/v5/mapbox/driving';
+  static const String dirImg = 'assets/images/';
 }
