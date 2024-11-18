@@ -5,9 +5,14 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutterApp/config.dart';
 import 'package:flutterApp/services/mapSerivice.dart';
-import 'package:flutterApp/widgets/customDialogWeather.dart';
+import 'package:flutterApp/services/weatherSuggestionService.dart';
 import 'package:flutterApp/helper/appConfig.dart';
-import 'package:flutterApp/services/weatherService.dart';
+import 'package:flutterApp/widgets/floatActingButton.dart';
+import 'package:flutterApp/widgets/buttonWeather.dart';
+import 'package:flutterApp/widgets/searchBar.dart' as custom;
+import 'package:flutterApp/widgets/displayMap.dart';
+import 'package:flutterApp/widgets/routeInstruction.dart';
+import 'package:flutterApp/widgets/suggestionList.dart';
 
 class MapScreen extends StatefulWidget {
   final double? longitude;
@@ -22,7 +27,7 @@ class MapScreen extends StatefulWidget {
 class MapScreenState extends State<MapScreen> {
   GlobalKey<MapScreenState> mapKey = GlobalKey<MapScreenState>();
   String apiMapboxKey = Config.api_mapbox_key;
-  LatLng _currentLocation = const LatLng(37.7749, -122.4194); 
+  LatLng _currentLocation = const LatLng(37.7749, -122.4194);
   bool _locationLoaded = false;
   double _zoomLevel = 16.0;
   late MapController _mapController;
@@ -34,17 +39,16 @@ class MapScreenState extends State<MapScreen> {
   List<String> _routeInstructions = [];
   String _travelTime = "";
   String _transportMode = "driving";
-  bool _showRouteInstructions = true; 
+  bool _showRouteInstructions = true;
   String dirImg = AppConfig.dirImg;
   bool _isDialogShown = false;
-  final WeatherService _weatherService = WeatherService();
-
+  final weatherService = WeatherSuggestionService();
 
   void _clearSearch() {
     setState(() {
       _searchController.clear();
       _suggestions.clear();
-      _showRouteInstructions = false; 
+      _showRouteInstructions = false;
     });
   }
 
@@ -54,65 +58,39 @@ class MapScreenState extends State<MapScreen> {
     _mapController = MapController();
     _initializeLocation();
   }
-    // This method will update the current location
+
+  // This method will update the current location
   void updateLocation(double longitude, double latitude) {
     setState(() {
       _currentLocation = LatLng(latitude, longitude);
     });
     if (_mapReady) {
-    _mapController.move(_currentLocation, _zoomLevel);
-  }
-  }
-
-void showWeatherSuggestion(double longitude, double latitude, BuildContext context) async {
-  try {
-    // Gọi API để lấy thông tin thời tiết
-    Map<String, dynamic> response = await _weatherService.getSuggestion(longitude, latitude);
-    if (response['success'] == true) {
-      String message = response['data'];
-      String weatherCode = response['code'];
-      double temperature = response['temp'];
-
-      List<String> img = [];
-      if (weatherCode.isNotEmpty) {
-        img.add('$dirImg/weather_${weatherCode[0]}.png');
-        if (weatherCode.length > 1) {
-          img.add('$dirImg/weather_second_${weatherCode[1]}.png');
-        }
-      }
-      showDialog(
-        context: context,
-        builder: (context) => CustomDialogWeather(
-          title: "Weather Suggestion",
-          message: message,
-          typeIcon: Icons.wb_sunny_outlined, // Có thể tùy chỉnh dựa trên mã thời tiết
-          color: Colors.orange, // Cũng có thể tùy chỉnh
-          imagePaths: img,
-          temperature: temperature,
-          onDialogClose: () {
-            print("Dialog closed");
-          },
-        ),
-      );
-    } else {
-      // Xử lý khi API trả về không thành công
-      print("Failed to fetch weather suggestion: ${response['message']}");
+      _mapController.move(_currentLocation, _zoomLevel);
     }
-  } catch (e) {
-    // Xử lý lỗi
-    print("Error in fetching weather suggestion: $e");
-
   }
-}
 
-Future<void> _initializeLocation() async {
-  if (widget.longitude != null && widget.latitude != null) {
-    _currentLocation = LatLng(widget.latitude!, widget.longitude!);
-    setState(() => _locationLoaded = true);
-  } else {
-    await _getCurrentLocation();
+  void _onMapReady() {
+    setState(() {
+      _mapReady = true;
+      if (_currentLocation != null) {
+        _mapController.move(_currentLocation, _zoomLevel);
+      }
+      if (!_isDialogShown) {
+        _isDialogShown = true;
+        weatherService.showWeatherSuggestion(
+            _currentLocation.longitude, _currentLocation.latitude, context);
+      }
+    });
   }
-}
+
+  Future<void> _initializeLocation() async {
+    if (widget.longitude != null && widget.latitude != null) {
+      _currentLocation = LatLng(widget.latitude!, widget.longitude!);
+      setState(() => _locationLoaded = true);
+    } else {
+      await _getCurrentLocation();
+    }
+  }
 
   Future<void> _getCurrentLocation() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
@@ -128,7 +106,8 @@ Future<void> _initializeLocation() async {
     if (permission == LocationPermission.deniedForever) {
       return Future.error('Location permissions are permanently denied.');
     }
-    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
     if (mounted) {
       setState(() {
         _currentLocation = LatLng(position.latitude, position.longitude);
@@ -137,7 +116,6 @@ Future<void> _initializeLocation() async {
       });
     }
   }
-
 
   Future<void> _searchLocation(String query) async {
     LatLng? location = await MapApiService.searchLocation(query);
@@ -148,15 +126,16 @@ Future<void> _initializeLocation() async {
     }
   }
 
-
   Future<void> _getRoute(LatLng start, LatLng destination) async {
-    List<LatLng> polylinePoints = await MapApiService.getRoute(start, destination);
-    List<String> instructions = await MapApiService.getRouteInstructions(start, destination);
+    List<LatLng> polylinePoints =
+        await MapApiService.getRoute(start, destination);
+    List<String> instructions =
+        await MapApiService.getRouteInstructions(start, destination);
     String travelTime = await MapApiService.getTravelTime(start, destination);
     setState(() {
       _routePolyline = polylinePoints;
       _routeInstructions = instructions;
-      _travelTime = travelTime; 
+      _travelTime = travelTime;
     });
   }
 
@@ -178,233 +157,61 @@ Future<void> _initializeLocation() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
-          _locationLoaded ? _buildMap() : const Center(child: CircularProgressIndicator()),
-          _buildSearchBar(),
-          if (_showRouteInstructions && _routeInstructions.isNotEmpty) _buildRouteInstructions(),
-          if (_suggestions.isNotEmpty) _buildSuggestionsList(),
-          _buildWeatherIcon(),
-          _buildFloatingButtons(),
-        ],
-      ),
-    );
-  }
-
-  // Build Map Widget
-  Widget _buildMap() {
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: _currentLocation,
-        initialZoom: _zoomLevel,
-        onMapReady: () {
-            setState(() {
-          _mapReady = true;
-
-          if (_currentLocation != null) {
-            _mapController.move(_currentLocation, _zoomLevel);
-          }
-
-          if (!_isDialogShown) {
-            _isDialogShown = true;
-            showWeatherSuggestion(_currentLocation.longitude, _currentLocation.latitude, context);
-          }
-        });
-        },
-      ),
-      children: [
-        TileLayer(
-          urlTemplate: "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=$apiMapboxKey",
-        ),
-        if (_routePolyline.isNotEmpty)
-          PolylineLayer(
-            polylines: [Polyline(points: _routePolyline, strokeWidth: 4.0, color: Colors.blue)],
+          if(_locationLoaded)
+            Positioned.fill( // Đảm bảo MapDisplay chiếm toàn bộ không gian
+              child: MapDisplay(
+                currentLocation: _currentLocation,
+                routePolyline: _routePolyline,
+                mapController: _mapController,
+                mapReady: _mapReady,
+                onMapReady: _onMapReady,
+              ),
+            ),
+          custom.SearchBar(
+            searchController: _searchController,
+            onSearchChanged: _onSearchChanged,
+            onSearchSubmitted: () => _searchLocation(_searchController.text),
+            onClear: _clearSearch,
+            top: 40, // Định vị theo yêu cầu
+            left: 10,
+            right: 10,
           ),
-        MarkerLayer(
-          markers: [
-            Marker(
-              point: _currentLocation,
-              width: 30.0,
-              height: 30.0,
-              child: Icon(Icons.location_on, color: Colors.red),
+          if (_showRouteInstructions && _routeInstructions.isNotEmpty)
+            RouteInstructions(
+              routeInstructions: _routeInstructions,
+              travelTime: _travelTime,
+              bottomPosition: 50, // Định vị trí tính từ đáy màn hình
             ),
-            if (_searchedLocation != null)
-              Marker(
-                point: _searchedLocation!,
-                width: 30.0,
-                height: 30.0,
-                child: Icon(Icons.location_pin, color: Colors.blue),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // Build Search Bar
-  Widget _buildSearchBar() {
-    return Positioned(
-      top: 40,
-      left: 10,
-      right: 10,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _searchController,
-                decoration: const InputDecoration(
-                  hintText: 'Search for a location...',
-                  border: InputBorder.none,
-                ),
-                onChanged: _onSearchChanged,
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {
-                _showRouteInstructions= true;
-                if (_searchController.text.isNotEmpty) {
-                  _searchLocation(_searchController.text);
-                }
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                _clearSearch();
-                setState(() {
-                  
-                  _searchController.clear();
-                  _suggestions.clear();
-                });
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Build Route Instructions Display
-Widget _buildRouteInstructions() {
-  return DraggableScrollableSheet(
-    initialChildSize: 0.1,  // Hiển thị 10% của widget
-    minChildSize: 0.1,      // Giới hạn tối thiểu là 10% màn hình
-    maxChildSize: 0.7,      // Giới hạn tối đa là 80% màn hình
-    builder: (context, scrollController) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
+          WeatherIcon(
+            onPressed: () => onWeatherButtonPressed(context),
+            top: 160, // Định vị trí theo yêu cầu
+            left: 20,
           ),
-          child: ListView(
-            controller: scrollController,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(10), // Thêm padding cho title
-                child: Text(
-                  'Detailed Directions $_travelTime',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-              ..._routeInstructions.map((instruction) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    child: Text(instruction, style: TextStyle(fontSize: 15)),
-                  )),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-}
-
-  // Build Suggestions List
-  Widget _buildSuggestionsList() {
-    return Positioned(
-      top: 100,
-      left: 10,
-      right: 10,
-      child: Container(
-        constraints: const BoxConstraints(maxHeight: 200),
-        color: Colors.white,
-        child: ListView.builder(
-          shrinkWrap: true,
-          itemCount: _suggestions.length,
-          itemBuilder: (context, index) {
-            return ListTile(
-              title: Text(_suggestions[index]),
-              onTap: () => _selectSuggestion(_suggestions[index]),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  // Build Weather Icon
-  Widget _buildWeatherIcon() {
-    return Positioned(
-      top: 160,
-      left: 20,
-      child: _suggestions.isEmpty
-          ? Container(
-              padding: const EdgeInsets.all(10),
-              decoration: const BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
-              child: IconButton(
-                icon: const Icon(Icons.cloudy_snowing, size: 30, color: Colors.white),
-                onPressed: () => onWeatherButtonPressed(context),
-              ),
-            )
-          : const SizedBox.shrink(),
-    );
-  }
-
-  // Build Floating Action Buttons (Zoom & Current Location)
-  Widget _buildFloatingButtons() {
-    return Positioned(
-      bottom: 50,
-      right: 10,
-      child: Column(
-        children: [
-          FloatingActionButton(
-            heroTag: "zoom_in",
-            onPressed: () {
+          FloatingActionButtons(
+            onZoomIn: () {
               setState(() {
                 _zoomLevel++;
                 _mapController.move(_currentLocation, _zoomLevel);
               });
             },
-            child: const Icon(Icons.zoom_in),
-          ),
-          const SizedBox(height: 10),
-          FloatingActionButton(
-            heroTag: "zoom_out",
-            onPressed: () {
+            onZoomOut: () {
               setState(() {
                 _zoomLevel--;
                 _mapController.move(_currentLocation, _zoomLevel);
               });
             },
-            child: const Icon(Icons.zoom_out),
+            onCurrentLocation: _getCurrentLocation,
+            bottom: 50, // Định vị theo yêu cầu
+            right: 10,
           ),
-          const SizedBox(height: 10),
-          FloatingActionButton(
-            heroTag: "current_location",
-            onPressed: () => _getCurrentLocation(),
-            child: const Icon(Icons.my_location),
-          ),
+          if (_suggestions.isNotEmpty)
+            SuggestionsList(
+              suggestions: _suggestions,
+              onSuggestionSelected: _selectSuggestion,
+            ),
         ],
       ),
     );

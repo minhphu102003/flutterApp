@@ -6,7 +6,7 @@ import 'Screens/homeScreen.dart';
 
 void main() {
   // Hàm main khởi chạy ứng dụng Flutter
-  runApp(
+  runApp( 
     MyApp(),
   );
 }
