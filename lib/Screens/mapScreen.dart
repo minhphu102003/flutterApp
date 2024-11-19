@@ -6,19 +6,20 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutterApp/config.dart';
 import 'package:flutterApp/services/mapSerivice.dart';
 import 'package:flutterApp/services/weatherSuggestionService.dart';
-import 'package:flutterApp/helper/appConfig.dart';
 import 'package:flutterApp/widgets/floatActingButton.dart';
 import 'package:flutterApp/widgets/buttonWeather.dart';
 import 'package:flutterApp/widgets/searchBar.dart' as custom;
 import 'package:flutterApp/widgets/displayMap.dart';
 import 'package:flutterApp/widgets/routeInstruction.dart';
 import 'package:flutterApp/widgets/suggestionList.dart';
+import 'package:flutterApp/widgets/FloatButtonReport.dart';
 
 class MapScreen extends StatefulWidget {
   final double? longitude;
   final double? latitude;
+  final VoidCallback changeScreen;
 
-  const MapScreen({Key? key, this.longitude, this.latitude}) : super(key: key);
+  const MapScreen({Key? key, this.longitude, this.latitude, required this.changeScreen}) : super(key: key);
 
   @override
   State<MapScreen> createState() => MapScreenState();
@@ -40,7 +41,6 @@ class MapScreenState extends State<MapScreen> {
   String _travelTime = "";
   String _transportMode = "driving";
   bool _showRouteInstructions = true;
-  String dirImg = AppConfig.dirImg;
   bool _isDialogShown = false;
   final weatherService = WeatherSuggestionService();
 
@@ -48,6 +48,7 @@ class MapScreenState extends State<MapScreen> {
     setState(() {
       _searchController.clear();
       _suggestions.clear();
+      _routePolyline.clear();
       _showRouteInstructions = false;
     });
   }
@@ -136,6 +137,7 @@ class MapScreenState extends State<MapScreen> {
       _routePolyline = polylinePoints;
       _routeInstructions = instructions;
       _travelTime = travelTime;
+      _showRouteInstructions = true;
     });
   }
 
@@ -149,6 +151,7 @@ class MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _selectSuggestion(String suggestion) async {
+    FocusScope.of(context).unfocus();
     _searchController.text = suggestion;
     _suggestions.clear();
     await _searchLocation(suggestion);
@@ -161,7 +164,7 @@ class MapScreenState extends State<MapScreen> {
       body: Stack(
         children: [
           if(_locationLoaded)
-            Positioned.fill( // Đảm bảo MapDisplay chiếm toàn bộ không gian
+            Positioned.fill( 
               child: MapDisplay(
                 currentLocation: _currentLocation,
                 routePolyline: _routePolyline,
@@ -207,6 +210,7 @@ class MapScreenState extends State<MapScreen> {
             bottom: 50, // Định vị theo yêu cầu
             right: 10,
           ),
+          FloatingReportButton(changeScreen: widget.changeScreen),
           if (_suggestions.isNotEmpty)
             SuggestionsList(
               suggestions: _suggestions,
