@@ -13,19 +13,20 @@ import 'package:flutterApp/widgets/displayMap.dart';
 import 'package:flutterApp/widgets/routeInstruction.dart';
 import 'package:flutterApp/widgets/suggestionList.dart';
 import 'package:flutterApp/widgets/FloatButtonReport.dart';
+import 'package:flutterApp/Screens/reportScreen.dart';
+import 'package:flutterApp/widgets/choseDirection.dart';
 
 class MapScreen extends StatefulWidget {
   final double? longitude;
   final double? latitude;
-  final VoidCallback changeScreen;
 
-  const MapScreen({Key? key, this.longitude, this.latitude, required this.changeScreen}) : super(key: key);
+  const MapScreen({Key? key, this.longitude, this.latitude}) : super(key: key);
 
   @override
   State<MapScreen> createState() => MapScreenState();
 }
 
-class MapScreenState extends State<MapScreen> {
+class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   GlobalKey<MapScreenState> mapKey = GlobalKey<MapScreenState>();
   String apiMapboxKey = Config.api_mapbox_key;
   LatLng _currentLocation = const LatLng(37.7749, -122.4194);
@@ -42,7 +43,14 @@ class MapScreenState extends State<MapScreen> {
   String _transportMode = "driving";
   bool _showRouteInstructions = true;
   bool _isDialogShown = false;
+  double _markerSize = 30;
   final weatherService = WeatherSuggestionService();
+  OverlayEntry? _currentOverlayEntry;
+  LatLng? _startPosition;
+  LatLng? _endPosition;
+  bool _isSelectingStart = true;
+  bool _findRoutes = false;
+  double topSuggeslist = 90;
 
   void _clearSearch() {
     setState(() {
@@ -50,14 +58,24 @@ class MapScreenState extends State<MapScreen> {
       _suggestions.clear();
       _routePolyline.clear();
       _showRouteInstructions = false;
+      _startPosition = null;
+      _endPosition = null;
+      _findRoutes = false;
     });
   }
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _mapController = MapController();
     _initializeLocation();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   // This method will update the current location
@@ -68,6 +86,158 @@ class MapScreenState extends State<MapScreen> {
     if (_mapReady) {
       _mapController.move(_currentLocation, _zoomLevel);
     }
+  }
+
+  void _changeScreen(context) {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => const ReportScreen()));
+  }
+
+  void _toggleCameraOverlay(BuildContext context) {
+    if (_currentOverlayEntry != null) {
+      _closeOverlay();
+    } else {
+      _openCamera(context);
+    }
+  }
+
+  void _closeOverlay() {
+    if (_currentOverlayEntry != null) {
+      _currentOverlayEntry!.remove(); // Loại bỏ overlay khỏi màn hình
+      _currentOverlayEntry = null; // Xóa tham chiếu
+    }
+  }
+
+  void _onSelectPosition(LatLng position, bool isStartPosition) {
+    setState(() {
+      topSuggeslist = 90;
+      if (isStartPosition) {
+        _startPosition = position;
+      } else {
+        _endPosition = position;
+      }
+    });
+    _toggleCameraOverlay(context);
+    if (_startPosition != null && _endPosition != null) {
+      _closeOverlay();
+      _getRoute(_startPosition!, _endPosition!);
+    }
+  }
+
+  void _adjustZoomAndMarker() {
+    setState(() {
+      _zoomLevel += 1; // Tăng zoom lên 1
+      _markerSize = 50.0;
+    });
+    if (_mapReady) {
+      _mapController.move(_currentLocation, _zoomLevel);
+    }
+  }
+
+  void _handleCloseOverlayAndAdjustMap() {
+    _closeOverlay();
+    _adjustZoomAndMarker();
+  }
+
+  void _openCamera(BuildContext context) {
+    OverlayState overlayState = Overlay.of(context)!;
+
+    _currentOverlayEntry = OverlayEntry(
+      builder: (BuildContext context) {
+        return Positioned(
+          top: 30,
+          left: 0,
+          right: 0,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              height: 225,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius:
+                    BorderRadius.vertical(bottom: Radius.circular(16)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 10,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ChoseDirection(
+                onClose: _handleCloseOverlayAndAdjustMap,
+                isStartPosition: _isSelectingStart,
+                startPosition: _startPosition,
+                endPosition: _endPosition,
+                onTextChanged: (isStart, query) {
+                  setState(() {
+                    _isSelectingStart = isStart;
+                    _findRoutes = true;
+                    if (isStart) {
+                      topSuggeslist = 170;
+                    } else {
+                      topSuggeslist = 170;
+                    }
+                  });
+                  _onSearchChanged(query);
+                },
+                onMapIconPressed: (isStart) {
+                  setState(() {
+                    _isSelectingStart = isStart;
+                    _findRoutes = true;
+                    _suggestions.clear();
+                  });
+                  _toggleCameraOverlay(context);
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    overlayState.insert(_currentOverlayEntry!);
+  }
+
+  void _onMapTap(TapPosition position, LatLng latLng) {
+    if (_currentOverlayEntry == null && _findRoutes) {
+      _onSelectPosition(latLng, _isSelectingStart);
+    }
+  }
+
+  List<Marker> _buildMarkers() {
+    List<Marker> markers = [];
+
+    if (_startPosition != null) {
+      markers.add(
+        Marker(
+          point: _startPosition!,
+          width: 30,
+          height: 30,
+          child: const Icon(
+            Icons.location_on,
+            color: Colors.green, // Marker màu xanh lá cho điểm bắt đầu
+            size: 40,
+          ),
+        ),
+      );
+    }
+
+    if (_endPosition != null) {
+      markers.add(
+        Marker(
+          point: _endPosition!,
+          width: 30,
+          height: 30,
+          child: const Icon(
+            Icons.location_on,
+            color: Colors.blue, // Marker màu xanh dương cho điểm kết thúc
+            size: 40,
+          ),
+        ),
+      );
+    }
+
+    return markers;
   }
 
   void _onMapReady() {
@@ -120,10 +290,25 @@ class MapScreenState extends State<MapScreen> {
 
   Future<void> _searchLocation(String query) async {
     LatLng? location = await MapApiService.searchLocation(query);
+    topSuggeslist = 90;
     if (location != null) {
       setState(() => _searchedLocation = location);
       _mapController.move(location, _zoomLevel);
-      await _getRoute(_currentLocation, location);
+      if (_findRoutes) {
+        if (_isSelectingStart) {
+          _startPosition = location;
+        } else {
+          _endPosition = location;
+        }
+      } else {
+        _currentLocation = location;
+        _markerSize = 50.0;
+      }
+    }
+    if (_startPosition != null && _endPosition != null) {
+      _closeOverlay();
+      _suggestions.clear();
+      _getRoute(_startPosition!, _endPosition!);
     }
   }
 
@@ -151,6 +336,7 @@ class MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _selectSuggestion(String suggestion) async {
+    topSuggeslist = 90;
     FocusScope.of(context).unfocus();
     _searchController.text = suggestion;
     _suggestions.clear();
@@ -160,18 +346,19 @@ class MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          if(_locationLoaded)
-            Positioned.fill( 
-              child: MapDisplay(
-                currentLocation: _currentLocation,
-                routePolyline: _routePolyline,
-                mapController: _mapController,
-                mapReady: _mapReady,
-                onMapReady: _onMapReady,
-              ),
+          if (_locationLoaded)
+            MapDisplay(
+              currentLocation: _currentLocation,
+              routePolyline: _routePolyline,
+              mapController: _mapController,
+              mapReady: _mapReady,
+              onMapReady: _onMapReady,
+              onMapTap: _onMapTap, // Gọi khi nhấn vào bản đồ
+              markerSize: _markerSize,
+              additionalMarkers: _buildMarkers(),
             ),
           custom.SearchBar(
             searchController: _searchController,
@@ -210,11 +397,15 @@ class MapScreenState extends State<MapScreen> {
             bottom: 50, // Định vị theo yêu cầu
             right: 10,
           ),
-          FloatingReportButton(changeScreen: widget.changeScreen),
+          FloatingReportButton(
+            changeScreen: () => _changeScreen(context),
+            openCamera: () => _toggleCameraOverlay(context),
+          ),
           if (_suggestions.isNotEmpty)
             SuggestionsList(
               suggestions: _suggestions,
               onSuggestionSelected: _selectSuggestion,
+              top: topSuggeslist,
             ),
         ],
       ),

@@ -106,7 +106,6 @@ class MyApp extends StatelessWidget {
                       curve: curve,
                     ),
                   );
-
                   // Hoạt ảnh mờ dần màn hình
                   var opacityAnimation =
                       Tween<double>(begin: 0.0, end: 1.0).animate(
