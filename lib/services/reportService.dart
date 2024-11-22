@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutterApp/models/place.dart';
 import 'package:flutterApp/models/report.dart';
 import 'package:flutterApp/models/paginated_data.dart';
 import './apiClient.dart';

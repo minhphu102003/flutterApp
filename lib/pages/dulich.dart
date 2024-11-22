@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutterApp/services/placeService.dart';
 import 'package:flutterApp/models/place.dart';
+import 'package:flutterApp/Screens/placeDetail.dart';
 
 class Dulich extends StatefulWidget {
   const Dulich({super.key});
@@ -233,6 +234,7 @@ class _DulichState extends State<Dulich> {
                 child: Row(
                   children: topPlaces.map((place) {
                     return tripCard(
+                      place,
                       place.name, // Tên địa điểm
                       'Đà Nẵng', // Đặt cố định thành phố (nếu cần)
                       place.img, // Đường dẫn ảnh từ API
@@ -265,6 +267,7 @@ class _DulichState extends State<Dulich> {
                 child: Row(
                   children: places.map((place) {
                     return tripCard(
+                      place,
                       place.name, // Tên địa điểm
                       'Đà Nẵng', // Đặt cố định thành phố (nếu cần)
                       place.img, // Đường dẫn ảnh từ API
@@ -299,6 +302,7 @@ class _DulichState extends State<Dulich> {
                           child: Row(
                             children: placeCurrent.map((place) {
                               return tripCard(
+                                place,
                                 place.name,
                                 'Đà Nẵng',
                                 place.img,
@@ -343,56 +347,66 @@ Widget categoryCard(String title, IconData icon, VoidCallback onTap) {
   );
 }
   // Trip Card Widget
-  Widget tripCard(String title, String location, String imagePath, double price,
+  Widget tripCard(Place place,String title, String location, String imagePath, double price,
       double rating) {
-    return Container(
-      margin: const EdgeInsets.only(right: 10),
-      width: 180,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.network(
-              imagePath,
-              height: 120,
-              width: 180,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.grey[300],
-                  height: 120,
-                  width: 180,
-                  child: const Icon(Icons.broken_image,
-                      size: 50, color: Colors.grey),
-                );
-              },
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  height: 120,
-                  width: 180,
-                  color: Colors.grey[200],
-                  child: const Center(child: CircularProgressIndicator()),
-                );
-              },
+    return GestureDetector(
+      onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PlaceDetailScreen(place: place),
+        ),
+      );
+    },
+      child: Container(
+        margin: const EdgeInsets.only(right: 10),
+        width: 180,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(
+                imagePath,
+                height: 120,
+                width: 180,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[300],
+                    height: 120,
+                    width: 180,
+                    child: const Icon(Icons.broken_image,
+                        size: 50, color: Colors.grey),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 120,
+                    width: 180,
+                    color: Colors.grey[200],
+                    child: const Center(child: CircularProgressIndicator()),
+                  );
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Text(title,
-              style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          Text(location, style: const TextStyle(color: Colors.grey)),
-          Row(
-            children: [
-              Text('\$$price/visit',
-                  style: const TextStyle(color: Colors.green)),
-              const Spacer(),
-              const Icon(Icons.star, color: Colors.orange, size: 16),
-              Text(rating.toString(), style: const TextStyle(fontSize: 16)),
-            ],
-          ),
-        ],
+            const SizedBox(height: 10),
+            Text(title,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(location, style: const TextStyle(color: Colors.grey)),
+            Row(
+              children: [
+                Text('\$$price/visit',
+                    style: const TextStyle(color: Colors.green)),
+                const Spacer(),
+                const Icon(Icons.star, color: Colors.orange, size: 16),
+                Text(rating.toString(), style: const TextStyle(fontSize: 16)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
