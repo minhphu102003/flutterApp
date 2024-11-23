@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterApp/models/place.dart' as place_model;
 import 'package:flutterApp/services/commentService.dart';
@@ -7,6 +8,12 @@ import 'package:flutterApp/services/locationService.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutterApp/services/accountService.dart';
+import 'package:flutterApp/helper/image.dart';
+import 'package:flutterApp/theme/colors.dart';
+import 'package:flutterApp/widgets/commentInput.dart';
+import 'package:flutterApp/widgets/customDialog.dart';
+import 'package:flutterApp/widgets/comment.dart';
+import 'package:flutterApp/helper/image_utils.dart';
 
 class PlaceDetailScreen extends StatefulWidget {
   final place_model.Place place;
@@ -26,7 +33,11 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   String address = 'Loading address...';
   String sortBy = 'Newest'; // Bộ lọc hiện tại
   final AccountService _accountService = AccountService();
+  final CommentService _commentService = CommentService();
   int _selectedRating = 0; // Default to 0 (no rating)
+  List<String> _imagePaths = [];
+  late TextEditingController
+      _commentController; // Danh sách các đường dẫn hình ảnh
 
   // Thông tin người dùng
   String? name;
@@ -35,14 +46,89 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   String? avatarUrl;
   String? token;
   final ImagePicker _picker = ImagePicker();
-  XFile? _image;
   bool _isCommenting = false;
+  final String baseURL = 'http://10.0.2.2:8000/uploads/';
 
   @override
   void initState() {
     super.initState();
+    _commentController = TextEditingController();
     fetchComments();
     fetchAddress();
+    _loadProfile();
+  }
+
+    // Callback để cập nhật bình luận
+  Future<void> onEditComment(Comment comment) async {
+    print("Cập nhật bình luận ${comment.id}");
+  }
+
+  // Callback để xóa bình luận
+  Future<void> onDeleteComment(Comment comment) async {
+    try {
+      await _commentService.deleteComment(id: comment.id);
+      setState(() {
+        comments.removeWhere((item) => item.id == comment.id);
+      });
+      showErrorDialog(context, 'Comment deleted successfully');
+    } catch (e) {
+      print('Error deleting comment: $e');
+      showErrorDialog(context, 'Failed to delete comment');
+    }
+  }
+
+
+  @override
+  void dispose() {
+    _commentController.dispose(); // Hủy controller khi không dùng nữa
+    super.dispose();
+  }
+
+  void showCustomDialog(BuildContext context, String title, String message,
+      IconData typeIcon, Color color, VoidCallback onDialogClose) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return CustomDialog(
+            title: title,
+            message: message,
+            typeIcon: typeIcon,
+            color: color,
+            onDialogClose: onDialogClose,
+          );
+        });
+  }
+
+  String formatDate(String dateStr) {
+    try {
+      final DateTime date = DateTime.parse(dateStr);
+      return DateFormat('dd/MM/yyyy').format(date);
+    } catch (e) {
+      return 'Invalid date';
+    }
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      // Lấy thông tin profile từ API
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      token = prefs.getString('token');
+      if (token == null) {
+        return; // Token không tồn tại
+      }
+      var response = await _accountService.getProfile();
+      if (response['success']) {
+        setState(() {
+          name = response['data']['username'];
+          email = response['data']['email'];
+          phone = response['data']['phone'] ?? null;
+        });
+      } else {
+        print('Error: ${response['message']}');
+      }
+    } catch (e) {
+      print('Failed to load profile: $e');
+    }
   }
 
   Future<void> fetchAddress() async {
@@ -57,18 +143,13 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
 
   Future<void> fetchComments() async {
     if (!hasMore) return;
-
-    setState(() {
-      isLoading = true;
-    });
-
+    setState(() => isLoading = true);
     try {
-      final paginatedData = await CommentService().fetchCommentByPlace(
+      final paginatedData = await _commentService.fetchCommentByPlace(
         id: widget.place.id,
         page: currentPage,
         limit: limit,
       );
-
       setState(() {
         comments.addAll(paginatedData.data);
         hasMore = paginatedData.totalPages > currentPage;
@@ -77,149 +158,121 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     } catch (e) {
       print('Error fetching comments: $e');
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
-  // Hàm để load profile của người dùng
-  Future<void> _loadProfile() async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      token = prefs.getString('token');
-      if (token == null) {
-        return; // Token không tồn tại
+  Future<void> _pickAndProcessImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      // Validate ảnh bằng hàm utils
+      final validationError = await validateImage(pickedFile);
+      if (validationError != null) {
+        // Hiển thị lỗi qua dialog
+        showErrorDialog(context, validationError);
+        return;
       }
-      var response = await _accountService.getProfile();
-      if (response['success']) {
-        setState(() {
-          name = response['data']['username'];
-          email = response['data']['email'];
-          phone = response['data']['phone'] ?? null;
-          avatarUrl = response['data']['avatar'] ?? null; // Nếu có avatar
-        });
-      } else {
-        print('Error: ${response['message']}');
+
+      // Nếu hợp lệ, bắt đầu xử lý ảnh
+      setState(() => isLoading = true);
+      final convertedPath = await _convertAndSaveImage(pickedFile.path);
+      if (convertedPath != null) {
+        setState(() => _imagePaths.add(convertedPath));
       }
-    } catch (e) {
-      print('Failed to load profile: $e');
+      setState(() => isLoading = false);
     }
   }
-    // Hàm để cập nhật bộ lọc
+
+  Future<String?> _convertAndSaveImage(String originalPath) async {
+    try {
+      File originalFile = File(originalPath);
+      File convertedFile = await convertImage(originalFile);
+      return convertedFile.path;
+    } catch (e) {
+      print('Error converting image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to process image: $e')),
+      );
+      return null;
+    }
+  }
+
+  void _toggleCommentInput() {
+    setState(() {
+      _isCommenting = !_isCommenting;
+      if (!_isCommenting) {
+        _selectedRating = 0;
+        _commentController.clear();
+        _imagePaths.clear();
+      } else {
+        if (name == null) {
+          showCustomDialog(
+              context,
+              'Notify',
+              'You must login to create comment',
+              Icons.notifications,
+              failureColor,
+              () {});
+          _isCommenting = !_isCommenting;
+        }
+      }
+    });
+  }
+
+  Future<void> _onSubmit() async {
+    if (_selectedRating == 0) {
+      showErrorDialog(context, 'Please provide a rating');
+      return;
+    }
+    setState(() {
+      _isCommenting = false;
+      isLoading = true;
+    });
+    try {
+      final newComment = await _commentService.createComment(
+        placeId: widget.place.id,
+        star: _selectedRating,
+        content: _commentController.text,
+        imagePaths: _imagePaths,
+      );
+      setState(() {
+        comments.insert(0, newComment);
+        _selectedRating = 0;
+        _commentController.clear();
+        _imagePaths.clear();
+      });
+      showErrorDialog(context, 'Comment submitted successfully!');
+    } catch (e) {
+      showErrorDialog(context, 'Failed to create comment: $e');
+      print('Error creating comment: $e');
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  void _onRatingSelected(int rating) {
+    setState(() {
+      _selectedRating = rating;
+    });
+  }
+
   void _updateSort(String newSort) {
     setState(() {
       sortBy = newSort;
-      comments.clear();  // Xóa các comment hiện tại để tải lại theo bộ lọc mới
+      comments.clear();
       currentPage = 1;
       hasMore = true;
     });
-    fetchComments();  // Gọi lại hàm lấy comment với bộ lọc mới
-  }
-    // Show or hide the comment input
-  void _toggleCommentInput() {
-    setState(() {
-      if(_isCommenting) {
-        setState(() {
-        _selectedRating = 0;
-      });
-      }
-      _isCommenting = !_isCommenting; 
-    });
+    fetchComments();
   }
 
-// Comment input widget
-Widget _buildCommentInput() {
-  return GestureDetector(
-    onTap: () {
-      FocusScope.of(context).requestFocus(FocusNode());
-    },
-    child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Hiển thị avatar nếu có, nếu không sẽ là avatar mặc định
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundImage: avatarUrl != null
-                    ? NetworkImage(avatarUrl!)
-                    : null,
-                child: avatarUrl == null
-                    ? const Icon(Icons.person, size: 40)
-                    : null,
-              ),
-              const SizedBox(width: 10),
-              Text(name ?? 'Anonymous', style: const TextStyle(fontSize: 18)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // Hiển thị 5 icon ngôi sao để người dùng đánh giá
-          Row(
-            children: List.generate(5, (index) {
-              return IconButton(
-                icon: Icon(
-                  index < _selectedRating
-                      ? Icons.star // Star is filled if selected
-                      : Icons.star_border, // Star is empty if not selected
-                  color: index < _selectedRating ? Colors.orange : Colors.grey,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _selectedRating = index + 1; // Set the selected rating
-                  });
-                },
-              );
-            }),
-          ),
-          const SizedBox(height: 10),
-          // Mô tả bình luận
-          TextField(
-            decoration: const InputDecoration(
-              hintText: 'Write your comment...',
-              border: OutlineInputBorder(),
-            ),
-            maxLines: 3,
-            onChanged: (value) {
-              // Lưu lại mô tả bình luận
-            },
-          ),
-          const SizedBox(height: 10),
-          // Upload ảnh
-          ElevatedButton(
-            onPressed: () async {
-              final pickedFile = await _picker.pickImage(
-                source: ImageSource.gallery,
-              );
-              if (pickedFile != null) {
-                setState(() {
-                  _image = pickedFile;
-                });
-              }
-            },
-            child: const Text('Upload Image'),
-          ),
-          if (_image != null)
-            Image.file(
-              File(_image!.path),
-              height: 100,
-              width: 100,
-              fit: BoxFit.cover,
-            ),
-          const SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: () {
-              // Submit comment logic
-            },
-            child: const Text('Submit Comment'),
-          ),
-        ],
-      ),
-    ),
-  );
-}
+  void _deleteImage(String imagePath) {
+    setState(() {
+      _imagePaths.remove(imagePath);
+    });
+    showErrorDialog(context, 'Image removed successfully.');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -230,19 +283,13 @@ Widget _buildCommentInput() {
         actions: [
           IconButton(
             icon: const Icon(Icons.directions, color: Colors.blue),
-            onPressed: () {
-              String googleMapsUrl =
-                  'https://www.google.com/maps/search/?q=${widget.place.latitude},${widget.place.longitude}';
-            },
+            onPressed: () {},
           ),
         ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: GestureDetector(
-              onTap: () {
-      FocusScope.of(context).requestFocus(FocusNode());
-    },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -259,10 +306,11 @@ Widget _buildCommentInput() {
               ),
               const SizedBox(height: 10),
               Text(widget.place.name,
-                  style:
-                      const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  style: const TextStyle(
+                      fontSize: 24, fontWeight: FontWeight.bold)),
               Text('Address: $address',
-                  style: const TextStyle(color: Color.fromARGB(255, 60, 60, 60), fontSize: 15)),
+                  style: const TextStyle(
+                      color: Color.fromARGB(255, 60, 60, 60), fontSize: 15)),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -273,7 +321,7 @@ Widget _buildCommentInput() {
               ),
               const SizedBox(height: 10),
               Text(
-                '${comments.length} comments',  // Hiển thị số lượng comment
+                '${comments.length} comments', // Hiển thị số lượng comment
                 style: const TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 20),
@@ -293,17 +341,18 @@ Widget _buildCommentInput() {
               isLoading && comments.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : comments.isEmpty
-                      ? const Text('No comments available.',
-                          style: TextStyle(color: Colors.grey))
+                      ? const Text(
+                          'No comments available.',
+                          style: TextStyle(color: Colors.grey),
+                        )
                       : Column(
                           children: comments.map((comment) {
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 5),
-                              child: ListTile(
-                                title: Text(comment.username ?? 'Anonymous'),
-                                subtitle: Text(comment.content),
-                                trailing: Text('${comment.star} ⭐'),
-                              ),
+                            return CommentCard(
+                              comment: comment,
+                              baseURL: baseURL, // Truyền baseURL vào widget,
+                              currentUsername: name,
+                              onDeleteComment: onDeleteComment,
+                              onEditComment: onEditComment,
                             );
                           }).toList(),
                         ),
@@ -314,7 +363,18 @@ Widget _buildCommentInput() {
                   onPressed: fetchComments,
                   child: const Text('Load More'),
                 ),
-              if (_isCommenting) _buildCommentInput(),
+              if (_isCommenting)
+                CommentInput(
+                  name: name,
+                  isLoading: isLoading,
+                  onDeleteImage: _deleteImage,
+                  onRatingSelected: _onRatingSelected,
+                  commentController: _commentController,
+                  onSubmitComment: _onSubmit,
+                  onUploadImage: _pickAndProcessImage,
+                  selectedRating: _selectedRating,
+                  imagePaths: _imagePaths,
+                ),
             ],
           ),
         ),
@@ -327,6 +387,7 @@ Widget _buildCommentInput() {
       ),
     );
   }
+
   // Widget để tạo nút bộ lọc
   Widget _buildSortButton(String label) {
     return GestureDetector(

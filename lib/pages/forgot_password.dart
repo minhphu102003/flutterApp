@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutterApp/login/sign/verify.dart';
+import 'package:flutterApp/pages/verify.dart';
 import 'package:flutterApp/widgets/customTextFormField.dart';
 import 'package:flutterApp/helper/validators.dart';
 import 'package:flutterApp/widgets/customDialog.dart';

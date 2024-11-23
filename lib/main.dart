@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutterApp/login/sign/sign.dart';
+import 'package:flutterApp/pages/sign.dart';
 import 'package:provider/provider.dart';
 import './provider/weatherProvider.dart';
 import 'Screens/homeScreen.dart';

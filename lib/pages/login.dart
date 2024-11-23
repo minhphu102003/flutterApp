@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutterApp/login/sign/forgot_password.dart';
-import 'package:flutterApp/login/sign/sign.dart';
+import 'package:flutterApp/pages/forgot_password.dart';
+import 'package:flutterApp/pages/sign.dart';
 import 'package:flutterApp/helper/validators.dart';
 import 'package:flutterApp/widgets/customTextFormField.dart';
 import 'package:flutterApp/services/authService.dart';

@@ -17,7 +17,7 @@ dependencies:
   # Đây là một thư viện để làm việc với tọa độ địa lý, cung cấp các lớp đại diện cho tọa độ như 
   # LatLng và các phương thức để tính toán khoảng cách giữa các điểm, tính toán hướng, và các phép biến đổi khác.
   latlong2: 
-
+  image: ^4.3.0
   # Cung cấp khả năng sử dụng các phông chữ của Google Fonts trong ứng dụng Flutter
   google_fonts: ^6.2.1
 

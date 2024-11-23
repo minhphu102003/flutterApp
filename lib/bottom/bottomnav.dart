@@ -1,7 +1,7 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterApp/Screens/mapScreen.dart';
-import 'package:flutterApp/bottom/profile.dart';
+import 'package:flutterApp/pages/profile.dart';
 import 'package:flutterApp/pages/camera.dart';
 import 'package:flutterApp/pages/dulich.dart';
 import 'package:flutterApp/pages/notification.dart';

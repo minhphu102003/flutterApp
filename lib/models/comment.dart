@@ -44,6 +44,35 @@ class Comment {
       username: json['username'], // Optional
     );
   }
+
+    // Thêm phương thức copyWith
+  Comment copyWith({
+    String? id,
+    int? star,
+    String? timestamps,
+    String? content,
+    Place? place,
+    String? placeId,
+    List<CommentImage>? listImg,
+    String? createdAt,
+    String? updatedAt,
+    String? accountId,
+    String? username,
+  }) {
+    return Comment(
+      id: id ?? this.id,
+      star: star ?? this.star,
+      timestamps: timestamps ?? this.timestamps,
+      content: content ?? this.content,
+      place: place ?? this.place,
+      placeId: placeId ?? this.placeId,
+      listImg: listImg ?? this.listImg,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      accountId: accountId ?? this.accountId,
+      username: username ?? this.username,
+    );
+  }
 }
 
 class Place {
@@ -70,6 +99,22 @@ class Place {
       img: json['img'],
     );
   }
+
+  Place copyWith({
+    String? id,
+    String? type,
+    String? name,
+    int? star,
+    String? img,
+  }) {
+    return Place(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      name: name ?? this.name,
+      star: star ?? this.star,
+      img: img ?? this.img,
+    );
+  }
 }
 
 class CommentImage {
@@ -87,4 +132,18 @@ class CommentImage {
       id: json['_id'],
     );
   }
+
+    // Thêm phương thức copyWith
+  CommentImage copyWith({
+    String? image,
+    String? id,
+  }) {
+    return CommentImage(
+      image: image ?? this.image,
+      id: id ?? this.id,
+    );
+  }
+  
 }
+
+

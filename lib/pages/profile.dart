@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutterApp/services/accountService.dart'; // Import AccountService
-import 'package:flutterApp/login/sign/login.dart';
+import 'package:flutterApp/pages/login.dart';
 import 'package:flutterApp/widgets/support_widget.dart';
 import 'package:flutterApp/services/authService.dart';
 import 'package:flutterApp/widgets/customDialog.dart';
