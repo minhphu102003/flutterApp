@@ -58,11 +58,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     _loadProfile();
   }
 
-    // Callback để cập nhật bình luận
-  Future<void> onEditComment(Comment comment) async {
-    print("Cập nhật bình luận ${comment.id}");
-  }
-
   // Callback để xóa bình luận
   Future<void> onDeleteComment(Comment comment) async {
     try {
@@ -97,6 +92,17 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
             onDialogClose: onDialogClose,
           );
         });
+  }
+
+  void onCommentUpdated(Comment updatedComment) {
+    setState(() {
+      // Cập nhật lại comment tương ứng trong danh sách
+      final index = comments.indexWhere((comment) => comment.id == updatedComment.id);
+      print(index);
+      if (index != -1) {
+        comments[index] = updatedComment;
+      }
+    });
   }
 
   String formatDate(String dateStr) {
@@ -352,7 +358,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                               baseURL: baseURL, // Truyền baseURL vào widget,
                               currentUsername: name,
                               onDeleteComment: onDeleteComment,
-                              onEditComment: onEditComment,
+                              onUpdateComment: onCommentUpdated,
                             );
                           }).toList(),
                         ),

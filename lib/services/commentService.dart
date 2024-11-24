@@ -190,7 +190,7 @@ class CommentService {
         print('Failed to create comment: ${response.data['errors']}');
         throw Exception('Failed to create comment');
       } else {
-        throw Exception('Failed to update comment. Status code: ${response.statusCode}');
+        throw Exception('Failed to update comment. Status code: ${response.statusCode} ${response.data}');
       }
     } catch (e, stacktrace) {
       print('Error occurred: $e');
@@ -198,4 +198,6 @@ class CommentService {
       rethrow;
     }
   }
+
+
 }

@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 
 import '../models/comment.dart';
-import '../models/place.dart';
 import '../widgets/editCommentDialog.dart';
 
 class CommentCard extends StatelessWidget {
   final Comment comment;
   final String baseURL;
   final String? currentUsername; // Username của người dùng hiện tại
-  final Future<void> Function(Comment) onEditComment;  // Callback cho sửa bình luận
   final Future<void> Function(Comment) onDeleteComment; // Callback cho xóa bình luận
-
+  final void Function(Comment) onUpdateComment;
   const CommentCard({
     Key? key,
     required this.comment,
     required this.baseURL,
     this.currentUsername,
-    required this.onEditComment,
     required this.onDeleteComment,
+    required this.onUpdateComment,
   }) : super(key: key);
 
   // Hàm định dạng ngày tháng
@@ -56,6 +54,7 @@ class CommentCard extends StatelessWidget {
                             builder: (context) => EditCommentWithImageDialog(
                               comment: comment,
                               baseURL: baseURL,
+                              onUpdateComment: onUpdateComment,
                             ),
                           );
                         } else if (value == 'delete') {
