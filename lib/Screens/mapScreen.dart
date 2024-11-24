@@ -36,6 +36,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   bool _mapReady = false;
   TextEditingController _searchController = TextEditingController();
   List<String> _suggestions = [];
+  List<Map<String, String>> _suggestionsGoongMap = [];
   LatLng? _searchedLocation;
   List<LatLng> _routePolyline = [];
   List<String> _routeInstructions = [];
@@ -55,7 +56,8 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   void _clearSearch() {
     setState(() {
       _searchController.clear();
-      _suggestions.clear();
+      // _suggestions.clear();
+      _suggestionsGoongMap.clear();
       _routePolyline.clear();
       _showRouteInstructions = false;
       _startPosition = null;
@@ -185,7 +187,8 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                   setState(() {
                     _isSelectingStart = isStart;
                     _findRoutes = true;
-                    _suggestions.clear();
+                    // _suggestions.clear();
+                    _suggestionsGoongMap.clear();
                   });
                   _toggleCameraOverlay(context);
                 },
@@ -206,7 +209,6 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
 
   List<Marker> _buildMarkers() {
     List<Marker> markers = [];
-
     if (_startPosition != null) {
       markers.add(
         Marker(
@@ -221,7 +223,6 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
         ),
       );
     }
-
     if (_endPosition != null) {
       markers.add(
         Marker(
@@ -236,7 +237,6 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
         ),
       );
     }
-
     return markers;
   }
 
@@ -289,7 +289,8 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _searchLocation(String query) async {
-    LatLng? location = await MapApiService.searchLocation(query);
+    // LatLng? location = await MapApiService.searchLocation(query);
+    LatLng? location = await MapApiService.getPlaceCoordinates(query);
     topSuggeslist = 90;
     if (location != null) {
       setState(() => _searchedLocation = location);
@@ -307,7 +308,8 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     }
     if (_startPosition != null && _endPosition != null) {
       _closeOverlay();
-      _suggestions.clear();
+      // _suggestions.clear();
+      _suggestionsGoongMap.clear();
       _getRoute(_startPosition!, _endPosition!);
     }
   }
@@ -328,19 +330,32 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
 
   Future<void> _onSearchChanged(String query) async {
     if (query.isNotEmpty) {
-      List<String> suggestions = await MapApiService.getSuggestions(query);
-      setState(() => _suggestions = suggestions);
+      // List<String> suggestions = await MapApiService.getSuggestions(query);
+     List<Map<String, String>> suggestions  = await MapApiService.getSuggestionsVerGoongMap(query,_currentLocation.latitude, _currentLocation.longitude);
+      setState(() => _suggestionsGoongMap = suggestions);
     } else {
-      setState(() => _suggestions.clear());
+      setState(() => _suggestionsGoongMap.clear());
     }
   }
 
   Future<void> _selectSuggestion(String suggestion) async {
     topSuggeslist = 90;
     FocusScope.of(context).unfocus();
-    _searchController.text = suggestion;
-    _suggestions.clear();
-    await _searchLocation(suggestion);
+    // Tìm kiếm place_id từ _suggestionsGoongMap dựa trên description
+    final selectedItem = _suggestionsGoongMap.firstWhere(
+      (item) => item['description'] == suggestion,
+      orElse: () => {},
+    );
+    final placeId = selectedItem['place_id'];
+    // _searchController.text = suggestion;
+    // _suggestions.clear();
+    _suggestionsGoongMap.clear();
+    // await _searchLocation(suggestion);
+    if (placeId != null) {
+      _searchController.text = suggestion;
+      _suggestionsGoongMap.clear();
+      await _searchLocation(placeId);
+    }
   }
 
   @override
@@ -401,9 +416,10 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
             changeScreen: () => _changeScreen(context),
             openCamera: () => _toggleCameraOverlay(context),
           ),
-          if (_suggestions.isNotEmpty)
+          if (_suggestionsGoongMap.isNotEmpty)
             SuggestionsList(
-              suggestions: _suggestions,
+              // suggestions: _suggestions,
+              suggestions: _suggestionsGoongMap.map((item) => item['description'] ?? '').toList(),
               onSuggestionSelected: _selectSuggestion,
               top: topSuggeslist,
             ),

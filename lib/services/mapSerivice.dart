@@ -8,6 +8,8 @@ class MapApiService {
   static final String apiMapboxKey = Config.api_mapbox_key;
   static final String baseMapBoxGeo = AppConfig.baseMapBoxGeo;
   static final String baseMapBoxDir = AppConfig.baseMapBoxDir;
+  static const String apiKeyGongMap = Config.api_gongmap_key;
+  static const String baseUrlGoongMap = 'https://rsapi.goong.io/Place';
 
   static Future<LatLng?> searchLocation(String query) async {
     final url = '$baseMapBoxGeo/$query.json?access_token=$apiMapboxKey';
@@ -85,4 +87,51 @@ class MapApiService {
     }
     return 'Không xác định'; // Trường hợp không có dữ liệu hoặc lỗi
   }
+
+static Future<List<Map<String, String>>> getSuggestionsVerGoongMap(String query, double latitude, double longitude) async {
+  final location = '$latitude,$longitude';
+  final url = '$baseUrlGoongMap/AutoComplete?api_key=$apiKeyGongMap&location=$location&input=$query';
+
+  try {
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final predictions = data['predictions'] as List;
+
+      // Trả về danh sách các Map chứa description và place_id
+      return predictions.map<Map<String, String>>((item) {
+        return {
+          'description': item['description'],
+          'place_id': item['place_id'],
+        };
+      }).toList();
+    } else {
+      print('Failed to fetch data: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error occurred: $e');
+  }
+  return [];
+}
+
+static Future<LatLng?> getPlaceCoordinates(String placeId) async {
+  final url = '$baseUrlGoongMap/Detail?place_id=$placeId&api_key=$apiKeyGongMap';
+
+  try {
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['result'] != null && data['result']['geometry'] != null) {
+        final location = data['result']['geometry']['location'];
+        return LatLng(location['lat'], location['lng']);
+      }
+    } else {
+      print('Failed to fetch details: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error occurred: $e');
+  }
+  return null;
+}
+
 }
