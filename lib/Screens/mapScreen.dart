@@ -15,6 +15,7 @@ import 'package:flutterApp/widgets/suggestionList.dart';
 import 'package:flutterApp/widgets/FloatButtonReport.dart';
 import 'package:flutterApp/Screens/reportScreen.dart';
 import 'package:flutterApp/widgets/choseDirection.dart';
+import 'package:flutterApp/Screens/poststatus.dart';
 
 class MapScreen extends StatefulWidget {
   final double? longitude;
@@ -93,6 +94,11 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   void _changeScreen(context) {
     Navigator.push(
         context, MaterialPageRoute(builder: (context) => const ReportScreen()));
+  }
+
+  void _changePost(context) {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => const CreatePostScreen()));
   }
 
   void _toggleCameraOverlay(BuildContext context) {
@@ -415,6 +421,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
           FloatingReportButton(
             changeScreen: () => _changeScreen(context),
             openCamera: () => _toggleCameraOverlay(context),
+            poststatus: () => _changePost(context),
           ),
           if (_suggestionsGoongMap.isNotEmpty)
             SuggestionsList(
