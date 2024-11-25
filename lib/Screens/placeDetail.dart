@@ -72,7 +72,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     }
   }
 
-
   @override
   void dispose() {
     _commentController.dispose(); // Hủy controller khi không dùng nữa
@@ -96,9 +95,8 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
 
   void onCommentUpdated(Comment updatedComment) {
     setState(() {
-      // Cập nhật lại comment tương ứng trong danh sách
-      final index = comments.indexWhere((comment) => comment.id == updatedComment.id);
-      print(index);
+      final index =
+          comments.indexWhere((comment) => comment.id == updatedComment.id);
       if (index != -1) {
         comments[index] = updatedComment;
       }
@@ -304,10 +302,17 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                 child: Image.network(
                   widget.place.img,
                   width: double.infinity,
-                  height: 200,
+                  height: 210,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Icon(Icons.broken_image, size: 100),
+                  errorBuilder: (BuildContext context, Object error,
+                      StackTrace? stackTrace) {
+                    return Image.asset(
+                      'assets/images/placeholder.png',
+                      width: double.infinity,
+                      height: 150,
+                      fit: BoxFit.cover,
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 10),

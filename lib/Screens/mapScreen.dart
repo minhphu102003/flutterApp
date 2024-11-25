@@ -16,6 +16,8 @@ import 'package:flutterApp/widgets/FloatButtonReport.dart';
 import 'package:flutterApp/Screens/reportScreen.dart';
 import 'package:flutterApp/widgets/choseDirection.dart';
 import 'package:flutterApp/Screens/poststatus.dart';
+import 'package:flutterApp/models/place.dart';
+import 'package:flutterApp/services/placeService.dart';
 
 class MapScreen extends StatefulWidget {
   final double? longitude;
@@ -36,13 +38,13 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   late MapController _mapController;
   bool _mapReady = false;
   TextEditingController _searchController = TextEditingController();
-  List<String> _suggestions = [];
+  // List<String> _suggestions = [];
   List<Map<String, String>> _suggestionsGoongMap = [];
   LatLng? _searchedLocation;
   List<LatLng> _routePolyline = [];
   List<String> _routeInstructions = [];
   String _travelTime = "";
-  String _transportMode = "driving";
+  // String _transportMode = "driving";
   bool _showRouteInstructions = true;
   bool _isDialogShown = false;
   double _markerSize = 30;
@@ -53,6 +55,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   bool _isSelectingStart = true;
   bool _findRoutes = false;
   double topSuggeslist = 90;
+  List<Place> places = [];
 
   void _clearSearch() {
     setState(() {
@@ -246,6 +249,20 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     return markers;
   }
 
+  Future<void> fetchPlaces() async {
+    try {
+      final result = await PlaceService().fetchNearestPlaces(
+      longitude: _currentLocation.longitude, // Truyền longitude đúng tham số
+      latitude: _currentLocation.latitude,
+      radius: 1 ); 
+      setState(() {
+        places = result.data;
+      });
+    } catch (e) {
+      print('Error fetching places: $e');
+    }
+  }
+
   void _onMapReady() {
     setState(() {
       _mapReady = true;
@@ -267,6 +284,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     } else {
       await _getCurrentLocation();
     }
+    await fetchPlaces();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -380,6 +398,11 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
               onMapTap: _onMapTap, // Gọi khi nhấn vào bản đồ
               markerSize: _markerSize,
               additionalMarkers: _buildMarkers(),
+              places: places,
+              onDirectionPressed: (LatLng start, LatLng destination) {
+              Navigator.pop(context); // Đóng modal
+              _getRoute(start, destination); // Gọi hàm ở widget cha
+            },
             ),
           custom.SearchBar(
             searchController: _searchController,
@@ -418,11 +441,29 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
             bottom: 50, // Định vị theo yêu cầu
             right: 10,
           ),
+          
           FloatingReportButton(
             changeScreen: () => _changeScreen(context),
             openCamera: () => _toggleCameraOverlay(context),
             poststatus: () => _changePost(context),
           ),
+          // FloatingActionButtons(
+          //   onZoomIn: () {
+          //     setState(() {
+          //       _zoomLevel++;
+          //       _mapController.move(_currentLocation, _zoomLevel);
+          //     });
+          //   },
+          //   onZoomOut: () {
+          //     setState(() {
+          //       _zoomLevel--;
+          //       _mapController.move(_currentLocation, _zoomLevel);
+          //     });
+          //   },
+          //   onCurrentLocation: _getCurrentLocation,
+          //   bottom: 100, // Định vị theo yêu cầu
+          //   right: 10,
+          // ),
           if (_suggestionsGoongMap.isNotEmpty)
             SuggestionsList(
               // suggestions: _suggestions,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class FloatingReportButton extends StatelessWidget {
   final VoidCallback changeScreen;
   final VoidCallback openCamera;
+  final VoidCallback poststatus;
 
   final double bottom;
   final double left;
@@ -11,6 +12,7 @@ class FloatingReportButton extends StatelessWidget {
     Key? key,
     required this.changeScreen,
     required this.openCamera,
+    required this.poststatus,
     this.left = 10,
     this.bottom = 50,
   }) : super(key: key);
@@ -37,6 +39,16 @@ class FloatingReportButton extends StatelessWidget {
             onPressed: openCamera,
             heroTag: "show_direction",
             child: const Icon(Icons.directions),
+          ),
+        ),
+
+        Positioned(
+          bottom: bottom + 140, // Adjust to stack the buttons vertically
+          left: left,
+          child: FloatingActionButton(
+            onPressed: poststatus,
+            heroTag: "show_direction",
+            child: const Icon(Icons.airline_seat_flat_angled_sharp),
           ),
         ),
       ],

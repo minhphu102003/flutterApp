@@ -5,12 +5,11 @@ import './apiClient.dart';
 
 class PlaceService {
   final ApiClient _apiClient = ApiClient.instance;
-
   // Function to fetch nearest places based on radius, type, limit, and page
   Future<PaginatedData<Place>> fetchNearestPlaces({
     required double longitude,
     required double latitude,
-    int? radius = 20,   // Default radius is 100 meters
+    int? radius = 20,   // Default radius is 20 km
     String? type,           // type is optional
     int? limit = 10,         // Default limit is 5 places
     int? page = 1,          // Default page is 1
@@ -26,7 +25,6 @@ class PlaceService {
         'limit': limit.toString(),
         'page': page.toString(),
       };
-
       // Add 'type' to queryParams only if it's not null or empty
       if (type != null && type.isNotEmpty) {
         queryParams['type'] = type;
@@ -37,13 +35,11 @@ class PlaceService {
       if (maxStar != null) {
         queryParams['maxStar'] = maxStar.toString();
       }
-
       // Sending GET request to the API
       Response response = await _apiClient.dio.get(
         '/place/nearest',
         queryParameters: queryParams, // Pass query parameters in the request
       );
-
       // If the response is successful (status code 200)
       if (response.statusCode == 200) {
         // Parse the response body

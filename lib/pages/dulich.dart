@@ -39,8 +39,8 @@ class _DulichState extends State<Dulich> {
   Future<void> fetchPlaces() async {
     try {
       final result = await PlaceService().fetchNearestPlaces(
-          latitude: 16.22002123,
-          longitude: 108.2004284); // Thay 'RESTAURANT' bằng loại bạn muốn
+          latitude: 16.0717883,
+          longitude: 108.2118483); // Thay 'RESTAURANT' bằng loại bạn muốn
       setState(() {
         places = result.data;
       });
@@ -392,9 +392,12 @@ Widget categoryCard(String title, IconData icon, VoidCallback onTap) {
               ),
             ),
             const SizedBox(height: 10),
-            Text(title,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis, // Thêm thuộc tính này để cắt ngắn
+              maxLines: 1, // Giới hạn chỉ hiển thị 1 dòng
+            ),
             Text(location, style: const TextStyle(color: Colors.grey)),
             Row(
               children: [
@@ -410,4 +413,5 @@ Widget categoryCard(String title, IconData icon, VoidCallback onTap) {
       ),
     );
   }
+
 }
