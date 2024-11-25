@@ -2,7 +2,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        
         // Thêm cấu hình Mapbox Maven repository ở đây
         maven {
             url 'https://api.mapbox.com/downloads/v2/releases/maven'
@@ -17,7 +16,6 @@ allprojects {
         }
     }
 }
-
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
@@ -25,7 +23,6 @@ subprojects {
 subprojects {
     project.evaluationDependsOn(":app")
 }
-
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
