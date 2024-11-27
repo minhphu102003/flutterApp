@@ -13,7 +13,7 @@ class AuthService {
         '/auth/signin',
         data: {'email': email, 'password': password},
       );
-
+      
       if (response.statusCode == 200) {
         print(response.data);
         final authToken = AuthToken.fromMap(response.data);

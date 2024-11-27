@@ -22,8 +22,9 @@ import 'package:flutterApp/services/placeService.dart';
 class MapScreen extends StatefulWidget {
   final double? longitude;
   final double? latitude;
+  final Function(double longitude, double latitude) onLocationChanged;
 
-  const MapScreen({Key? key, this.longitude, this.latitude}) : super(key: key);
+  const MapScreen({Key? key,required this.onLocationChanged, this.longitude, this.latitude}) : super(key: key);
 
   @override
   State<MapScreen> createState() => MapScreenState();
@@ -56,6 +57,14 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   bool _findRoutes = false;
   double topSuggeslist = 90;
   List<Place> places = [];
+  List<List<LatLng>> _routePolylines = [];
+  List<dynamic> reports = [];
+
+  void addReport(Map<String, dynamic> report) {
+    setState(() {
+      reports.add(report);
+    });
+  }
 
   void _clearSearch() {
     setState(() {
@@ -63,6 +72,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
       // _suggestions.clear();
       _suggestionsGoongMap.clear();
       _routePolyline.clear();
+      _routePolylines.clear();
       _showRouteInstructions = false;
       _startPosition = null;
       _endPosition = null;
@@ -281,6 +291,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     if (widget.longitude != null && widget.latitude != null) {
       _currentLocation = LatLng(widget.latitude!, widget.longitude!);
       setState(() => _locationLoaded = true);
+      widget.onLocationChanged(widget.longitude!, widget.latitude!);
     } else {
       await _getCurrentLocation();
     }
@@ -306,6 +317,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     if (mounted) {
       setState(() {
         _currentLocation = LatLng(position.latitude, position.longitude);
+        widget.onLocationChanged(_currentLocation.longitude!, _currentLocation.latitude!);
         _locationLoaded = true;
         if (_mapReady) _mapController.move(_currentLocation, _zoomLevel);
       });
@@ -339,17 +351,37 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _getRoute(LatLng start, LatLng destination) async {
-    List<LatLng> polylinePoints =
-        await MapApiService.getRoute(start, destination);
-    List<String> instructions =
-        await MapApiService.getRouteInstructions(start, destination);
-    String travelTime = await MapApiService.getTravelTime(start, destination);
-    setState(() {
-      _routePolyline = polylinePoints;
-      _routeInstructions = instructions;
-      _travelTime = travelTime;
-      _showRouteInstructions = true;
-    });
+    // List<LatLng> polylinePoints =
+    //     await MapApiService.getRoute(start, destination);
+    // List<String> instructions =
+    //     await MapApiService.getRouteInstructions(start, destination);
+    // String travelTime = await MapApiService.getTravelTime(start, destination);
+    // setState(() {
+    //   _routePolyline = polylinePoints;
+    //   _routeInstructions = instructions;
+    //   _travelTime = travelTime;
+    //   _showRouteInstructions = true;
+    // });
+    try {
+    final result = await MapApiService.getRoutesVerWayPoints(start, destination);
+    List<List<LatLng>> polylinePoints = result['routes'];
+    List<LatLng> intersections = result['waypoints'];
+      setState(() {
+        _routePolylines = polylinePoints;
+      });
+  // for (List<LatLng> intersectionRoute in intersections) {
+  //   for (LatLng intersection in intersections) {
+  //     final additionalRoutes = await MapApiService.getRoutes(intersection, destination);
+  //     setState(() {
+  //        _routePolylines.add(additionalRoutes['routes']);
+  //       // _routePolyline.add(additionalRoutes['routes']);
+  //     });
+  //   // }
+  // }
+    } catch (e) {
+      print("Error fetching route: $e");
+      // Có thể thêm thông báo lỗi cho người dùng tại đây
+    }
   }
 
   Future<void> _onSearchChanged(String query) async {
@@ -391,7 +423,8 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
           if (_locationLoaded)
             MapDisplay(
               currentLocation: _currentLocation,
-              routePolyline: _routePolyline,
+              // routePolyline: _routePolyline,
+              routePolylines: _routePolylines,
               mapController: _mapController,
               mapReady: _mapReady,
               onMapReady: _onMapReady,

@@ -18,7 +18,7 @@ class AccountService {
         options: Options(
           headers: {'x-access-token': token},
         ),
-      );
+      );  
       if (response.statusCode == 200 && response.data['success']) {
         return response.data;
       } else {

@@ -7,9 +7,9 @@ import 'package:flutterApp/helper/location.dart';
 import 'package:flutterApp/services/locationService.dart';
 import 'package:flutterApp/Screens/placeDetail.dart';
 
-class MapDisplay extends StatelessWidget {
+class MapDisplay extends StatefulWidget  {
   final LatLng currentLocation;
-  final List<LatLng> routePolyline;
+  final List<List<LatLng>> routePolylines;
   final MapController mapController;
   final bool mapReady;
   final void Function() onMapReady;
@@ -19,10 +19,10 @@ class MapDisplay extends StatelessWidget {
   final List<Place> places; // Thêm tham số places
   final Function(LatLng start, LatLng destination) onDirectionPressed;
 
-  const MapDisplay({
+  MapDisplay({
     Key? key,
     required this.currentLocation,
-    required this.routePolyline,
+    required this.routePolylines,
     required this.mapController,
     required this.mapReady,
     required this.onMapReady,
@@ -33,9 +33,29 @@ class MapDisplay extends StatelessWidget {
     required this.onDirectionPressed, // Khởi tạo danh sách places
   }) : super(key: key);
 
+  @override
+  _MapDisplayState createState() => _MapDisplayState();
+}
+
+class _MapDisplayState extends State<MapDisplay>  {
+  double _imageSize = 40.0;
+  int? _selectedMarkerIndex;
+
+  final List<Map<String, dynamic>> fakeReports = [
+    {
+      'latitude': 16.07244931885037,
+      'longitude': 108.2084066511162,
+      'img': 'https://hoanghamobile.com/tin-tuc/wp-content/uploads/2024/07/anh-obito-2.jpg', 
+    },
+    {
+      'latitude': 16.07255000000000,
+      'longitude': 108.20850000000000,
+      'img': 'https://hoanghamobile.com/tin-tuc/wp-content/uploads/2024/07/anh-obito-2.jpg',
+    },
+  ];
   void showPlaceInfo(BuildContext context, Place place) {
     final distance = calculateDistance(
-      currentLocation,
+      widget.currentLocation,
       LatLng(place.latitude, place.longitude),
     );
    LatLng destination = LatLng(place.latitude, place.longitude);
@@ -172,7 +192,7 @@ class MapDisplay extends StatelessWidget {
                     IconButton(
                       onPressed: () {
                         // Navigator.pop(context);
-                        onDirectionPressed(currentLocation , destination);
+                        widget.onDirectionPressed(widget.currentLocation , destination);
                       },
                       icon: const Icon(Icons.directions),
                       color: Colors.blue,
@@ -188,14 +208,48 @@ class MapDisplay extends StatelessWidget {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
+    List<Marker> reportMarkers = List.generate(fakeReports.length, (index) {
+      final report = fakeReports[index];
+      return Marker(
+        point: LatLng(report['latitude'], report['longitude']),
+        width: _imageSize, // Kích thước của marker
+        height: _imageSize, // Kích thước của marker
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              print(_selectedMarkerIndex);
+              if (_selectedMarkerIndex == index) {
+                _selectedMarkerIndex = null; // Nếu đã chọn thì bỏ chọn
+              } else {
+                _selectedMarkerIndex = index;
+              }
+            });
+          },
+          child: Container(
+            width: _selectedMarkerIndex == index ? 80.0 : _imageSize, // Chỉ thay đổi kích thước của marker được chọn
+            height: _selectedMarkerIndex == index ? 80.0 : _imageSize,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(color: Colors.red, width: 3.0),
+              image: DecorationImage(
+                image: NetworkImage(report['img']),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+
     String api = Config.api_mapbox_key;
-    List<Marker> placeMarkers = places.map((place) {
+    List<Marker> placeMarkers = widget.places.map((place) {
       return Marker(
         point: LatLng(place.latitude, place.longitude),
-        width: markerSize,
-        height: markerSize,
+        width: widget.markerSize,
+        height: widget.markerSize,
         child: GestureDetector(
           onTap: () {
             showPlaceInfo(context, place);
@@ -210,45 +264,58 @@ class MapDisplay extends StatelessWidget {
     }).toList();
 
     return FlutterMap(
-      mapController: mapController,
+      mapController: widget.mapController,
       options: MapOptions(
-        initialCenter: currentLocation,
+        initialCenter: widget.currentLocation,
         initialZoom: 16.0,
-        onMapReady: onMapReady,
-        onTap: onMapTap,
+        onMapReady: widget.onMapReady,
+        onTap: widget.onMapTap,
       ),
       children: [
         TileLayer(
           urlTemplate:
               "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=$api",
         ),
-        if (routePolyline.isNotEmpty)
-          PolylineLayer(
-            polylines: [
+        // if (routePolyline.isNotEmpty)
+        //   PolylineLayer(
+        //     polylines: [
+        //       Polyline(
+        //         points: routePolyline,
+        //         strokeWidth: 4.0,
+        //         color: Colors.blue,
+        //       )
+        //     ],
+        //   ),
+        if (widget.routePolylines.isNotEmpty)
+        PolylineLayer(
+          polylines: [
+            for (int i = 0; i < widget.routePolylines.length; i++)
               Polyline(
-                points: routePolyline,
+                points: widget.routePolylines[i],
                 strokeWidth: 4.0,
-                color: Colors.blue,
-              )
-            ],
-          ),
+                color: i == 0 ? Colors.blue : const Color.fromARGB(255, 182, 182, 182).withOpacity(0.7),
+              ),
+          ],
+        ),
         MarkerLayer(
           markers: [
             // Marker mặc định tại vị trí hiện tại
             Marker(
-              point: currentLocation,
-              width: markerSize,
-              height: markerSize,
+              point: widget.currentLocation,
+              width: widget.markerSize,
+              height: widget.markerSize,
               child: Icon(
                 Icons.location_on,
                 color: Colors.red,
-                size: markerSize * 0.6,
+                size: widget.markerSize * 0.6,
               ),
             ),
             // Marker tùy chỉnh từ danh sách
-            ...additionalMarkers,
+            ...widget.additionalMarkers,
             // Marker cho các địa điểm
             ...placeMarkers,
+
+            ...reportMarkers, 
           ],
         ),
       ],

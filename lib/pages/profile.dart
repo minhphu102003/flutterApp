@@ -48,28 +48,48 @@ class _ProfileState extends State<Profile> {
     _loadProfile();
   }
 
-  Future<void> _loadProfile() async {
-    try {
-      // Lấy thông tin profile từ API
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      token = prefs.getString('token');
-      if (token == null) {
-        return; // Token không tồn tại
-      }
-      var response = await _accountService.getProfile();
-      if (response['success']) {
-        setState(() {
-          name = response['data']['username'];
-          email = response['data']['email'];
-          phone = response['data']['phone']?? null;
-        });
+// void _navigateToLogin() {
+//   SharedPreferences.getInstance().then((prefs) {
+//     prefs.remove('token'); // Xóa token cũ để đảm bảo không sử dụng lại
+//   });
+
+//   // Điều hướng đến màn hình Login
+//   Navigator.pushReplacement(
+//     context,
+//     MaterialPageRoute(builder: (context) => const Login()),
+//   );
+// }
+
+Future<void> _loadProfile() async {
+  try {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    token = prefs.getString('token');
+    if (token == null) {
+      // _navigateToLogin(); // Token không tồn tại, điều hướng đến Login
+      return;
+    }
+
+    var response = await _accountService.getProfile();
+
+    if (response['success']) {
+      setState(() {
+        name = response['data']['username'];
+        email = response['data']['email'];
+        phone = response['data']['phone'] ?? null;
+      });
+    } else {
+      // Kiểm tra thông báo lỗi liên quan đến hết hạn token
+      if (response['message'] == 'Error fetching profile') {
+        // _navigateToLogin(); // Điều hướng đến màn hình Login
       } else {
         print('Error: ${response['message']}');
       }
-    } catch (e) { 
-      print('Failed to load profile: $e');
     }
+  } catch (e) {
+    print('Failed to load profile: $e');
+    // _navigateToLogin(); // Điều hướng khi có lỗi không xác định
   }
+}
 
   Future<void> getImage() async {
     var image = await _picker.pickImage(source: ImageSource.gallery);
@@ -81,18 +101,10 @@ class _ProfileState extends State<Profile> {
       print("No image selected.");
     }
   }
-
   @override
   Widget build(BuildContext context) {
-    if (token == null) {
+    if (name == null) {
       return const Login(); // Điều hướng tới màn hình đăng nhập nếu không có token
-    } else if (name == null || email == null) {
-      // Hiển thị chỉ báo tải khi chưa có dữ liệu
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
     } else {
       // Hiển thị giao diện Profile
       return Scaffold(

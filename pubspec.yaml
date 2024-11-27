@@ -20,11 +20,13 @@ dependencies:
   image: ^4.3.0
   # Cung cấp khả năng sử dụng các phông chữ của Google Fonts trong ứng dụng Flutter
   google_fonts: ^6.2.1
+  web_socket_channel: ^3.0.1
+  uuid: ^4.5.1
 
   # Cung cấp các phương thức để lấy vị trí hiện tại của thiết bị, theo dõi sự thay đổi vị trí và
   # xác định các thông tin địa lý.
   geolocator: 
-
+  flutter_polyline_points: ^2.1.0
   # Thư viện để thực hiện các yêu cầu HTTP, thường được sử dụng để gọi các API
   http: 
 

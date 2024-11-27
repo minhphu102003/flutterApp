@@ -1,57 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutterApp/bottom/bottomnav.dart';
+import 'package:flutterApp/models/notification.dart';
 
 class NotificationCus extends StatefulWidget {
-  const NotificationCus({super.key});
+  final List<TrafficNotification> notifications;
+  const NotificationCus({super.key, this.notifications = const []});
 
   @override
-  State<NotificationCus> createState() => _NotificationCusState();
+  State<NotificationCus> createState() => NotificationCusState();
 }
 
-class _NotificationCusState extends State<NotificationCus> {
-  final List<Map<String, dynamic>> notifications = [
-    {
-      'title': 'Thông báo kẹt xe',
-      'content': 'Nội dung thông báo kẹt xe của ',
-      'img': 'assets/images/traffic_jam.png',
-      'status': 'sent',
-      'isRead': false,
-      'timestamp': DateTime.now().subtract(Duration(minutes: 10)),
-      'distance': '5.3 km',
-      'longitude': 106.6926, // Example longitude
-      'latitude': 16.7626, // Example latitude
-    },
-    {
-      'title': 'Thông báo kẹt xe',
-      'content': 'Nội dung của thông báo 2.',
-      'img': 'assets/images/traffic_jam.png',
-      'status': 'read',
-      'isRead': true,
-      'timestamp': DateTime.now().subtract(Duration(hours: 2)),
-      'distance': '2.8 km',
-      'longitude': 106.6957,
-      'latitude': 10.7670,
-    },
-        {
-      'title': 'Thông báo kẹt xe',
-      'content': 'Nội dung của thông báo 2.',
-      'img': 'assets/images/traffic_jam.png',
-      'status': 'read',
-      'isRead': true,
-      'timestamp': DateTime.now().subtract(Duration(hours: 2)),
-      'distance': '2.8 km',
-      'longitude': 106.6957,
-      'latitude': 10.7670,
-    },
-  ];
-
+class NotificationCusState extends State<NotificationCus> {
+  // GlobalKey<NotificationCusState> notificationKey = GlobalKey<NotificationCusState>();
   String formatDate(DateTime? dateTime) {
     if (dateTime == null) {
       return 'N/A'; // Return a placeholder if dateTime is null
     }
     return DateFormat('HH:mm dd/MM/yyyy')
         .format(dateTime); // Format the date if it's not null
+  }
+
+  void addNotification(TrafficNotification notification){
+    setState(() {
+      widget.notifications.add(notification);
+      print(notification);
+    });
   }
 
   @override
@@ -68,11 +42,11 @@ class _NotificationCusState extends State<NotificationCus> {
       body: Container(
         color: Colors.grey[200],
         child: ListView.separated(
-          itemCount: notifications.length,
+          itemCount: widget.notifications.length,
           padding: const EdgeInsets.symmetric(vertical: 10),
           itemBuilder: (context, index) {
-            final notification = notifications[index];
-            final isRead = notification['isRead'] ?? false;
+            final notification = widget.notifications[index];
+            final isRead = notification.isRead;
 
             return GestureDetector(
               onTap: () {
@@ -80,8 +54,8 @@ class _NotificationCusState extends State<NotificationCus> {
                     context.findAncestorStateOfType<BottomNavState>();
                 if (bottomNavState != null) {
                   bottomNavState.navigateToMap(
-                    notification['longitude'],
-                    notification['latitude'],
+                    notification.longitude,
+                    notification.latitude,
                   );
                 }
               },
@@ -110,7 +84,7 @@ class _NotificationCusState extends State<NotificationCus> {
                           ),
                           child: ClipOval(
                             child: Image.asset(
-                              notification['img']!,
+                              'assets/images/traffic_jam.png',
                               width: 60,
                               height: 60,
                               fit: BoxFit.cover,
@@ -146,7 +120,7 @@ class _NotificationCusState extends State<NotificationCus> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            notification['title']!,
+                            notification.title,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight:
@@ -155,7 +129,7 @@ class _NotificationCusState extends State<NotificationCus> {
                           ),
                           const SizedBox(height: 5),
                           Text(
-                            notification['content']!,
+                            notification.content,
                             style: const TextStyle(
                               fontSize: 14,
                               color: Colors.black54,
@@ -169,14 +143,14 @@ class _NotificationCusState extends State<NotificationCus> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Distance: ${notification['distance']}',
+                                'Distance: ${notification.distance}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black,
                                 ),
                               ),
                               Text(
-                                formatDate(notification['timestamp']),
+                                formatDate(notification.timestamp),
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey,
