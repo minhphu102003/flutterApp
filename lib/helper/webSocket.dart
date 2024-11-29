@@ -2,12 +2,17 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'dart:convert';
 import 'package:flutterApp/models/notification.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 class WebSocketService {
   late WebSocketChannel channel;
   Function(TrafficNotification)? onNotificationReceived;
 
-  void connect(String serverUrl) {
+  void connect(String mobileUrl, String webUrl) {
+    // Chọn URL dựa trên nền tảng
+    String serverUrl = kIsWeb ? webUrl : mobileUrl;
+
     channel = WebSocketChannel.connect(
       Uri.parse(serverUrl),
     );

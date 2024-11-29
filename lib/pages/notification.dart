@@ -13,6 +13,7 @@ class NotificationCus extends StatefulWidget {
 
 class NotificationCusState extends State<NotificationCus> {
   // GlobalKey<NotificationCusState> notificationKey = GlobalKey<NotificationCusState>();
+  late List<TrafficNotification> _notifications;
   String formatDate(DateTime? dateTime) {
     if (dateTime == null) {
       return 'N/A'; // Return a placeholder if dateTime is null
@@ -20,11 +21,20 @@ class NotificationCusState extends State<NotificationCus> {
     return DateFormat('HH:mm dd/MM/yyyy')
         .format(dateTime); // Format the date if it's not null
   }
-
+    @override
+  void initState() {
+    super.initState();
+    _notifications = List.from(widget.notifications); // Khởi tạo danh sách từ widget.notifications
+  }
   void addNotification(TrafficNotification notification){
     setState(() {
-      widget.notifications.add(notification);
-      print(notification);
+      _notifications.add(notification);
+    });
+  }
+
+  void addNotificationsInit(List<TrafficNotification> notifications) {
+    setState(() {
+      _notifications = List.from(notifications); // Gán danh sách mới
     });
   }
 
@@ -42,10 +52,10 @@ class NotificationCusState extends State<NotificationCus> {
       body: Container(
         color: Colors.grey[200],
         child: ListView.separated(
-          itemCount: widget.notifications.length,
+          itemCount: _notifications.length,
           padding: const EdgeInsets.symmetric(vertical: 10),
           itemBuilder: (context, index) {
-            final notification = widget.notifications[index];
+            final notification = _notifications[index];
             final isRead = notification.isRead;
 
             return GestureDetector(

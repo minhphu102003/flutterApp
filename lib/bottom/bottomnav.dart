@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutterApp/helper/user.dart';
 import 'package:flutterApp/models/notification.dart';
 import 'package:flutterApp/helper/location.dart';
+import '../services/notificationService.dart';
 
 class BottomNav extends StatefulWidget {
   const BottomNav({super.key});
@@ -33,23 +34,30 @@ class BottomNavState extends State<BottomNav> {
   void addNewNotification(TrafficNotification newNotification) {
     setState(() {
       if (currentLatitude != null && currentLongitude != null) {
-        newNotification.distance = "${calculateDistances(
+        double distance = calculateDistances(
           currentLatitude!,
           currentLongitude!,
           newNotification.latitude,
           newNotification.longitude,
-        ).toStringAsFixed(1)} km";
-        // Add new notification to the list using the GlobalKey
-        notificationKey.currentState?.addNotification(newNotification);  // Correct usage of notificationKey
-        print(newNotification);
-        newNotificationCount++;  // Increment the count of new notifications
+        );
+        // Kiểm tra nếu khoảng cách nhỏ hơn 10 km
+        if (distance < 10) {
+          newNotification.distance = "${distance.toStringAsFixed(1)} km";
+          // Thêm thông báo vào danh sách
+          notificationKey.currentState?.addNotification(newNotification);
+          newNotificationCount++; // Increment the count of new notifications
+        }
+        if(distance< 30){
+          mapKey.currentState?.addNotification(newNotification);
+        }
       }
     });
   }
 
   final GlobalKey<CurvedNavigationBarState> _bottomNavigationKey = GlobalKey();
   GlobalKey<MapScreenState> mapKey = GlobalKey<MapScreenState>();
-  GlobalKey<NotificationCusState> notificationKey = GlobalKey<NotificationCusState>(); 
+  GlobalKey<NotificationCusState> notificationKey =
+      GlobalKey<NotificationCusState>();
 
   int currentTabIndex = 0;
   int newNotificationCount = 0;
@@ -87,9 +95,30 @@ class BottomNavState extends State<BottomNav> {
     _webSocketService.sendMessage(json.encode(payload));
   }
 
+  Future<void> fetchNotifications() async {
+  try {
+    // Gọi NotificationService để lấy thông báo
+    final NotificationService notificationService = NotificationService();
+    final paginatedData = await notificationService.getNotifications(page: 1, limit: 10);
+
+    // Cập nhật danh sách thông báo
+    setState(() {
+      notifications = paginatedData.data;
+      newNotificationCount = paginatedData.data.length;
+    });
+    notificationKey.currentState?.addNotificationsInit(notifications);
+    // // Thêm vào NotificationCus widget
+    // notificationKey.currentState?.addNotifications(notifications);
+  } catch (error) {
+    print('Failed to fetch notifications: $error');
+  }
+}
+
+
   @override
   void initState() {
     super.initState();
+    fetchNotifications();
     homepage = MapScreen(key: mapKey, onLocationChanged: onLocationChanged);
     dulich = const Dulich();
     profile = const Profile();
@@ -97,15 +126,20 @@ class BottomNavState extends State<BottomNav> {
 
     // Pass notificationKey to NotificationCus so its state can be accessed
     notification = NotificationCus(
-      key: notificationKey,  // Pass the GlobalKey here
-      notifications: notifications,  // Pass notifications list
+      key: notificationKey, // Pass the GlobalKey here
+      notifications: notifications, // Pass notifications list
     );
 
     pages = [homepage, dulich, camera, notification, profile];
     _webSocketService = WebSocketService();
-    _webSocketService.connect('ws://10.0.2.2:8000');
-    _webSocketService.onNotificationReceived = (TrafficNotification newNotification) {
-      addNewNotification(newNotification);  // Call the callback to add new notification
+    _webSocketService.connect(
+      'ws://10.0.2.2:8000', // Mobile (Android Emulator)
+      'ws://localhost:8000', // Web
+    );
+    _webSocketService.onNotificationReceived =
+        (TrafficNotification newNotification) {
+      addNewNotification(
+          newNotification); // Call the callback to add new notification
     };
     _webSocketService.sendMessage('Client connected');
   }
@@ -115,6 +149,7 @@ class BottomNavState extends State<BottomNav> {
     _webSocketService.disconnect();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

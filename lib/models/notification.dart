@@ -21,17 +21,21 @@ class TrafficNotification {
     required this.img,
   });
 
-  factory TrafficNotification.fromJson(Map<String, dynamic> json) {
-    return TrafficNotification(
-      title: json['title'] as String,
-      content: json['content'] as String,
-      status: json['status'] as String,
-      isRead: json['isRead'] as bool,
-      timestamp: DateTime.parse(json['timestamp'] as String),
-      distance: json['distance'] as String,
-      longitude: double.parse(json['longitude'] as String),
-      latitude: double.parse(json['latitude'] as String),
-      img: json['img'] as String,
-    );
-  }
+factory TrafficNotification.fromJson(Map<String, dynamic> json) {
+  return TrafficNotification(
+    title: json['title'] as String,
+    content: json['content'] as String,
+    status: json['status'] as String,
+    isRead: json['isRead'] as bool,
+    timestamp: DateTime.parse(json['timestamp'] as String),
+    distance: json['distance'].toString(), // Đảm bảo chuyển thành String nếu cần
+    longitude: json['longitude'] is double
+        ? json['longitude'] as double
+        : double.parse(json['longitude'].toString()), // Xử lý cả trường hợp kiểu double và String
+    latitude: json['latitude'] is double
+        ? json['latitude'] as double
+        : double.parse(json['latitude'].toString()), // Tương tự cho latitude
+    img: json['img'] as String,
+  );
+}
 }

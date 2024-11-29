@@ -6,10 +6,15 @@ import 'package:flutterApp/models/place.dart';
 import 'package:flutterApp/helper/location.dart';
 import 'package:flutterApp/services/locationService.dart';
 import 'package:flutterApp/Screens/placeDetail.dart';
+import 'package:flutterApp/models/notification.dart';
+import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
-class MapDisplay extends StatefulWidget  {
+class MapDisplay extends StatefulWidget {
   final LatLng currentLocation;
-  final List<List<LatLng>> routePolylines;
+  // final List<List<LatLng>> routePolylines;
+  final List<Map<String, dynamic>> routePolylines;
   final MapController mapController;
   final bool mapReady;
   final void Function() onMapReady;
@@ -18,6 +23,7 @@ class MapDisplay extends StatefulWidget  {
   final List<Marker> additionalMarkers; // Danh sách marker tùy chỉnh
   final List<Place> places; // Thêm tham số places
   final Function(LatLng start, LatLng destination) onDirectionPressed;
+  final List<TrafficNotification> notifications;
 
   MapDisplay({
     Key? key,
@@ -30,35 +36,79 @@ class MapDisplay extends StatefulWidget  {
     this.additionalMarkers = const [], // Khởi tạo danh sách rỗng
     this.markerSize = 30.0,
     this.places = const [],
-    required this.onDirectionPressed, // Khởi tạo danh sách places
+    required this.onDirectionPressed,
+    this.notifications = const [], // Khởi tạo danh sách places
   }) : super(key: key);
 
   @override
-  _MapDisplayState createState() => _MapDisplayState();
+  MapDisplayState createState() => MapDisplayState();
 }
 
-class _MapDisplayState extends State<MapDisplay>  {
+class MapDisplayState extends State<MapDisplay> {
+  String serverUrl = kIsWeb ? 'http://127.0.0.1:8000/uploads/' : 'http://10.0.2.2:8000/uploads/';
   double _imageSize = 40.0;
   int? _selectedMarkerIndex;
+  bool firstRecommend = false;
+  List<Map<String, dynamic>> previousRoutePolylines = [];
+  Timer? _timer;
+  List<TrafficNotification> notifications = [];
 
-  final List<Map<String, dynamic>> fakeReports = [
-    {
-      'latitude': 16.07244931885037,
-      'longitude': 108.2084066511162,
-      'img': 'https://hoanghamobile.com/tin-tuc/wp-content/uploads/2024/07/anh-obito-2.jpg', 
-    },
-    {
-      'latitude': 16.07255000000000,
-      'longitude': 108.20850000000000,
-      'img': 'https://hoanghamobile.com/tin-tuc/wp-content/uploads/2024/07/anh-obito-2.jpg',
-    },
-  ];
+  @override
+  void didUpdateWidget(covariant MapDisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Kiểm tra xem widget.routePolylines có thay đổi không
+    if (widget.routePolylines != oldWidget.routePolylines) {
+      firstRecommend = false;
+      previousRoutePolylines = widget.routePolylines;
+    }
+    if(widget.notifications != oldWidget.notifications){
+      notifications = widget.notifications;
+    }
+  }
+
+@override
+void initState() {
+  super.initState();
+  notifications = widget.notifications;
+  _timer = Timer.periodic(Duration(minutes: 1), (timer) {
+    // print("1 phút");
+    if (mounted) {
+      removeExpiredNotifications(); // Gọi hàm kiểm tra và loại bỏ notifications
+    }
+  });
+}
+
+  void addNotifications(TrafficNotification notification) {
+    setState(() {
+      widget.notifications.add(notification);
+          print(notification.title);
+    });
+    print(widget.notifications.length);
+  }
+
+void removeExpiredNotifications() {
+  DateTime currentTime = DateTime.now(); // Thời gian hiện tại
+  if (mounted) {
+    setState(() {
+      widget.notifications.removeWhere((notification) {
+        Duration diff = currentTime.difference(notification.timestamp);
+        return diff.inMinutes > 2; // Kiểm tra xem đã qua 2 phút chưa
+      });
+    });
+  }
+}
+  @override
+  void dispose() {
+    _timer?.cancel(); // Hủy Timer khi widget bị hủy
+    super.dispose();
+  }
+
   void showPlaceInfo(BuildContext context, Place place) {
     final distance = calculateDistance(
       widget.currentLocation,
       LatLng(place.latitude, place.longitude),
     );
-   LatLng destination = LatLng(place.latitude, place.longitude);
+    LatLng destination = LatLng(place.latitude, place.longitude);
     // Gọi API để lấy địa chỉ
     Future<String> addressFuture =
         LocationService.fetchAddress(place.latitude, place.longitude);
@@ -192,7 +242,8 @@ class _MapDisplayState extends State<MapDisplay>  {
                     IconButton(
                       onPressed: () {
                         // Navigator.pop(context);
-                        widget.onDirectionPressed(widget.currentLocation , destination);
+                        widget.onDirectionPressed(
+                            widget.currentLocation, destination);
                       },
                       icon: const Icon(Icons.directions),
                       color: Colors.blue,
@@ -208,13 +259,13 @@ class _MapDisplayState extends State<MapDisplay>  {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
-    List<Marker> reportMarkers = List.generate(fakeReports.length, (index) {
-      final report = fakeReports[index];
+    List<Marker> reportMarkers =
+        List.generate(notifications.length, (index) {
+      final report = notifications[index];
       return Marker(
-        point: LatLng(report['latitude'], report['longitude']),
+        point: LatLng(report.latitude, report.longitude),
         width: _imageSize, // Kích thước của marker
         height: _imageSize, // Kích thước của marker
         child: GestureDetector(
@@ -229,13 +280,16 @@ class _MapDisplayState extends State<MapDisplay>  {
             });
           },
           child: Container(
-            width: _selectedMarkerIndex == index ? 80.0 : _imageSize, // Chỉ thay đổi kích thước của marker được chọn
+            width: _selectedMarkerIndex == index
+                ? 80.0
+                : _imageSize, // Chỉ thay đổi kích thước của marker được chọn
             height: _selectedMarkerIndex == index ? 80.0 : _imageSize,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8.0),
               border: Border.all(color: Colors.red, width: 3.0),
               image: DecorationImage(
-                image: NetworkImage(report['img']),
+                image:
+                    NetworkImage('$serverUrl${report.img}'),
                 fit: BoxFit.cover,
               ),
             ),
@@ -276,27 +330,31 @@ class _MapDisplayState extends State<MapDisplay>  {
           urlTemplate:
               "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=$api",
         ),
-        // if (routePolyline.isNotEmpty)
-        //   PolylineLayer(
-        //     polylines: [
-        //       Polyline(
-        //         points: routePolyline,
-        //         strokeWidth: 4.0,
-        //         color: Colors.blue,
-        //       )
-        //     ],
-        //   ),
         if (widget.routePolylines.isNotEmpty)
-        PolylineLayer(
-          polylines: [
-            for (int i = 0; i < widget.routePolylines.length; i++)
-              Polyline(
-                points: widget.routePolylines[i],
+          PolylineLayer(
+            polylines: widget.routePolylines.map((route) {
+              // Determine the color based on the recommendation status
+              Color polylineColor;
+              if (route['recommended'] == true && !firstRecommend) {
+                // If it's the first recommended route, color it blue
+                polylineColor = Colors.blue;
+                firstRecommend =
+                    true; // Set the flag to true after coloring the first recommended route
+              } else if (route['recommended'] == false) {
+                // If it's not recommended, color it red
+                polylineColor = Colors.red;
+              } else {
+                // All other routes (not the first recommended or non-recommended) will be colored brown
+                polylineColor = Colors.brown;
+              }
+
+              return Polyline(
+                points: route['coordinates'], // Get coordinates
                 strokeWidth: 4.0,
-                color: i == 0 ? Colors.blue : const Color.fromARGB(255, 182, 182, 182).withOpacity(0.7),
-              ),
-          ],
-        ),
+                color: polylineColor,
+              );
+            }).toList(),
+          ),
         MarkerLayer(
           markers: [
             // Marker mặc định tại vị trí hiện tại
@@ -315,7 +373,7 @@ class _MapDisplayState extends State<MapDisplay>  {
             // Marker cho các địa điểm
             ...placeMarkers,
 
-            ...reportMarkers, 
+            ...reportMarkers,
           ],
         ),
       ],

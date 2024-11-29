@@ -18,13 +18,19 @@ import 'package:flutterApp/widgets/choseDirection.dart';
 import 'package:flutterApp/Screens/poststatus.dart';
 import 'package:flutterApp/models/place.dart';
 import 'package:flutterApp/services/placeService.dart';
+import 'package:flutterApp/models/notification.dart';
 
 class MapScreen extends StatefulWidget {
   final double? longitude;
   final double? latitude;
   final Function(double longitude, double latitude) onLocationChanged;
 
-  const MapScreen({Key? key,required this.onLocationChanged, this.longitude, this.latitude}) : super(key: key);
+  const MapScreen(
+      {Key? key,
+      required this.onLocationChanged,
+      this.longitude,
+      this.latitude})
+      : super(key: key);
 
   @override
   State<MapScreen> createState() => MapScreenState();
@@ -42,8 +48,10 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   // List<String> _suggestions = [];
   List<Map<String, String>> _suggestionsGoongMap = [];
   LatLng? _searchedLocation;
-  List<LatLng> _routePolyline = [];
-  List<String> _routeInstructions = [];
+  // List<LatLng> _routePolyline = [];
+  // List<List<LatLng>> _routePolylines = [];
+  List<Map<String, dynamic>> _routePolylines = [];
+  List<List<String>> _routeInstructions = [];
   String _travelTime = "";
   // String _transportMode = "driving";
   bool _showRouteInstructions = true;
@@ -57,12 +65,15 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   bool _findRoutes = false;
   double topSuggeslist = 90;
   List<Place> places = [];
-  List<List<LatLng>> _routePolylines = [];
-  List<dynamic> reports = [];
+  List<TrafficNotification> notifications = [];
+  GlobalKey<MapDisplayState> MapdisplayKey = GlobalKey<MapDisplayState>();
+  MapApiService _mapApiService = MapApiService();
+  int _selectedRouteIndex = 0;
 
-  void addReport(Map<String, dynamic> report) {
+  void addNotification(TrafficNotification notification) {
     setState(() {
-      reports.add(report);
+      MapdisplayKey.currentState?.addNotifications(notification);
+      notifications.add(notification);
     });
   }
 
@@ -71,7 +82,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
       _searchController.clear();
       // _suggestions.clear();
       _suggestionsGoongMap.clear();
-      _routePolyline.clear();
+      // _routePolyline.clear();
       _routePolylines.clear();
       _showRouteInstructions = false;
       _startPosition = null;
@@ -110,8 +121,8 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   }
 
   void _changePost(context) {
-    Navigator.push(
-        context, MaterialPageRoute(builder: (context) => const CreatePostScreen()));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => const CreatePostScreen()));
   }
 
   void _toggleCameraOverlay(BuildContext context) {
@@ -262,9 +273,10 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   Future<void> fetchPlaces() async {
     try {
       final result = await PlaceService().fetchNearestPlaces(
-      longitude: _currentLocation.longitude, // Truyền longitude đúng tham số
-      latitude: _currentLocation.latitude,
-      radius: 1 ); 
+          longitude:
+              _currentLocation.longitude, // Truyền longitude đúng tham số
+          latitude: _currentLocation.latitude,
+          radius: 1);
       setState(() {
         places = result.data;
       });
@@ -317,7 +329,8 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     if (mounted) {
       setState(() {
         _currentLocation = LatLng(position.latitude, position.longitude);
-        widget.onLocationChanged(_currentLocation.longitude!, _currentLocation.latitude!);
+        widget.onLocationChanged(
+            _currentLocation.longitude!, _currentLocation.latitude!);
         _locationLoaded = true;
         if (_mapReady) _mapController.move(_currentLocation, _zoomLevel);
       });
@@ -350,44 +363,38 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _getRoute(LatLng start, LatLng destination) async {
-    // List<LatLng> polylinePoints =
-    //     await MapApiService.getRoute(start, destination);
-    // List<String> instructions =
-    //     await MapApiService.getRouteInstructions(start, destination);
-    // String travelTime = await MapApiService.getTravelTime(start, destination);
-    // setState(() {
-    //   _routePolyline = polylinePoints;
-    //   _routeInstructions = instructions;
-    //   _travelTime = travelTime;
-    //   _showRouteInstructions = true;
-    // });
-    try {
-    final result = await MapApiService.getRoutesVerWayPoints(start, destination);
-    List<List<LatLng>> polylinePoints = result['routes'];
-    List<LatLng> intersections = result['waypoints'];
-      setState(() {
-        _routePolylines = polylinePoints;
-      });
-  // for (List<LatLng> intersectionRoute in intersections) {
-  //   for (LatLng intersection in intersections) {
-  //     final additionalRoutes = await MapApiService.getRoutes(intersection, destination);
-  //     setState(() {
-  //        _routePolylines.add(additionalRoutes['routes']);
-  //       // _routePolyline.add(additionalRoutes['routes']);
-  //     });
-  //   // }
-  // }
-    } catch (e) {
-      print("Error fetching route: $e");
-      // Có thể thêm thông báo lỗi cho người dùng tại đây
-    }
+Future<void> _getRoute(LatLng start, LatLng destination) async {
+  try {
+    final result = await _mapApiService.getRoutesWithInstructions(start, destination);
+    final routesWithInstructions = result['routesWithInstructions'] as List;
+
+    setState(() {
+      _routePolylines = routesWithInstructions.map((route) {
+        // Directly use the 'coordinates' (which should be a List<LatLng>)
+        final coordinates = route['coordinates'] as List<LatLng>; // No need to map to LatLng again
+
+        return {
+          'coordinates': coordinates,
+          'recommended': route['recommended'] as bool
+        };
+      }).toList();
+
+      _routeInstructions = routesWithInstructions
+          .map((route) => route['instructions'] as List<String>)
+          .toList();
+      _showRouteInstructions = true;
+    });
+  } catch (e) {
+    print("Error fetching route and instructions: $e");
   }
+}
 
   Future<void> _onSearchChanged(String query) async {
     if (query.isNotEmpty) {
       // List<String> suggestions = await MapApiService.getSuggestions(query);
-     List<Map<String, String>> suggestions  = await MapApiService.getSuggestionsVerGoongMap(query,_currentLocation.latitude, _currentLocation.longitude);
+      List<Map<String, String>> suggestions =
+          await MapApiService.getSuggestionsVerGoongMap(
+              query, _currentLocation.latitude, _currentLocation.longitude);
       setState(() => _suggestionsGoongMap = suggestions);
     } else {
       setState(() => _suggestionsGoongMap.clear());
@@ -433,9 +440,10 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
               additionalMarkers: _buildMarkers(),
               places: places,
               onDirectionPressed: (LatLng start, LatLng destination) {
-              Navigator.pop(context); // Đóng modal
-              _getRoute(start, destination); // Gọi hàm ở widget cha
-            },
+                Navigator.pop(context); // Đóng modal
+                _getRoute(start, destination); // Gọi hàm ở widget cha
+              },
+              notifications: notifications,
             ),
           custom.SearchBar(
             searchController: _searchController,
@@ -448,7 +456,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
           ),
           if (_showRouteInstructions && _routeInstructions.isNotEmpty)
             RouteInstructions(
-              routeInstructions: _routeInstructions,
+              routeInstructions: _routeInstructions[0],
               travelTime: _travelTime,
               bottomPosition: 50, // Định vị trí tính từ đáy màn hình
             ),
@@ -474,33 +482,17 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
             bottom: 50, // Định vị theo yêu cầu
             right: 10,
           ),
-          
           FloatingReportButton(
             changeScreen: () => _changeScreen(context),
             openCamera: () => _toggleCameraOverlay(context),
             poststatus: () => _changePost(context),
           ),
-          // FloatingActionButtons(
-          //   onZoomIn: () {
-          //     setState(() {
-          //       _zoomLevel++;
-          //       _mapController.move(_currentLocation, _zoomLevel);
-          //     });
-          //   },
-          //   onZoomOut: () {
-          //     setState(() {
-          //       _zoomLevel--;
-          //       _mapController.move(_currentLocation, _zoomLevel);
-          //     });
-          //   },
-          //   onCurrentLocation: _getCurrentLocation,
-          //   bottom: 100, // Định vị theo yêu cầu
-          //   right: 10,
-          // ),
           if (_suggestionsGoongMap.isNotEmpty)
             SuggestionsList(
               // suggestions: _suggestions,
-              suggestions: _suggestionsGoongMap.map((item) => item['description'] ?? '').toList(),
+              suggestions: _suggestionsGoongMap
+                  .map((item) => item['description'] ?? '')
+                  .toList(),
               onSuggestionSelected: _selectSuggestion,
               top: topSuggeslist,
             ),

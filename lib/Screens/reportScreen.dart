@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/reportService.dart';
 import '../models/report.dart';
 import '../models/paginated_data.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -13,6 +15,7 @@ class ReportScreen extends StatefulWidget {
 class _ReportScreenState extends State<ReportScreen> {
   final ReportService _reportService = ReportService();
   late Future<PaginatedData<Report>> _futureReports;
+  String serverUrl = kIsWeb ? 'http://127.0.0.1:8000/uploads/' : 'http://10.0.2.2:8000/uploads/';
 
   @override
   void initState() {
@@ -191,7 +194,7 @@ class _ReportScreenState extends State<ReportScreen> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10),
                                   image: DecorationImage(
-                                    image: NetworkImage('http://10.0.2.2:8000/uploads/${report.imgs.first.img}'),
+                                    image: NetworkImage('$serverUrl${report.imgs.first.img}'),
                                     fit: BoxFit.cover,
                                   ),
                                 ),
