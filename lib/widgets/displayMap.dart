@@ -24,7 +24,7 @@ class MapDisplay extends StatefulWidget {
   final List<Place> places; // Thêm tham số places
   final Function(LatLng start, LatLng destination) onDirectionPressed;
   final List<TrafficNotification> notifications;
-
+   
   MapDisplay({
     Key? key,
     required this.currentLocation,

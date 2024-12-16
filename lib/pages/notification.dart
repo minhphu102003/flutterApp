@@ -15,12 +15,13 @@ class NotificationCusState extends State<NotificationCus> {
   // GlobalKey<NotificationCusState> notificationKey = GlobalKey<NotificationCusState>();
   late List<TrafficNotification> _notifications;
   String formatDate(DateTime? dateTime) {
-    if (dateTime == null) {
-      return 'N/A'; // Return a placeholder if dateTime is null
-    }
-    return DateFormat('HH:mm dd/MM/yyyy')
-        .format(dateTime); // Format the date if it's not null
+  if (dateTime == null) {
+    return 'N/A'; // Return a placeholder if dateTime is null
   }
+  // Cộng thêm 7 giờ trước khi format
+  final adjustedDateTime = dateTime.add(Duration(hours: 7));
+  return DateFormat('HH:mm dd/MM/yyyy').format(adjustedDateTime);
+}
     @override
   void initState() {
     super.initState();

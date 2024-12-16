@@ -48,7 +48,7 @@ class FloatingReportButton extends StatelessWidget {
           child: FloatingActionButton(
             onPressed: poststatus,
             heroTag: "post_status",
-            child: const Icon(Icons.airline_seat_flat_angled_sharp),
+            child: const Icon(Icons.warning),
           ),
         ),
       ],

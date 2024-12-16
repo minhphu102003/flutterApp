@@ -120,9 +120,9 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
         context, MaterialPageRoute(builder: (context) => const ReportScreen()));
   }
 
-  void _changePost(context) {
+  void _changePost(context, double longitude, double latitude) {
     Navigator.push(context,
-        MaterialPageRoute(builder: (context) => const CreatePostScreen()));
+        MaterialPageRoute(builder: (context) =>  CreatePostScreen(longitude: longitude, latitude: latitude,)));
   }
 
   void _toggleCameraOverlay(BuildContext context) {
@@ -485,7 +485,7 @@ Future<void> _getRoute(LatLng start, LatLng destination) async {
           FloatingReportButton(
             changeScreen: () => _changeScreen(context),
             openCamera: () => _toggleCameraOverlay(context),
-            poststatus: () => _changePost(context),
+            poststatus: () => _changePost(context, _currentLocation.longitude, _currentLocation.latitude),
           ),
           if (_suggestionsGoongMap.isNotEmpty)
             SuggestionsList(
