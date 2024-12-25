@@ -43,8 +43,9 @@ class ReportService {
       );
 
       // Kiểm tra trạng thái phản hồi
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200) {
         final jsonResponse = response.data as Map<String, dynamic>;
+        print(jsonResponse);
         return PaginatedData<Report>.fromJson(
           jsonResponse,
           (json) => Report.fromJson(json as Map<String, dynamic>),

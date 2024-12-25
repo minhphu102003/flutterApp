@@ -24,7 +24,7 @@ class MapDisplay extends StatefulWidget {
   final List<Place> places; // Thêm tham số places
   final Function(LatLng start, LatLng destination) onDirectionPressed;
   final List<TrafficNotification> notifications;
-   
+
   MapDisplay({
     Key? key,
     required this.currentLocation,
@@ -45,13 +45,16 @@ class MapDisplay extends StatefulWidget {
 }
 
 class MapDisplayState extends State<MapDisplay> {
-  String serverUrl = kIsWeb ? 'http://127.0.0.1:8000/uploads/' : 'http://10.0.2.2:8000/uploads/';
-  double _imageSize = 40.0;
+  String serverUrl = kIsWeb
+      ? 'http://127.0.0.1:8000/uploads/'
+      : 'http://10.0.2.2:8000/uploads/';
+  double _imageSize = 50.0;
   int? _selectedMarkerIndex;
   bool firstRecommend = false;
   List<Map<String, dynamic>> previousRoutePolylines = [];
   Timer? _timer;
   List<TrafficNotification> notifications = [];
+  bool displayImage = false;
 
   @override
   void didUpdateWidget(covariant MapDisplay oldWidget) {
@@ -61,42 +64,48 @@ class MapDisplayState extends State<MapDisplay> {
       firstRecommend = false;
       previousRoutePolylines = widget.routePolylines;
     }
-    if(widget.notifications != oldWidget.notifications){
+    if (widget.notifications != oldWidget.notifications) {
       notifications = widget.notifications;
     }
   }
 
-@override
-void initState() {
-  super.initState();
-  notifications = widget.notifications;
-  _timer = Timer.periodic(Duration(minutes: 1), (timer) {
-    // print("1 phút");
-    if (mounted) {
-      removeExpiredNotifications(); // Gọi hàm kiểm tra và loại bỏ notifications
-    }
-  });
-}
+  @override
+  void initState() {
+    super.initState();
+    notifications = widget.notifications;
+    _timer = Timer.periodic(Duration(minutes: 1), (timer) {
+      // print("1 phút");
+      if (mounted) {
+        removeExpiredNotifications(); // Gọi hàm kiểm tra và loại bỏ notifications
+      }
+    });
+  }
 
   void addNotifications(TrafficNotification notification) {
     setState(() {
       widget.notifications.add(notification);
-          print(notification.title);
     });
-    print(widget.notifications.length);
   }
 
-void removeExpiredNotifications() {
-  DateTime currentTime = DateTime.now(); // Thời gian hiện tại
-  if (mounted) {
+  void changeDisplayImage({bool? value}) {
     setState(() {
-      widget.notifications.removeWhere((notification) {
-        Duration diff = currentTime.difference(notification.timestamp);
-        return diff.inMinutes > 2; // Kiểm tra xem đã qua 2 phút chưa
-      });
+      // Nếu value là null thì mặc định là đảo ngược giá trị của displayImage
+      displayImage = value ?? !displayImage;
     });
   }
-}
+
+  void removeExpiredNotifications() {
+    DateTime currentTime = DateTime.now(); // Thời gian hiện tại
+    if (mounted) {
+      setState(() {
+        widget.notifications.removeWhere((notification) {
+          Duration diff = currentTime.difference(notification.timestamp);
+          return diff.inMinutes > 10; // Kiểm tra xem đã qua 2 phút chưa
+        });
+      });
+    }
+  }
+
   @override
   void dispose() {
     _timer?.cancel(); // Hủy Timer khi widget bị hủy
@@ -261,8 +270,7 @@ void removeExpiredNotifications() {
 
   @override
   Widget build(BuildContext context) {
-    List<Marker> reportMarkers =
-        List.generate(notifications.length, (index) {
+    List<Marker> reportMarkers = List.generate(notifications.length, (index) {
       final report = notifications[index];
       return Marker(
         point: LatLng(report.latitude, report.longitude),
@@ -271,7 +279,6 @@ void removeExpiredNotifications() {
         child: GestureDetector(
           onTap: () {
             setState(() {
-              print(_selectedMarkerIndex);
               if (_selectedMarkerIndex == index) {
                 _selectedMarkerIndex = null; // Nếu đã chọn thì bỏ chọn
               } else {
@@ -279,20 +286,55 @@ void removeExpiredNotifications() {
               }
             });
           },
-          child: Container(
-            width: _selectedMarkerIndex == index
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: (_selectedMarkerIndex == index)
                 ? 80.0
                 : _imageSize, // Chỉ thay đổi kích thước của marker được chọn
-            height: _selectedMarkerIndex == index ? 80.0 : _imageSize,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8.0),
-              border: Border.all(color: Colors.red, width: 3.0),
-              image: DecorationImage(
-                image:
-                    NetworkImage('$serverUrl${report.img}'),
-                fit: BoxFit.cover,
-              ),
-            ),
+            height: (_selectedMarkerIndex == index) ? 80.0 : _imageSize,
+            decoration: displayImage
+                ? null // Không có BoxDecoration nếu hiển thị biểu tượng warning
+                : BoxDecoration(
+                    borderRadius: BorderRadius.circular(8.0),
+                    border:
+                        Border.all(color: Colors.red, width: 3.0), // Viền đỏ
+                    image: DecorationImage(
+                      image: NetworkImage('${report.img}'), // Hiển thị ảnh
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+            child: displayImage
+                ? Container(
+                    width: _selectedMarkerIndex == index
+                        ? 50.0
+                        : 36.0, // Kích thước vùng chứa
+                    height: _selectedMarkerIndex == index ? 50.0 : 36.0,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle, // Hình tròn
+                      border: Border.all(
+                        color:
+                            const Color.fromARGB(255, 253, 103, 73), // Màu viền
+                        width: 3.0, // Độ dày viền
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color.fromARGB(255, 250, 113, 67)
+                              .withOpacity(0.5), // Hiệu ứng đổ bóng
+                          spreadRadius: 4, // Độ lan tỏa bóng
+                          blurRadius: 6, // Độ mờ bóng
+                          offset: Offset(0, 3), // Độ lệch bóng
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.warning, // Biểu tượng warning
+                        color: const Color.fromARGB(255, 238, 88, 42),
+                        size: _selectedMarkerIndex == index ? 30.0 : 20.0,
+                      ),
+                    ),
+                  )
+                : null, // Không hiển thị `child` nếu có ảnh
           ),
         ),
       );
@@ -356,6 +398,7 @@ void removeExpiredNotifications() {
             }).toList(),
           ),
         MarkerLayer(
+          key: ValueKey(_selectedMarkerIndex),
           markers: [
             // Marker mặc định tại vị trí hiện tại
             Marker(

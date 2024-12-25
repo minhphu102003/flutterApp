@@ -241,6 +241,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
         imagePaths: _imagePaths,
       );
       setState(() {
+        newComment.username = name;
         comments.insert(0, newComment);
         _selectedRating = 0;
         _commentController.clear();

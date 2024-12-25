@@ -9,7 +9,7 @@ class Comment {
   final String createdAt;
   final String updatedAt;
   final String? accountId; // Optional
-  final String? username;  // Optional
+  String? username;  // Optional
 
   Comment({
     required this.id,

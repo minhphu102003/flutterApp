@@ -101,7 +101,7 @@ class CommentInput extends StatelessWidget {
                         fit: BoxFit.cover,
                       ),
                       IconButton(
-                        icon: Icon(Icons.close, color: Colors.red),
+                        icon: const Icon(Icons.close, color: Colors.red),
                         onPressed: () {
                           onDeleteImage(path); // Gọi callback để xử lý xóa ảnh
                         },

@@ -60,36 +60,36 @@ class _ProfileState extends State<Profile> {
 //   );
 // }
 
-Future<void> _loadProfile() async {
-  try {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    token = prefs.getString('token');
-    if (token == null) {
-      // _navigateToLogin(); // Token không tồn tại, điều hướng đến Login
-      return;
-    }
-
-    var response = await _accountService.getProfile();
-
-    if (response['success']) {
-      setState(() {
-        name = response['data']['username'];
-        email = response['data']['email'];
-        phone = response['data']['phone'] ?? null;
-      });
-    } else {
-      // Kiểm tra thông báo lỗi liên quan đến hết hạn token
-      if (response['message'] == 'Error fetching profile') {
-        // _navigateToLogin(); // Điều hướng đến màn hình Login
-      } else {
-        print('Error: ${response['message']}');
+  Future<void> _loadProfile() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      token = prefs.getString('token');
+      if (token == null) {
+        // _navigateToLogin(); // Token không tồn tại, điều hướng đến Login
+        return;
       }
+
+      var response = await _accountService.getProfile();
+
+      if (response['success']) {
+        setState(() {
+          name = response['data']['username'];
+          email = response['data']['email'];
+          phone = response['data']['phone'] ?? null;
+        });
+      } else {
+        // Kiểm tra thông báo lỗi liên quan đến hết hạn token
+        if (response['message'] == 'Error fetching profile') {
+          // _navigateToLogin(); // Điều hướng đến màn hình Login
+        } else {
+          print('Error: ${response['message']}');
+        }
+      }
+    } catch (e) {
+      print('Failed to load profile: $e');
+      // _navigateToLogin(); // Điều hướng khi có lỗi không xác định
     }
-  } catch (e) {
-    print('Failed to load profile: $e');
-    // _navigateToLogin(); // Điều hướng khi có lỗi không xác định
   }
-}
 
   Future<void> getImage() async {
     var image = await _picker.pickImage(source: ImageSource.gallery);
@@ -101,6 +101,7 @@ Future<void> _loadProfile() async {
       print("No image selected.");
     }
   }
+
   @override
   Widget build(BuildContext context) {
     if (name == null) {
@@ -171,24 +172,22 @@ Future<void> _loadProfile() async {
                 onTap: () async {
                   String message = await _authService.logOut();
                   if (message == 'Logout successful!') {
-                    showCustomDialog(
-                        context,
-                        'Notify',
-                        message,
-                        Icons.notifications,
-                        successColor, () {
+                    showCustomDialog(context, 'Notify', message,
+                        Icons.notifications, successColor, () {
                       setState(() {
                         token = null;
                       });
                     });
+                    // Dùng pushAndRemoveUntil để thay thế tất cả màn hình trước đó bằng màn hình Login
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => Login()),
+                      (Route<dynamic> route) =>
+                          false, // Xóa tất cả các màn hình trước đó
+                    );
                   } else {
-                      showCustomDialog(
-                        context,
-                        'Notify',
-                        message,
-                        Icons.error,
-                        failureColor, () {
-                    });
+                    showCustomDialog(context, 'Notify', message, Icons.error,
+                        failureColor, () {});
                   }
                 },
               ),

@@ -4,10 +4,11 @@ import '../models/report.dart';
 import '../models/paginated_data.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
+
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
-
   @override
   _ReportScreenState createState() => _ReportScreenState();
 }
@@ -15,7 +16,7 @@ class ReportScreen extends StatefulWidget {
 class _ReportScreenState extends State<ReportScreen> {
   final ReportService _reportService = ReportService();
   late Future<PaginatedData<Report>> _futureReports;
-  String serverUrl = kIsWeb ? 'http://127.0.0.1:8000/uploads/' : 'http://10.0.2.2:8000/uploads/';
+  // String serverUrl = kIsWeb ? 'http://127.0.0.1:8000/uploads/' : 'http://10.0.2.2:8000/uploads/';
 
   @override
   void initState() {
@@ -57,7 +58,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   Expanded(
                     child: TextField(
                       decoration: InputDecoration(
-                        hintText: 'Bạn đang nghĩ gì?',
+                        hintText: 'What are you thinking?',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10.0),
                         ),
@@ -85,7 +86,7 @@ class _ReportScreenState extends State<ReportScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Video gần đây',
+                        'Recent Videos',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
@@ -160,6 +161,9 @@ class _ReportScreenState extends State<ReportScreen> {
 
                   return Column(
                     children: reports.map((report) {
+                      // Định dạng thời gian
+                        DateTime adjustedTimestamp = report.timestamp.add(Duration(hours: 7));
+                        String formattedTime = DateFormat('HH:mm dd/MM/yyyy').format(adjustedTimestamp);
                       return Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16.0, vertical: 8.0),
@@ -188,13 +192,23 @@ class _ReportScreenState extends State<ReportScreen> {
                               style: const TextStyle(fontSize: 16),
                             ),
                             const SizedBox(height: 10),
+                            // Hiển thị thời gian
+                            Text(
+                              '$formattedTime',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
                             if (report.imgs.isNotEmpty)
                               Container(
                                 height: 200,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10),
                                   image: DecorationImage(
-                                    image: NetworkImage('$serverUrl${report.imgs.first.img}'),
+                                    // image: NetworkImage('$serverUrl${report.imgs.first.img}'),
+                                    image: NetworkImage('${report.imgs.first.img}'),
                                     fit: BoxFit.cover,
                                   ),
                                 ),

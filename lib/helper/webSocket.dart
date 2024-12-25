@@ -4,14 +4,17 @@ import 'dart:convert';
 import 'package:flutterApp/models/notification.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 
 class WebSocketService {
   late WebSocketChannel channel;
+  late Timer _pingTimer;
   Function(TrafficNotification)? onNotificationReceived;
 
-  void connect(String mobileUrl, String webUrl) {
+  // void connect(String mobileUrl, String webUrl)
+  void connect(String serverUrl) {
     // Chọn URL dựa trên nền tảng
-    String serverUrl = kIsWeb ? webUrl : mobileUrl;
+    // String serverUrl = kIsWeb ? webUrl : mobileUrl;
 
     channel = WebSocketChannel.connect(
       Uri.parse(serverUrl),
@@ -33,8 +36,15 @@ class WebSocketService {
       },
       onDone: () {
         print('WebSocket closed');
+        _pingTimer.cancel();
       },
     );
+    _pingTimer = Timer.periodic(Duration(seconds: 30), (timer) {
+      if (channel != null && channel.sink != null) {
+        channel.sink.add('ping');
+        print("Ping sent to keep connection alive");
+      }
+    });
   }
 
   void sendMessage(String message) {

@@ -35,6 +35,7 @@ class WeatherIcon extends StatelessWidget {
             ),
           ),
         ),
+      
       ],
     );
   }

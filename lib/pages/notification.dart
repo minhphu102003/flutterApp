@@ -29,7 +29,7 @@ class NotificationCusState extends State<NotificationCus> {
   }
   void addNotification(TrafficNotification notification){
     setState(() {
-      _notifications.add(notification);
+      _notifications.insert(0, notification); // Thêm thông báo mới vào đầu danh sách
     });
   }
 

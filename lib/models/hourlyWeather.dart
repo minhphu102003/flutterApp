@@ -38,25 +38,40 @@ class HourlyWeather with ChangeNotifier {
   });
 
   // Phương thức static để khởi tạo đối tượng từ dữ liệu JSON
-  static HourlyWeather fromJson(dynamic json) {
-    return HourlyWeather(
-      temp: (json['main']['temp']).toDouble(), // Nhiệt độ
-      feelsLike: (json['main']['feels_like']).toDouble(), // Nhiệt độ cảm nhận
-      tempMin: (json['main']['temp_min']).toDouble(), // Nhiệt độ tối thiểu
-      tempMax: (json['main']['temp_max']).toDouble(), // Nhiệt độ tối đa
-      pressure: json['main']['pressure'], // Áp suất
-      humidity: json['main']['humidity'], // Độ ẩm
-      windSpeed: (json['wind']['speed']).toDouble(), // Tốc độ gió
-      windGust: json['wind'].containsKey('gust') ? (json['wind']['gust']).toDouble() : 0.0, // Tốc độ gió giật, nếu có
-      clouds: json['clouds']['all'], // Tỷ lệ mây
-      weatherCategory: json['weather'][0]['main'], // Thể loại thời tiết
-      condition: json['weather'][0]['description'], // Mô tả thời tiết
-      date: DateTime.parse(json['dt_txt']), // Thời gian dữ liệu thời tiết
-      precipitation: ((json['pop']).toDouble() * 100).toStringAsFixed(0), // Tỉ lệ mưa
-      rainVolume: json.containsKey('rain') && json['rain'].containsKey('1h')
-          ? (json['rain']['1h']).toDouble() // Khối lượng mưa trong 1 giờ
-          : 0.0,
-      visibility: json['visibility'], // Tầm nhìn
-    );
-  }
+static HourlyWeather fromJson(dynamic json) {
+  return HourlyWeather(
+    temp: (json['main']['temp'] ?? 0).toDouble(),
+    feelsLike: (json['main']['feels_like'] ?? 0).toDouble(),
+    tempMin: (json['main']['temp_min'] ?? 0).toDouble(),
+    tempMax: (json['main']['temp_max'] ?? 0).toDouble(),
+    pressure: json['main']['pressure'] ?? 0,
+    humidity: json['main']['humidity'] ?? 0,
+    windSpeed: (json['wind']['speed'] ?? 0).toDouble(),
+    windGust: json['wind'] != null &&
+              json['wind'].containsKey('gust') &&
+              json['wind']['gust'] != null
+        ? (json['wind']['gust']).toDouble()
+        : 0.0,
+    clouds: json['clouds'] != null ? json['clouds']['all'] ?? 0 : 0,
+    weatherCategory: json['weather'] != null && json['weather'].isNotEmpty
+        ? json['weather'][0]['main'] ?? ''
+        : '',
+    condition: json['weather'] != null && json['weather'].isNotEmpty
+        ? json['weather'][0]['description'] ?? ''
+        : '',
+    date: json['dt_txt'] != null ? DateTime.parse(json['dt_txt']) : DateTime.now(),
+    precipitation: json.containsKey('pop') && json['pop'] != null
+        ? ((json['pop']).toDouble() * 100).toStringAsFixed(0)
+        : "0",
+    rainVolume: json.containsKey('rain') &&
+                json['rain'] != null &&
+                json['rain'].containsKey('1h') &&
+                json['rain']['1h'] != null
+        ? (json['rain']['1h']).toDouble()
+        : 0.0,
+    visibility: json['visibility'] ?? 0,
+  );
+}
+
+
 }

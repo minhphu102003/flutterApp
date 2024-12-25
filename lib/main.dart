@@ -3,10 +3,11 @@ import 'package:flutterApp/pages/sign.dart';
 import 'package:provider/provider.dart';
 import './provider/weatherProvider.dart';
 import 'Screens/homeScreen.dart';
+import 'bottom/bottomnav.dart';
 
 void main() {
   // Hàm main khởi chạy ứng dụng Flutter
-  runApp( 
+  runApp(
     MyApp(),
   );
 }
@@ -35,13 +36,12 @@ class MyApp extends StatelessWidget {
                 ColorScheme.fromSwatch().copyWith(secondary: Colors.white),
           ),
           // Màn hình khởi đầu của ứng dụng là BottomNav
-          home: Sign(),
-          
+          home: BottomNav(),
+
           // Cấu hình cho việc điều hướng trong ứng dụng
           onGenerateRoute: (setting) {
             // Lấy argument truyền vào cho route
             final argument = setting.arguments;
-            
             // Điều hướng đến màn hình chi tiết dự báo thời tiết 7 ngày
             if (setting.name == SevenDayForecastDetail.routeName) {
               return PageRouteBuilder(
@@ -85,7 +85,6 @@ class MyApp extends StatelessWidget {
                 },
               );
             }
-
             // Điều hướng đến màn hình bản đồ
             if (setting.name == MapScreen.routeName) {
               return PageRouteBuilder(
@@ -126,7 +125,6 @@ class MyApp extends StatelessWidget {
                 },
               );
             }
-
             // Mặc định điều hướng về HomeScreen nếu không có route phù hợp
             return MaterialPageRoute(builder: (_) => HomeScreen());
           }),

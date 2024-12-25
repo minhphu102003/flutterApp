@@ -77,6 +77,12 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     });
   }
 
+void _changeDisplayImage({bool? change}) {
+  setState(() {
+    // Truyền giá trị change vào phương thức changeDisplayImage của MapdisplayKey
+    MapdisplayKey.currentState?.changeDisplayImage(value: change);
+  });
+}
   void _clearSearch() {
     setState(() {
       _searchController.clear();
@@ -88,6 +94,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
       _startPosition = null;
       _endPosition = null;
       _findRoutes = false;
+      _changeDisplayImage();
     });
   }
 
@@ -121,8 +128,13 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   }
 
   void _changePost(context, double longitude, double latitude) {
-    Navigator.push(context,
-        MaterialPageRoute(builder: (context) =>  CreatePostScreen(longitude: longitude, latitude: latitude,)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => CreatePostScreen(
+                  longitude: longitude,
+                  latitude: latitude,
+                )));
   }
 
   void _toggleCameraOverlay(BuildContext context) {
@@ -230,6 +242,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     );
     overlayState.insert(_currentOverlayEntry!);
   }
+
 
   void _onMapTap(TapPosition position, LatLng latLng) {
     if (_currentOverlayEntry == null && _findRoutes) {
@@ -363,31 +376,37 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     }
   }
 
-Future<void> _getRoute(LatLng start, LatLng destination) async {
-  try {
-    final result = await _mapApiService.getRoutesWithInstructions(start, destination);
-    final routesWithInstructions = result['routesWithInstructions'] as List;
+  Future<void> _getRoute(LatLng start, LatLng destination) async {
+    try {
+      final result =
+          await _mapApiService.getRoutesWithInstructions(start, destination);
+      final routesWithInstructions = result['routesWithInstructions'] as List;
 
-    setState(() {
-      _routePolylines = routesWithInstructions.map((route) {
-        // Directly use the 'coordinates' (which should be a List<LatLng>)
-        final coordinates = route['coordinates'] as List<LatLng>; // No need to map to LatLng again
+      setState(() {
+        _routePolylines = routesWithInstructions.map((route) {
+          // Directly use the 'coordinates' (which should be a List<LatLng>)
+          final coordinates = route['coordinates']
+              as List<LatLng>; // No need to map to LatLng again
 
-        return {
-          'coordinates': coordinates,
-          'recommended': route['recommended'] as bool
-        };
-      }).toList();
+          return {
+            'coordinates': coordinates,
+            'recommended': route['recommended'] as bool
+          };
+        }).toList();
 
-      _routeInstructions = routesWithInstructions
-          .map((route) => route['instructions'] as List<String>)
-          .toList();
-      _showRouteInstructions = true;
-    });
-  } catch (e) {
-    print("Error fetching route and instructions: $e");
+        if(_routePolylines != null){
+          _changeDisplayImage(change: true);
+        }
+
+        _routeInstructions = routesWithInstructions
+            .map((route) => route['instructions'] as List<String>)
+            .toList();
+        _showRouteInstructions = true;
+      });
+    } catch (e) {
+      print("Error fetching route and instructions: $e");
+    }
   }
-}
 
   Future<void> _onSearchChanged(String query) async {
     if (query.isNotEmpty) {
@@ -429,6 +448,7 @@ Future<void> _getRoute(LatLng start, LatLng destination) async {
         children: [
           if (_locationLoaded)
             MapDisplay(
+              key: MapdisplayKey,
               currentLocation: _currentLocation,
               // routePolyline: _routePolyline,
               routePolylines: _routePolylines,
@@ -445,6 +465,7 @@ Future<void> _getRoute(LatLng start, LatLng destination) async {
               },
               notifications: notifications,
             ),
+          
           custom.SearchBar(
             searchController: _searchController,
             onSearchChanged: _onSearchChanged,
@@ -485,7 +506,9 @@ Future<void> _getRoute(LatLng start, LatLng destination) async {
           FloatingReportButton(
             changeScreen: () => _changeScreen(context),
             openCamera: () => _toggleCameraOverlay(context),
-            poststatus: () => _changePost(context, _currentLocation.longitude, _currentLocation.latitude),
+            poststatus: () => _changePost(
+                context, _currentLocation.longitude, _currentLocation.latitude),
+            changeHidden: _changeDisplayImage,
           ),
           if (_suggestionsGoongMap.isNotEmpty)
             SuggestionsList(

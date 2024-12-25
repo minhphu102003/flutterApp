@@ -49,7 +49,14 @@ class _CustomDialogWeatherState extends State<CustomDialogWeather> {
         children: [
           Icon(widget.typeIcon, color: widget.color),
           const SizedBox(width: 8),
-          Text(widget.title),
+          Text(
+            widget.title,
+            style: const TextStyle(
+              fontSize: 20, // Điều chỉnh cỡ chữ nhỏ hơn
+              fontWeight: FontWeight.bold, // Tuỳ chọn nếu bạn muốn chữ đậm
+              color: Colors.black, // Màu sắc của chữ
+            ),
+          ),
         ],
       ),
       content: Column(

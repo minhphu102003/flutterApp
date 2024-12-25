@@ -51,20 +51,25 @@ class _SignState extends State<Sign> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       resizeToAvoidBottomInset: false,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(8.0),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      body: SafeArea(
         child: Container(
+          padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
+              // Phần hình ảnh
               Container(
-                  width: MediaQuery.of(context).size.width,
-                  child: Image.asset(
-                    "$dirImg/6ecaa6adda417ea842eeadc75dce2c4a-removebg-preview.png",
-                    fit: BoxFit.cover,
-                  )),
+                width: size.width,
+                height: size.height * 0.3, // Chiếm 30% chiều cao màn hình
+                child: Image.asset(
+                  "$dirImg/6ecaa6adda417ea842eeadc75dce2c4a-removebg-preview.png",
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(height: 10.0),
               const Text(
                 "DANANG HUB CITY",
                 style: TextStyle(
@@ -74,149 +79,178 @@ class _SignState extends State<Sign> {
                 ),
               ),
               const SizedBox(height: 20.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      CustomTextFormField(
-                        hintText: "Name",
-                        validator: nameValidator,
-                        controller: nameController,
-                        prefixIcon: Icon(Icons.person),
-                        onChanged: (value) {
-                          username = value;
-                        },
-                      ),
-                      const SizedBox(height: 30.0),
-                      CustomTextFormField(
-                        hintText: "Email",
-                        validator: emailValidator,
-                        controller: emailController,
-                        prefixIcon: Icon(Icons.email),
-                        onChanged: (value) {
-                          email = value;
-                        },
-                      ),
-                      const SizedBox(height: 30.0),
-                      CustomTextFormField(
-                        hintText: "Password",
-                        obscureText: true,
-                        validator: passwordValidator,
-                        controller: passwordController,
-                        prefixIcon: Icon(Icons.lock),
-                        onChanged: (value) {
-                          password = value;
-                        },
-                      ),
-                      const SizedBox(height: 30.0),
-                      GestureDetector(
-                        onTap: () async {
-                          FocusScope.of(context).unfocus();
-                          if (_formKey.currentState!.validate()) {
-                            print(username);
-                            print(email);
-                            print(password);
-                            ApiResponse<AuthToken?> apiResponse =
-                                await AuthService()
-                                    .signUp(username!, email!, password!);
-                            if (apiResponse.error == null) {
-                              nameController.clear();
-                              emailController.clear();
-                              passwordController.clear();
-                              showCustomDialog(
-                                  context,
-                                  'Notify',
-                                  'Registration successful!',
-                                  Icons.notifications,
-                                  successColor, () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => Login(),
-                                    ));
-                              });
-                            } else {
-                              showCustomDialog(
-                                  context,
-                                  'Error',
-                                  apiResponse.error!,
-                                  Icons.error,
-                                  failureColor,
-                                  (){
-                                    // Sau khi đóng thông báo thì không thực hiện hành động gì
-                                  }
-                                );
-                            }
-                          }
-                        },
-                        child: Container(
-                          width: MediaQuery.of(context).size.width,
-                          padding: EdgeInsets.symmetric(
-                              vertical: 13.0, horizontal: 30.0),
-                          decoration: BoxDecoration(
-                            color: Color(0xFF273671),
-                            borderRadius: BorderRadius.circular(30),
+              // Form
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          CustomTextFormField(
+                            hintText: "Name",
+                            validator: nameValidator,
+                            controller: nameController,
+                            prefixIcon: Icon(Icons.person),
+                            onChanged: (value) {
+                              username = value;
+                            },
                           ),
-                          child: const Center(
-                            child: Text(
-                              "Sign Up",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 22.0,
-                                fontWeight: FontWeight.w500,
+                          const SizedBox(height: 20.0),
+                          CustomTextFormField(
+                            hintText: "Email",
+                            validator: emailValidator,
+                            controller: emailController,
+                            prefixIcon: Icon(Icons.email),
+                            onChanged: (value) {
+                              email = value;
+                            },
+                          ),
+                          const SizedBox(height: 20.0),
+                          CustomTextFormField(
+                            hintText: "Password",
+                            obscureText: true,
+                            validator: passwordValidator,
+                            controller: passwordController,
+                            prefixIcon: Icon(Icons.lock),
+                            onChanged: (value) {
+                              password = value;
+                            },
+                          ),
+                          const SizedBox(height: 20.0),
+                          GestureDetector(
+                            onTap: () async {
+                              FocusScope.of(context).unfocus();
+                              if (_formKey.currentState!.validate()) {
+                                ApiResponse<AuthToken?> apiResponse =
+                                    await AuthService().signUp(
+                                  username!,
+                                  email!,
+                                  password!,
+                                );
+                                if (apiResponse.error == null) {
+                                  nameController.clear();
+                                  emailController.clear();
+                                  passwordController.clear();
+                                  showCustomDialog(
+                                    context,
+                                    'Notify',
+                                    'Registration successful!',
+                                    Icons.notifications,
+                                    successColor,
+                                    () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => Login(),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                } else {
+                                  showCustomDialog(
+                                    context,
+                                    'Error',
+                                    apiResponse.error!,
+                                    Icons.error,
+                                    failureColor,
+                                    () {},
+                                  );
+                                }
+                              }
+                            },
+                            child: Container(
+                              width: size.width,
+                              padding: EdgeInsets.symmetric(
+                                vertical: 13.0,
+                                horizontal: 30.0,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF273671),
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  "Sign Up",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 22.0,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                               ),
                             ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Dòng LogIn
+              Column(
+                children: [
+                  const SizedBox(height: 20.0),
+                  const Text(
+                    "or LogIn with",
+                    style: TextStyle(
+                      color: Color(0xFF273671),
+                      fontSize: 22.0,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 20.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        "$dirImg/google.png",
+                        height: 45,
+                        width: 45,
+                        fit: BoxFit.cover,
+                      ),
+                      const SizedBox(width: 20.0),
+                      Image.asset(
+                        "$dirImg/apple1.png",
+                        height: 50,
+                        width: 50,
+                        fit: BoxFit.cover,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Already have an account?",
+                        style: TextStyle(
+                          color: Color(0xFF8c8e98),
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 5.0),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => Login(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          "LogIn",
+                          style: TextStyle(
+                            color: Color(0xFF273671),
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 40.0),
-              const Text(
-                "or LogIn with",
-                style: TextStyle(
-                  color: Color(0xFF273671),
-                  fontSize: 22.0,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 30.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset("$dirImg/google.png",
-                      height: 45, width: 45, fit: BoxFit.cover),
-                  SizedBox(width: 30.0),
-                  Image.asset("$dirImg/apple1.png",
-                      height: 50, width: 50, fit: BoxFit.cover),
-                ],
-              ),
-              SizedBox(height: 40.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("Already have an account?",
-                      style: TextStyle(
-                          color: Color(0xFF8c8e98),
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.w500)),
-                  const SizedBox(width: 5.0),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => Login()));
-                    },
-                    child: const Text(
-                      "LogIn",
-                      style: TextStyle(
-                          color: Color(0xFF273671),
-                          fontSize: 20.0,
-                          fontWeight: FontWeight.w500),
-                    ),
                   ),
                 ],
               ),
@@ -226,4 +260,5 @@ class _SignState extends State<Sign> {
       ),
     );
   }
+
 }

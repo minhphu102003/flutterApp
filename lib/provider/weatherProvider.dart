@@ -132,7 +132,7 @@ class Weatherprovider with ChangeNotifier {
         dailyWeather =
             dailyList.map((item) => Dailyweather.fromDailyJson(item)).toList();
         isLoading = false; // Kết thúc quá trình tải
-        print('Fetch Daily Weather for: ${location.latitude}/${location.longitude}');
+        print('Fetch Daily Weather for 1: ${location.latitude}/${location.longitude}');
       } else {
         isLoading = false;
         throw Exception('Failed to load weather data'); // Lỗi nếu không thể lấy dữ liệu

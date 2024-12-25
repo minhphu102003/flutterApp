@@ -95,7 +95,8 @@ class CommentCard extends StatelessWidget {
                       final image = entry.value;
 
                       // Tạo URL đầy đủ từ baseURL và tên ảnh
-                      final imageUrl = '$baseURL${image.image}';
+                      // final imageUrl = '$baseURL${image.image}';
+                      final imageUrl = image.image;
 
                       // Nếu là ảnh thứ 4 và có nhiều hơn 4 ảnh
                       if (index == 3 && images.length > 4) {

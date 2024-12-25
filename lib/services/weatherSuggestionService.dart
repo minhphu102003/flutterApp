@@ -19,11 +19,11 @@ class WeatherSuggestionService {
         double temperature = response['temp'];
 
         List<String> img = [];
-        if (weatherCode.isNotEmpty) {
-          img.add('$dirImg/weather_${weatherCode[0]}.png');
-          if (weatherCode.length > 1) {
+        if (weatherCode.length == 1) {
+          img.add('$dirImg/weather.png');
+        }
+        if (weatherCode.length == 2) {
             img.add('$dirImg/weather_second_${weatherCode[1]}.png');
-          }
         }
         showDialog(
           context: context,
