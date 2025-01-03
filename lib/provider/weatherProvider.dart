@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutterApp/config.dart';
-import 'package:flutterApp/models/additionalWeatherData.dart';
 import 'package:flutterApp/models/geocode.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
@@ -100,7 +99,7 @@ class Weatherprovider with ChangeNotifier {
   // Lấy thời tiết hiện tại
   Future<void> getCurrentWeather(LatLng location) async {
     Uri url = Uri.parse(
-      'https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&units=metric&appid=$apiKey',
+      'https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&units=metric&appid=$apiKey&lang=vi',
     );
     try {
       final response = await http.get(url); // Gửi yêu cầu đến API
@@ -133,7 +132,7 @@ class Weatherprovider with ChangeNotifier {
         dailyWeather =
             dailyList.map((item) => Dailyweather.fromDailyJson(item)).toList();
         isLoading = false; // Kết thúc quá trình tải
-        print('Fetch Daily Weather for: ${location.latitude}/${location.longitude}');
+        print('Fetch Daily Weather for 1: ${location.latitude}/${location.longitude}');
       } else {
         isLoading = false;
         throw Exception('Failed to load weather data'); // Lỗi nếu không thể lấy dữ liệu

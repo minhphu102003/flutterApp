@@ -1,31 +1,42 @@
 import 'package:flutter/material.dart';
-import '../theme/colors.dart';
 
-// Widget WeatherButton được sử dụng để hiển thị một nút nổi (FloatingActionButton) với biểu tượng thời tiết.
-// Nút này có thể được đặt tại một vị trí cụ thể trên màn hình và thực hiện hành động khi được nhấn.
-class WeatherButton extends StatelessWidget {
-  // Callback được gọi khi người dùng nhấn vào nút.
+class WeatherIcon extends StatelessWidget {
   final VoidCallback onPressed;
+  final double top; // Vị trí tính từ trên cùng
+  final double left; // Vị trí tính từ trái
 
-  // Constructor của WeatherButton, nhận vào một callback onPressed.
-  const WeatherButton({super.key, required this.onPressed});
+  const WeatherIcon({
+    Key? key,
+    required this.onPressed,
+    this.top = 160, // Giá trị mặc định
+    this.left = 20, // Giá trị mặc định
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Sử dụng widget Positioned để đặt FloatingActionButton tại một vị trí cố định trên màn hình.
-    return Positioned(
-      // Đặt nút cách 15% chiều cao của màn hình từ trên xuống.
-      top: MediaQuery.of(context).size.height * 0.15,
-      // Đặt nút cách 10 đơn vị từ mép trái của màn hình.
-      left: 10.0,
-      // Tạo FloatingActionButton có màu nền là primaryBlue (được định nghĩa trong file colors.dart).
-      child: FloatingActionButton(
-        backgroundColor: primaryBlue,
-        // Gọi callback onPressed khi người dùng nhấn vào nút.
-        onPressed: onPressed,
-        // Biểu tượng thời tiết (hình đám mây) được hiển thị trên nút, với màu trắng.
-        child: const Icon(Icons.cloud, color: Colors.white),
-      ),
+    return Stack(
+      children: [
+        Positioned(
+          top: top,
+          left: left,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: const BoxDecoration(
+              color: Colors.blue,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.cloudy_snowing,
+                size: 30,
+                color: Colors.white,
+              ),
+              onPressed: onPressed,
+            ),
+          ),
+        ),
+      
+      ],
     );
   }
 }

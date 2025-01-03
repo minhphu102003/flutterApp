@@ -1,17 +1,9 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutterApp/Screens/mapScreen.dart';
-import 'package:flutterApp/login/sign/login.dart';
-import 'package:flutterApp/login/sign/sign.dart';
-import 'package:flutterApp/bottom/bottomnav.dart';
-import 'package:flutterApp/bottom/key.dart';
-import 'package:flutterApp/bottom/profile.dart';
-import 'package:flutterApp/pages/dulich.dart';
+import 'package:flutterApp/pages/sign.dart';
 import 'package:provider/provider.dart';
 import './provider/weatherProvider.dart';
 import 'Screens/homeScreen.dart';
-import 'Screens/sevenDayForecastDetailScreen.dart';
-import 'dart:convert'; // Thêm thư viện này để dùng json.decode
+import 'bottom/bottomnav.dart';
 
 void main() {
   // Hàm main khởi chạy ứng dụng Flutter
@@ -44,15 +36,12 @@ class MyApp extends StatelessWidget {
                 ColorScheme.fromSwatch().copyWith(secondary: Colors.white),
           ),
           // Màn hình khởi đầu của ứng dụng là BottomNav
-          home: BottomNav()
-          ,
-          
+          home: BottomNav(),
+
           // Cấu hình cho việc điều hướng trong ứng dụng
           onGenerateRoute: (setting) {
             // Lấy argument truyền vào cho route
             final argument = setting.arguments;
-            print(setting.name);
-            
             // Điều hướng đến màn hình chi tiết dự báo thời tiết 7 ngày
             if (setting.name == SevenDayForecastDetail.routeName) {
               return PageRouteBuilder(
@@ -96,7 +85,6 @@ class MyApp extends StatelessWidget {
                 },
               );
             }
-
             // Điều hướng đến màn hình bản đồ
             if (setting.name == MapScreen.routeName) {
               return PageRouteBuilder(
@@ -117,7 +105,6 @@ class MyApp extends StatelessWidget {
                       curve: curve,
                     ),
                   );
-
                   // Hoạt ảnh mờ dần màn hình
                   var opacityAnimation =
                       Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -138,7 +125,6 @@ class MyApp extends StatelessWidget {
                 },
               );
             }
-
             // Mặc định điều hướng về HomeScreen nếu không có route phù hợp
             return MaterialPageRoute(builder: (_) => HomeScreen());
           }),

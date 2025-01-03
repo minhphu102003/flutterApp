@@ -4,7 +4,7 @@ description: "A new Flutter project."
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.0+1
+version: 1.0.3+3
 
 environment:
   sdk: ^3.5.2
@@ -17,14 +17,16 @@ dependencies:
   # Đây là một thư viện để làm việc với tọa độ địa lý, cung cấp các lớp đại diện cho tọa độ như 
   # LatLng và các phương thức để tính toán khoảng cách giữa các điểm, tính toán hướng, và các phép biến đổi khác.
   latlong2: 
-
+  image: ^4.3.0
   # Cung cấp khả năng sử dụng các phông chữ của Google Fonts trong ứng dụng Flutter
   google_fonts: ^6.2.1
+  web_socket_channel: ^3.0.1
+  uuid: ^4.5.1
 
   # Cung cấp các phương thức để lấy vị trí hiện tại của thiết bị, theo dõi sự thay đổi vị trí và
   # xác định các thông tin địa lý.
   geolocator: 
-
+  flutter_polyline_points: ^2.1.0
   # Thư viện để thực hiện các yêu cầu HTTP, thường được sử dụng để gọi các API
   http: 
 
@@ -54,16 +56,22 @@ dependencies:
   # Thư viện để tích hợp Google Maps vào ứng dụng Flutter, google_maps_flutter_web
   # dùng cho hỗ trợ trên nền web.
 
-  google_maps_flutter: ^2.9.0
+  google_maps_flutter: ^2.9.0 
   google_maps_flutter_web: ^0.5.10
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  dio: ^5.7.0
+  shared_preferences: ^2.3.2
   curved_navigation_bar: ^1.0.6
-  image_picker:
-  mapbox_gl: ^0.16.0
+  
+  # mapbox_gl: ^0.16.0
+  mapbox_maps_flutter: ^2.3.0
+  youtube_player_iframe:
+  youtube_player_flutter:
+  universal_io: ^2.2.2
 
+  #sử lí hình ảnh
+  image_picker: ^0.8.5+3
 
   
 
@@ -72,7 +80,12 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.2
 
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon1.png"
 
 flutter:
 
@@ -82,6 +95,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
+    - assets/icon/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

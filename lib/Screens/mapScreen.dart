@@ -1,451 +1,526 @@
 import 'package:flutter/material.dart';
-import 'package:flutterApp/widgets/mapSample.dart';
-import 'package:flutterApp/widgets/buttonWeather.dart';
-import 'package:flutterApp/Screens/homeScreen.dart';
-import 'package:flutterApp/bottom/bottomnav.dart';
-import 'package:flutterApp/bottom/key.dart';
-import 'package:flutterApp/bottom/profile.dart';
-import 'package:flutterApp/widgets/support_widget.dart';
-import 'package:material_floating_search_bar_2/material_floating_search_bar_2.dart';
+import 'package:flutterApp/helper/navigation_helpers.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:flutterApp/config.dart';
+import 'package:flutterApp/services/mapSerivice.dart';
+import 'package:flutterApp/services/weatherSuggestionService.dart';
+import 'package:flutterApp/widgets/floatActingButton.dart';
+import 'package:flutterApp/widgets/buttonWeather.dart';
+import 'package:flutterApp/widgets/searchBar.dart' as custom;
+import 'package:flutterApp/widgets/displayMap.dart';
+import 'package:flutterApp/widgets/routeInstruction.dart';
+import 'package:flutterApp/widgets/suggestionList.dart';
+import 'package:flutterApp/widgets/FloatButtonReport.dart';
+import 'package:flutterApp/Screens/reportScreen.dart';
+import 'package:flutterApp/widgets/choseDirection.dart';
+import 'package:flutterApp/Screens/poststatus.dart';
+import 'package:flutterApp/models/place.dart';
+import 'package:flutterApp/services/placeService.dart';
+import 'package:flutterApp/models/notification.dart';
 
-class Map extends StatefulWidget {
-  const Map({super.key});
+class MapScreen extends StatefulWidget {
+  final double? longitude;
+  final double? latitude;
+  final Function(double longitude, double latitude) onLocationChanged;
+
+  const MapScreen(
+      {Key? key,
+      required this.onLocationChanged,
+      this.longitude,
+      this.latitude})
+      : super(key: key);
 
   @override
-  State<Map> createState() => _MapState();
+  State<MapScreen> createState() => MapScreenState();
 }
 
-class _MapState extends State<Map> {
-  LatLng _currentLocation = LatLng(37.7749, -122.4194); // Vị trí mặc định
+class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
+  GlobalKey<MapScreenState> mapKey = GlobalKey<MapScreenState>();
+  String apiMapboxKey = Config.api_mapbox_key;
+  LatLng _currentLocation = const LatLng(37.7749, -122.4194);
   bool _locationLoaded = false;
-  double _zoomLevel = 14.0; // Mức zoom mặc định
-  late MapController _mapController; // Khởi tạo MapController
-  bool _mapReady = false; // Kiểm tra bản đồ đã sẵn sàng chưa
-  TextEditingController _searchController = TextEditingController(); // Controller cho thanh tìm kiếm
-  List<String> _suggestions = [];
+  double _zoomLevel = 16.0;
+  late MapController _mapController;
+  bool _mapReady = false;
+  TextEditingController _searchController = TextEditingController();
+  // List<String> _suggestions = [];
+  List<Map<String, String>> _suggestionsGoongMap = [];
   LatLng? _searchedLocation;
-  List<LatLng> _routePolyline = []; // Danh sách điểm polyline của tuyến đường
-  List<String> _routeInstructions = []; // Biến lưu thông tin hướng dẫn chi tiết
+  // List<LatLng> _routePolyline = [];
+  // List<List<LatLng>> _routePolylines = [];
+  List<Map<String, dynamic>> _routePolylines = [];
+  List<List<String>> _routeInstructions = [];
+  String _travelTime = "";
+  // String _transportMode = "driving";
+  bool _showRouteInstructions = true;
+  bool _isDialogShown = false;
+  double _markerSize = 30;
+  final weatherService = WeatherSuggestionService();
+  OverlayEntry? _currentOverlayEntry;
+  LatLng? _startPosition;
+  LatLng? _endPosition;
+  bool _isSelectingStart = true;
+  bool _findRoutes = false;
+  double topSuggeslist = 90;
+  List<Place> places = [];
+  List<TrafficNotification> notifications = [];
+  GlobalKey<MapDisplayState> MapdisplayKey = GlobalKey<MapDisplayState>();
+  MapApiService _mapApiService = MapApiService();
+  int _selectedRouteIndex = 0;
+
+  void addNotification(TrafficNotification notification) {
+    setState(() {
+      MapdisplayKey.currentState?.addNotifications(notification);
+      notifications.add(notification);
+    });
+  }
+
+void _changeDisplayImage({bool? change}) {
+  setState(() {
+    // Truyền giá trị change vào phương thức changeDisplayImage của MapdisplayKey
+    MapdisplayKey.currentState?.changeDisplayImage(value: change);
+  });
+}
+  void _clearSearch() {
+    setState(() {
+      _searchController.clear();
+      // _suggestions.clear();
+      _suggestionsGoongMap.clear();
+      // _routePolyline.clear();
+      _routePolylines.clear();
+      _showRouteInstructions = false;
+      _startPosition = null;
+      _endPosition = null;
+      _findRoutes = false;
+      _changeDisplayImage();
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    _mapController = MapController(); // Khởi tạo controller
-    _getCurrentLocation(); // Lấy vị trí hiện tại khi bắt đầu
+    WidgetsBinding.instance.addObserver(this);
+    _mapController = MapController();
+    _initializeLocation();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // This method will update the current location
+  void updateLocation(double longitude, double latitude) {
+    setState(() {
+      _currentLocation = LatLng(latitude, longitude);
+    });
+    if (_mapReady) {
+      _mapController.move(_currentLocation, _zoomLevel);
+    }
+  }
+
+  void _changeScreen(context) {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => const ReportScreen()));
+  }
+
+  void _changePost(context, double longitude, double latitude) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => CreatePostScreen(
+                  longitude: longitude,
+                  latitude: latitude,
+                )));
+  }
+
+  void _toggleCameraOverlay(BuildContext context) {
+    if (_currentOverlayEntry != null) {
+      _closeOverlay();
+    } else {
+      _openCamera(context);
+    }
+  }
+
+  void _closeOverlay() {
+    if (_currentOverlayEntry != null) {
+      _currentOverlayEntry!.remove(); // Loại bỏ overlay khỏi màn hình
+      _currentOverlayEntry = null; // Xóa tham chiếu
+    }
+  }
+
+  void _onSelectPosition(LatLng position, bool isStartPosition) {
+    setState(() {
+      topSuggeslist = 90;
+      if (isStartPosition) {
+        _startPosition = position;
+      } else {
+        _endPosition = position;
+      }
+    });
+    _toggleCameraOverlay(context);
+    if (_startPosition != null && _endPosition != null) {
+      _closeOverlay();
+      _getRoute(_startPosition!, _endPosition!);
+    }
+  }
+
+  void _adjustZoomAndMarker() {
+    setState(() {
+      _zoomLevel += 1; // Tăng zoom lên 1
+      _markerSize = 50.0;
+    });
+    if (_mapReady) {
+      _mapController.move(_currentLocation, _zoomLevel);
+    }
+  }
+
+  void _handleCloseOverlayAndAdjustMap() {
+    _closeOverlay();
+    _adjustZoomAndMarker();
+  }
+
+  void _openCamera(BuildContext context) {
+    OverlayState overlayState = Overlay.of(context)!;
+
+    _currentOverlayEntry = OverlayEntry(
+      builder: (BuildContext context) {
+        return Positioned(
+          top: 30,
+          left: 0,
+          right: 0,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              height: 225,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius:
+                    BorderRadius.vertical(bottom: Radius.circular(16)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 10,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ChoseDirection(
+                onClose: _handleCloseOverlayAndAdjustMap,
+                isStartPosition: _isSelectingStart,
+                startPosition: _startPosition,
+                endPosition: _endPosition,
+                onTextChanged: (isStart, query) {
+                  setState(() {
+                    _isSelectingStart = isStart;
+                    _findRoutes = true;
+                    if (isStart) {
+                      topSuggeslist = 170;
+                    } else {
+                      topSuggeslist = 170;
+                    }
+                  });
+                  _onSearchChanged(query);
+                },
+                onMapIconPressed: (isStart) {
+                  setState(() {
+                    _isSelectingStart = isStart;
+                    _findRoutes = true;
+                    // _suggestions.clear();
+                    _suggestionsGoongMap.clear();
+                  });
+                  _toggleCameraOverlay(context);
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    overlayState.insert(_currentOverlayEntry!);
+  }
+
+
+  void _onMapTap(TapPosition position, LatLng latLng) {
+    if (_currentOverlayEntry == null && _findRoutes) {
+      _onSelectPosition(latLng, _isSelectingStart);
+    }
+  }
+
+  List<Marker> _buildMarkers() {
+    List<Marker> markers = [];
+    if (_startPosition != null) {
+      markers.add(
+        Marker(
+          point: _startPosition!,
+          width: 30,
+          height: 30,
+          child: const Icon(
+            Icons.location_on,
+            color: Colors.green, // Marker màu xanh lá cho điểm bắt đầu
+            size: 40,
+          ),
+        ),
+      );
+    }
+    if (_endPosition != null) {
+      markers.add(
+        Marker(
+          point: _endPosition!,
+          width: 30,
+          height: 30,
+          child: const Icon(
+            Icons.location_on,
+            color: Colors.blue, // Marker màu xanh dương cho điểm kết thúc
+            size: 40,
+          ),
+        ),
+      );
+    }
+    return markers;
+  }
+
+  Future<void> fetchPlaces() async {
+    try {
+      final result = await PlaceService().fetchNearestPlaces(
+          longitude:
+              _currentLocation.longitude, // Truyền longitude đúng tham số
+          latitude: _currentLocation.latitude,
+          radius: 1);
+      setState(() {
+        places = result.data;
+      });
+    } catch (e) {
+      print('Error fetching places: $e');
+    }
+  }
+
+  void _onMapReady() {
+    setState(() {
+      _mapReady = true;
+      if (_currentLocation != null) {
+        _mapController.move(_currentLocation, _zoomLevel);
+      }
+      if (!_isDialogShown) {
+        _isDialogShown = true;
+        weatherService.showWeatherSuggestion(
+            _currentLocation.longitude, _currentLocation.latitude, context);
+      }
+    });
+  }
+
+  Future<void> _initializeLocation() async {
+    if (widget.longitude != null && widget.latitude != null) {
+      _currentLocation = LatLng(widget.latitude!, widget.longitude!);
+      setState(() => _locationLoaded = true);
+      widget.onLocationChanged(widget.longitude!, widget.latitude!);
+    } else {
+      await _getCurrentLocation();
+    }
+    await fetchPlaces();
   }
 
   Future<void> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    // Kiểm tra dịch vụ vị trí có bật không
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
+    if (!await Geolocator.isLocationServiceEnabled()) {
       return Future.error('Location services are disabled.');
     }
-
-    // Kiểm tra quyền truy cập vị trí
-    permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         return Future.error('Location permissions are denied.');
       }
     }
-
     if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
+      return Future.error('Location permissions are permanently denied.');
     }
-
-    // Lấy vị trí hiện tại
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
-
     if (mounted) {
       setState(() {
         _currentLocation = LatLng(position.latitude, position.longitude);
+        widget.onLocationChanged(
+            _currentLocation.longitude!, _currentLocation.latitude!);
         _locationLoaded = true;
-        // Di chuyển bản đồ sau khi sẵn sàng
-        if (_mapReady) {
-          _mapController.move(_currentLocation, _zoomLevel);
-        }
+        if (_mapReady) _mapController.move(_currentLocation, _zoomLevel);
       });
     }
   }
 
   Future<void> _searchLocation(String query) async {
-    // Gọi API Mapbox để lấy tọa độ từ địa chỉ
-    final url =
-        'https://api.mapbox.com/geocoding/v5/mapbox.places/$query.json?access_token=pk.eyJ1IjoibGV2cGh1b2N0aGluaCIsImEiOiJjbTJva29zcWkwZ256MnFzZnQwb2o0ZHI3In0.ohOhkig08r5vOgSMgb-WZg';
-
-    final response = await http.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-
-      if (data['features'].isNotEmpty) {
-        final firstResult = data['features'][0];
-        final coordinates = firstResult['geometry']['coordinates'];
-        final latLng = LatLng(coordinates[1], coordinates[0]);
-
-        // Di chuyển bản đồ tới vị trí đã tìm thấy
-        setState(() {
-          _searchedLocation = latLng;
-        });
-        _mapController.move(latLng, _zoomLevel);
-        _getRoute(_currentLocation, latLng);
+    // LatLng? location = await MapApiService.searchLocation(query);
+    LatLng? location = await MapApiService.getPlaceCoordinates(query);
+    topSuggeslist = 90;
+    if (location != null) {
+      setState(() => _searchedLocation = location);
+      _mapController.move(location, _zoomLevel);
+      if (_findRoutes) {
+        if (_isSelectingStart) {
+          _startPosition = location;
+        } else {
+          _endPosition = location;
+        }
       } else {
-        print('No results found for the address.');
+        _currentLocation = location;
+        _markerSize = 50.0;
       }
-    } else {
-      print('API request failed: ${response.statusCode}');
+    }
+    if (_startPosition != null && _endPosition != null) {
+      _closeOverlay();
+      // _suggestions.clear();
+      _suggestionsGoongMap.clear();
+      _getRoute(_startPosition!, _endPosition!);
     }
   }
 
-  Future<void> _selectSuggestion(String suggestion) async {
-    // Khi người dùng chọn gợi ý, tìm kiếm và di chuyển bản đồ tới vị trí tương ứng
-    _searchController.text = suggestion;
-    _suggestions.clear();
-    _searchLocation(suggestion);
+  Future<void> _getRoute(LatLng start, LatLng destination) async {
+    try {
+      final result =
+          await _mapApiService.getRoutesWithInstructions(start, destination);
+      final routesWithInstructions = result['routesWithInstructions'] as List;
+
+      setState(() {
+        _routePolylines = routesWithInstructions.map((route) {
+          // Directly use the 'coordinates' (which should be a List<LatLng>)
+          final coordinates = route['coordinates']
+              as List<LatLng>; // No need to map to LatLng again
+          final recommended = route['recommended'] as bool;
+          final report = route['report'] as List<Map<String, dynamic>>;
+          return {
+            'coordinates': coordinates,
+            'recommended': recommended,
+            'report': report,
+          };
+        }).toList();
+
+        if(_routePolylines != null){
+          _changeDisplayImage(change: true);
+        }
+
+        _routeInstructions = routesWithInstructions
+            .map((route) => route['instructions'] as List<String>)
+            .toList();
+        _showRouteInstructions = true;
+      });
+    } catch (e) {
+      print("Error fetching route and instructions: $e");
+    }
   }
 
   Future<void> _onSearchChanged(String query) async {
     if (query.isNotEmpty) {
-      // Gọi API để lấy gợi ý
-      final url =
-          'https://api.mapbox.com/geocoding/v5/mapbox.places/$query.json?access_token=pk.eyJ1IjoibGV2cGh1b2N0aGluaCIsImEiOiJjbTJva29zcWkwZ256MnFzZnQwb2o0ZHI3In0.ohOhkig08r5vOgSMgb-WZg';
-      final response = await http.get(Uri.parse(url));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-
-        setState(() {
-          _suggestions = data['features']
-              .map<String>((item) => item['place_name'].toString())
-              .toList();
-        });
-      } else {
-        print('API request failed: ${response.statusCode}');
-      }
+      // List<String> suggestions = await MapApiService.getSuggestions(query);
+      List<Map<String, String>> suggestions =
+          await MapApiService.getSuggestionsVerGoongMap(
+              query, _currentLocation.latitude, _currentLocation.longitude);
+      setState(() => _suggestionsGoongMap = suggestions);
     } else {
-      setState(() {
-        _suggestions.clear();
-      });
+      setState(() => _suggestionsGoongMap.clear());
     }
   }
-  void _onWeatherButtonPressed() {
-    // Lấy kích thước màn hình
-    final screenSize = MediaQuery.of(context).size;
-    // Tính toán vị trí của button
-    final buttonOffset = Offset(10.0, screenSize.height * 0.15);
 
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const HomeScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = 0.0;
-          const end = 1.0;
-          const curve = Curves.easeInOut;
-
-          // Điều chỉnh vị trí bắt đầu phóng theo buttonOffset
-          var scaleAnimation = Tween<double>(begin: begin, end: end).animate(
-            CurvedAnimation(
-              parent: animation,
-              curve: curve,
-            ),
-          );
-
-          var opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-            CurvedAnimation(
-              parent: animation,
-              curve: curve,
-            ),
-          );
-
-          // Tính toán offset cho màn hình mới
-          var scaleTransform = Matrix4.identity()..scale(scaleAnimation.value);
-
-          return Transform(
-            transform: scaleTransform,
-            alignment:
-                Alignment.topLeft, // Hoặc điều chỉnh để phù hợp với yêu cầu
-            child: FadeTransition(
-              opacity: opacityAnimation,
-              child: child,
-            ),
-          );
-        },
-      ),
+  Future<void> _selectSuggestion(String suggestion) async {
+    topSuggeslist = 90;
+    FocusScope.of(context).unfocus();
+    // Tìm kiếm place_id từ _suggestionsGoongMap dựa trên description
+    final selectedItem = _suggestionsGoongMap.firstWhere(
+      (item) => item['description'] == suggestion,
+      orElse: () => {},
     );
-  }
-
-  Future<void> _getRoute(LatLng start, LatLng destination) async {
-    // Gọi API Mapbox Directions để lấy tuyến đường
-    final url =
-        'https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${destination.longitude},${destination.latitude}?geometries=geojson&steps=true&access_token=pk.eyJ1IjoibGV2cGh1b2N0aGluaCIsImEiOiJjbTJva29zcWkwZ256MnFzZnQwb2o0ZHI3In0.ohOhkig08r5vOgSMgb-WZg';
-
-    final response = await http.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data['routes'].isNotEmpty) {
-        final route = data['routes'][0]['geometry']['coordinates'] as List;
-        List<LatLng> polylinePoints =
-            route.map((point) => LatLng(point[1], point[0])).toList();
-
-        // Lấy thông tin hướng dẫn từ tất cả các bước
-        final legs = data['routes'][0]['legs'] as List;
-        List<String> instructions = [];
-        for (var leg in legs) {
-          final steps = leg['steps'] as List;
-          for (var step in steps) {
-            instructions.add(step['maneuver']['instruction'].toString());
-          }
-        }
-
-        setState(() {
-          _routePolyline = polylinePoints;
-          _routeInstructions = instructions;
-        });
-      } else {
-        print('No route data found in the response.');
-      }
-    } else {
-      print('Failed to load route: ${response.statusCode}');
+    final placeId = selectedItem['place_id'];
+    // _searchController.text = suggestion;
+    // _suggestions.clear();
+    _suggestionsGoongMap.clear();
+    // await _searchLocation(suggestion);
+    if (placeId != null) {
+      _searchController.text = suggestion;
+      _suggestionsGoongMap.clear();
+      await _searchLocation(placeId);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          _locationLoaded
-              ? FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: _currentLocation,
-                    initialZoom: _zoomLevel,
-                    onMapReady: () {
-                      setState(() {
-                        _mapReady = true;
-                        _mapController.move(_currentLocation, _zoomLevel);
-                      });
-                    },
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibGV2cGh1b2N0aGluaCIsImEiOiJjbTJva29zcWkwZ256MnFzZnQwb2o0ZHI3In0.ohOhkig08r5vOgSMgb-WZg",
-                    ),
-                    if (_routePolyline.isNotEmpty)
-                      PolylineLayer(
-                        polylines: [
-                          Polyline(
-                            points: _routePolyline,
-                            strokeWidth: 4.0,
-                            color: Colors.blue, // Màu của tuyến đường
-                          ),
-                        ],
-                      ),
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: _currentLocation,
-                          width: 30.0,
-                          height: 30.0,
-                          child: Icon(Icons.my_location, color: Colors.red),
-                        ),
-                        if (_searchedLocation != null)
-                          Marker(
-                            point: _searchedLocation!,
-                            width: 30.0,
-                            height: 30.0,
-                            child: Icon(Icons.location_pin, color: Colors.blue),
-                          ),
-                      ],
-                    ),
-                  ],
-                )
-              : Center(child: CircularProgressIndicator()),
-
-          // Thanh tìm kiếm đặt ở trên
-          Positioned(
-            top: 40,
+          if (_locationLoaded)
+            MapDisplay(
+              key: MapdisplayKey,
+              currentLocation: _currentLocation,
+              // routePolyline: _routePolyline,
+              routePolylines: _routePolylines,
+              mapController: _mapController,
+              mapReady: _mapReady,
+              onMapReady: _onMapReady,
+              onMapTap: _onMapTap, // Gọi khi nhấn vào bản đồ
+              markerSize: _markerSize,
+              additionalMarkers: _buildMarkers(),
+              places: places,
+              onDirectionPressed: (LatLng start, LatLng destination) {
+                Navigator.pop(context); // Đóng modal
+                _getRoute(start, destination); // Gọi hàm ở widget cha
+              },
+              notifications: notifications,
+            ),
+          
+          custom.SearchBar(
+            searchController: _searchController,
+            onSearchChanged: _onSearchChanged,
+            onSearchSubmitted: () => _searchLocation(_searchController.text),
+            onClear: _clearSearch,
+            top: 40, // Định vị theo yêu cầu
             left: 10,
             right: 10,
-            child: Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-              width: double.infinity,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Tìm kiếm địa chỉ...',
-                        border: InputBorder.none,
-                      ),
-                      onChanged: _onSearchChanged,
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.search),
-                    onPressed: () {
-                      if (_searchController.text.isNotEmpty) {
-                        _searchLocation(_searchController.text);
-                      }
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.close),
-                    onPressed: () {
-                      setState(() {
-                        _searchController.clear();
-                        _suggestions.clear();
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
           ),
-
-          // Hiển thị hướng dẫn chi tiết
-          if (_routeInstructions.isNotEmpty)
-            Positioned(
-              bottom: 100,
-              left: 10,
-              right: 10,
-              child: Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 5,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hướng dẫn chi tiết',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    ..._routeInstructions.map((instruction) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Text(instruction),
-                        )),
-                  ],
-                ),
-              ),
+          if (_showRouteInstructions && _routeInstructions.isNotEmpty)
+            RouteInstructions(
+              routeInstructions: _routeInstructions[0],
+              travelTime: _travelTime,
+              bottomPosition: 50, // Định vị trí tính từ đáy màn hình
             ),
-
-          // Hiển thị gợi ý dưới thanh tìm kiếm
-          Positioned(
-            top: 100,
-            left: 10,
-            right: 10,
-            child: _suggestions.isNotEmpty
-                ? Container(
-                    constraints: BoxConstraints(
-                      maxHeight: 200,
-                    ),
-                    color: Colors.white,
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: _suggestions.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(_suggestions[index]),
-                          onTap: () => _selectSuggestion(_suggestions[index]),
-                        );
-                      },
-                    ),
-                  )
-                : SizedBox.shrink(),
-          ),
-          Positioned(
-            top: 160, // Đưa icon xuống dưới thanh tìm kiếm
+          WeatherIcon(
+            onPressed: () => onWeatherButtonPressed(context),
+            top: 160, // Định vị trí theo yêu cầu
             left: 20,
-            child: _suggestions
-                    .isEmpty // Only show the icon if there are no suggestions
-                ? Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.blue, // Màu nền cho icon
-                      shape: BoxShape.circle, // Bo tròn
-                    ),
-                    child: IconButton(
-                      icon: Icon(Icons.cloudy_snowing,
-                          size: 30, color: Colors.white), // Icon thời tiết
-                      onPressed: _onWeatherButtonPressed,
-                    ),
-                  )
-                : SizedBox.shrink(), // Hide the icon when there are suggestions
           ),
-
-          // Nút nổi (zoom và vị trí hiện tại)
-          Positioned(
-            bottom: 50,
+          FloatingActionButtons(
+            onZoomIn: () {
+              setState(() {
+                _zoomLevel++;
+                _mapController.move(_currentLocation, _zoomLevel);
+              });
+            },
+            onZoomOut: () {
+              setState(() {
+                _zoomLevel--;
+                _mapController.move(_currentLocation, _zoomLevel);
+              });
+            },
+            onCurrentLocation: _getCurrentLocation,
+            bottom: 50, // Định vị theo yêu cầu
             right: 10,
-            child: Column(
-              children: [
-                FloatingActionButton(
-                  heroTag: "zoom_in",
-                  onPressed: () {
-                    setState(() {
-                      _zoomLevel++;
-                      _mapController.move(_currentLocation, _zoomLevel);
-                    });
-                  },
-                  child: Icon(Icons.zoom_in),
-                ),
-                SizedBox(height: 10),
-                FloatingActionButton(
-                  heroTag: "zoom_out",
-                  onPressed: () {
-                    setState(() {
-                      _zoomLevel--;
-                      _mapController.move(_currentLocation, _zoomLevel);
-                    });
-                  },
-                  child: Icon(Icons.zoom_out),
-                ),
-                SizedBox(height: 10),
-                FloatingActionButton(
-                  heroTag: "location",
-                  onPressed: () {
-                    _getCurrentLocation();
-                  },
-                  child: Icon(Icons.my_location),
-                ),
-              ],
-            ),
           ),
+          FloatingReportButton(
+            changeScreen: () => _changeScreen(context),
+            openCamera: () => _toggleCameraOverlay(context),
+            poststatus: () => _changePost(
+                context, _currentLocation.longitude, _currentLocation.latitude),
+            changeHidden: _changeDisplayImage,
+          ),
+          if (_suggestionsGoongMap.isNotEmpty)
+            SuggestionsList(
+              // suggestions: _suggestions,
+              suggestions: _suggestionsGoongMap
+                  .map((item) => item['description'] ?? '')
+                  .toList(),
+              onSuggestionSelected: _selectSuggestion,
+              top: topSuggeslist,
+            ),
         ],
       ),
     );
