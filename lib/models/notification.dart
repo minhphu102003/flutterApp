@@ -21,7 +21,7 @@ class TrafficNotification {
     required this.img,
   });
 
-factory TrafficNotification.fromJson(Map<String, dynamic> json) {
+factory TrafficNotification.  fromJson(Map<String, dynamic> json) {
   return TrafficNotification(
     title: json['title'] as String,
     content: json['content'] as String,

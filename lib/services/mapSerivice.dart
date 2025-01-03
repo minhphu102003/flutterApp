@@ -303,81 +303,105 @@ class MapApiService {
     }
   }
 
-  Future<Map<String, dynamic>> getRoutesWithInstructions(
-      LatLng start, LatLng destination,
-      {String vehicleType = 'drive'}) async {
-    try {
-      // Gửi yêu cầu API
-      final response = await _apiClient.dio.get(
-        '/routes',
-        queryParameters: {
-          'start': '${start.longitude},${start.latitude}',
-          'end': '${destination.longitude},${destination.latitude}',
-          'vehicleType': vehicleType,
-        },
-      );
+Future<Map<String, dynamic>> getRoutesWithInstructions(
+    LatLng start, LatLng destination,
+    {String vehicleType = 'drive'}) async {
+  try {
+    // Gửi yêu cầu API
+    final response = await _apiClient.dio.get(
+      '/routes',
+      queryParameters: {
+        'start': '${start.longitude},${start.latitude}',
+        'end': '${destination.longitude},${destination.latitude}',
+        'vehicleType': vehicleType,
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final data = response.data;
+    if (response.statusCode == 200) {
+      final data = response.data;
 
-        if (data['routes'] != null) {
-          List<Map<String, dynamic>> routesWithInstructions = [];
+      if (data['routes'] != null) {
+        List<Map<String, dynamic>> routesWithInstructions = [];
 
-          for (var route in data['routes']) {
-            // Giải mã polyline
-            List<LatLng> routeCoordinates = [];
-            String encodedPolyline = route['geometry'];
-            final decodedPoints =
-                PolylinePoints().decodePolyline(encodedPolyline);
-            routeCoordinates.addAll(
-              decodedPoints
-                  .map((point) => LatLng(point.latitude, point.longitude)),
-            );
+        for (var route in data['routes']) {
+          // Giải mã polyline
+          List<LatLng> routeCoordinates = [];
+          String encodedPolyline = route['geometry'];
+          final decodedPoints =
+              PolylinePoints().decodePolyline(encodedPolyline);
+          routeCoordinates.addAll(
+            decodedPoints
+                .map((point) => LatLng(point.latitude, point.longitude)),
+          );
 
-            // Lấy danh sách intersections
-            List<LatLng> intersections = [];
-            List<String> instructions = [];
+          // Lấy danh sách intersections
+          List<LatLng> intersections = [];
+          List<String> instructions = [];
 
-            for (var leg in route['legs']) {
-              for (var step in leg['steps']) {
-                // Xử lý intersection
-                for (var intersection in step['intersections']) {
-                  intersections.add(
-                    LatLng(intersection['location'][1],
-                        intersection['location'][0]),
-                  );
-                }
-
-                // Xử lý instructions
-                String name = step['name'] as String;
-                if (name.contains(' ')) {
-                  name = name.substring(name.indexOf(' ') + 1).trim();
-                }
-                final distance = (step['distance'] as num).toDouble();
-                instructions
-                    .add('Passing $name (${distance.toStringAsFixed(1)} m)');
+          for (var leg in route['legs']) {
+            for (var step in leg['steps']) {
+              // Xử lý intersection
+              for (var intersection in step['intersections']) {
+                intersections.add(
+                  LatLng(intersection['location'][1],
+                      intersection['location'][0]),
+                );
               }
+
+              // Xử lý instructions
+              String name = step['name'] as String;
+              if (name.contains(' ')) {
+                name = name.substring(name.indexOf(' ') + 1).trim();
+              }
+              final distance = (step['distance'] as num).toDouble();
+              instructions
+                  .add('Passing $name (${distance.toStringAsFixed(1)} m)');
             }
-            final bool recommended = route['recommended'] ?? false;
-            // Lưu kết quả cho mỗi route
-            routesWithInstructions.add({
-              'coordinates': routeCoordinates,
-              'instructions': instructions,
-              'intersections': intersections,
-              'recommended': recommended,
-            });
           }
-          return {'routesWithInstructions': routesWithInstructions};
-        } else {
-          throw Exception("No routes found");
+
+          final bool recommended = route['recommended'] ?? false;
+
+          // Safely handle the 'report' field
+          List<Map<String, dynamic>> report = [];
+          if (!recommended && route['report'] != null) {
+            final reportList = route['report'] as List<dynamic>;
+            report = reportList.map((rep) {
+              if (rep is Map<String, dynamic>) {
+                return {
+                  'trafficVolume': rep['trafficVolume'],
+                  'congestionLevel': rep['congestionLevel'],
+                  'typeReport': rep['typeReport'],
+                  'img': rep['img'],
+                  'timestamp': rep['timestamp'],
+                  'latitude': rep['latitude'],
+                  'longitude': rep['longitude'],
+                };
+              } else {
+                throw Exception("Invalid report format");
+              }
+            }).toList();
+          }
+
+          // Lưu kết quả cho mỗi route
+          routesWithInstructions.add({
+            'coordinates': routeCoordinates,
+            'instructions': instructions,
+            'intersections': intersections,
+            'recommended': recommended,
+            'report': report,
+          });
         }
+        return {'routesWithInstructions': routesWithInstructions};
       } else {
-        throw Exception("Failed to fetch routes: ${response.statusCode}");
+        throw Exception("No routes found");
       }
-    } catch (error) {
-      print("Error fetching routes and instructions: $error");
-      throw error;
+    } else {
+      throw Exception("Failed to fetch routes: ${response.statusCode}");
     }
+  } catch (error) {
+    print("Error fetching routes and instructions: $error");
+    throw error;
   }
+}
 
 }

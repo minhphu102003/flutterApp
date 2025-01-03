@@ -387,10 +387,12 @@ void _changeDisplayImage({bool? change}) {
           // Directly use the 'coordinates' (which should be a List<LatLng>)
           final coordinates = route['coordinates']
               as List<LatLng>; // No need to map to LatLng again
-
+          final recommended = route['recommended'] as bool;
+          final report = route['report'] as List<Map<String, dynamic>>;
           return {
             'coordinates': coordinates,
-            'recommended': route['recommended'] as bool
+            'recommended': recommended,
+            'report': report,
           };
         }).toList();
 

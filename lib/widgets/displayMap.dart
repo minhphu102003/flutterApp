@@ -100,7 +100,7 @@ class MapDisplayState extends State<MapDisplay> {
       setState(() {
         widget.notifications.removeWhere((notification) {
           Duration diff = currentTime.difference(notification.timestamp);
-          return diff.inMinutes > 10; // Kiểm tra xem đã qua 2 phút chưa
+          return diff.inMinutes > 5; // Kiểm tra xem đã qua 2 phút chưa
         });
       });
     }

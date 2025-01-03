@@ -95,7 +95,13 @@ class NotificationCusState extends State<NotificationCus> {
                           ),
                           child: ClipOval(
                             child: Image.asset(
-                              'assets/images/traffic_jam.png',
+                              notification.title.startsWith('T')
+                                  ? 'assets/images/traffic_jam.png'
+                                  : notification.title.startsWith('F')
+                                      ? 'assets/images/flood.png'
+                                      : notification.title.startsWith('R')
+                                          ? 'assets/images/roadWork.png'
+                                          : 'assets/images/accident.png',
                               width: 60,
                               height: 60,
                               fit: BoxFit.cover,

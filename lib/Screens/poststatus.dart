@@ -131,10 +131,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       appBar: AppBar(
         title: const Text('Create Post'),
         actions: [
-          const CircleAvatar(
-            radius: 20,
-            backgroundImage: NetworkImage('https://via.placeholder.com/150'),
-          ),
           const SizedBox(width: 10),
           IconButton(
             icon: const Icon(Icons.close),
@@ -157,7 +153,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   const CircleAvatar(
                     radius: 30,
                     backgroundImage:
-                        NetworkImage('https://via.placeholder.com/150'),
+                        AssetImage(
+                        'assets/images/defaultAvatar.png'),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -174,10 +171,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   const SizedBox(width: 10),
                   Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.photo),
-                        onPressed: _pickImages, // Gọi hàm chọn ảnh từ thư viện
-                      ),
+                      // IconButton(
+                      //   icon: const Icon(Icons.photo),
+                      //   onPressed: _pickImages, // Gọi hàm chọn ảnh từ thư viện
+                      // ),
                       IconButton(
                         icon: const Icon(Icons.camera_alt),
                         onPressed: _captureImage, // Gọi hàm chụp ảnh từ camera
@@ -286,16 +283,20 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             ),
             const Divider(),
             Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: ElevatedButton(
-                  onPressed: isLoading
-                      ? null
-                      : _sendReport, // Vô hiệu hóa nút nếu đang loading
-                  child: isLoading
-                      ? CircularProgressIndicator() // Hiển thị loading khi đang gửi báo cáo
-                      : Text(
-                          'Submit Report'), // Hiển thị nút bình thường nếu không loading
-                )),
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton(
+                onPressed: isLoading ? null : _sendReport,
+                child: isLoading
+                    ? const SizedBox(
+                        height: 20, // Chiều cao của loading
+                        width: 20,  // Chiều rộng của loading
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.0, // Độ dày của đường tròn loading
+                        ),
+                      )
+                    : const Text('Submit Report'),
+              ),
+            ),
           ],
         ),
       ),
