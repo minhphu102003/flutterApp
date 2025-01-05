@@ -48,18 +48,6 @@ class _ProfileState extends State<Profile> {
     _loadProfile();
   }
 
-// void _navigateToLogin() {
-//   SharedPreferences.getInstance().then((prefs) {
-//     prefs.remove('token'); // Xóa token cũ để đảm bảo không sử dụng lại
-//   });
-
-//   // Điều hướng đến màn hình Login
-//   Navigator.pushReplacement(
-//     context,
-//     MaterialPageRoute(builder: (context) => const Login()),
-//   );
-// }
-
   Future<void> _loadProfile() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -136,7 +124,7 @@ class _ProfileState extends State<Profile> {
                             width: 150.0,
                             fit: BoxFit.cover,
                           )
-                        : Icon(
+                        : const Icon(
                             Icons.account_circle,
                             size: 150.0,
                             color: Colors.grey,

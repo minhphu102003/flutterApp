@@ -14,6 +14,7 @@ import 'package:flutterApp/widgets/commentInput.dart';
 import 'package:flutterApp/widgets/customDialog.dart';
 import 'package:flutterApp/widgets/comment.dart';
 import 'package:flutterApp/helper/image_utils.dart';
+import 'package:flutterApp/helper/appConfig.dart';
 
 class PlaceDetailScreen extends StatefulWidget {
   final place_model.Place place;
@@ -47,7 +48,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   String? token;
   final ImagePicker _picker = ImagePicker();
   bool _isCommenting = false;
-  final String baseURL = 'http://10.0.2.2:8000/uploads/';
+  final String baseURL = AppConfig.urlLocalUploadAndroi;
 
   @override
   void initState() {
@@ -67,7 +68,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
       });
       showErrorDialog(context, 'Comment deleted successfully');
     } catch (e) {
-      print('Error deleting comment: $e');
       showErrorDialog(context, 'Failed to delete comment');
     }
   }

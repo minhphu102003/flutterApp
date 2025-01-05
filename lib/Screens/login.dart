@@ -70,7 +70,7 @@ Widget build(BuildContext context) {
                       hintText: "Email",
                       controller: emailControler,
                       validator: emailValidator,
-                      prefixIcon: Icon(Icons.email),
+                      prefixIcon: const Icon(Icons.email),
                       onChanged: (value) {
                         email = value;
                       },
@@ -81,7 +81,7 @@ Widget build(BuildContext context) {
                       hintText: "Password",
                       controller: passwordController,
                       validator: passwordValidator,
-                      prefixIcon: Icon(Icons.lock),
+                      prefixIcon: const Icon(Icons.lock),
                       onChanged: (value) {
                         password = value;
                       },
@@ -98,7 +98,7 @@ Widget build(BuildContext context) {
                             passwordController.clear();
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => BottomNav()),
+                              MaterialPageRoute(builder: (context) => const BottomNav()),
                             );
                           } else {
                             showCustomDialog(
@@ -117,7 +117,7 @@ Widget build(BuildContext context) {
                       child: Container(
                         width: MediaQuery.of(context).size.width,
                         padding: const EdgeInsets.symmetric(vertical: 13.0, horizontal: 30.0),
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: Color(0xFF273671),
                         ),
                         child: const Center(
@@ -141,7 +141,7 @@ Widget build(BuildContext context) {
                         height: MediaQuery.of(context).size.height / 25,
                         padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 10.0),
                         decoration: BoxDecoration(
-                          color: Color.fromARGB(255, 92, 108, 173),
+                          color: const Color.fromARGB(255, 92, 108, 173),
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                         child: const Center(
@@ -159,7 +159,7 @@ Widget build(BuildContext context) {
                     const SizedBox(height: 20.0),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => ForgotPassword()));
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ForgotPassword()));
                       },
                       child: const Text(
                         "Forgot Password?",

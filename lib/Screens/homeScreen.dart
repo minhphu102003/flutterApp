@@ -108,7 +108,7 @@ class CustomSearchBar extends StatefulWidget {
 
 class _CustomSearchBarState extends State<CustomSearchBar> {
   // Danh sách gợi ý thành phố cho người dùng
-  List<String> _citiesSuggestion = [
+  final List<String> _citiesSuggestion = [
     'New York',
     'Tokyo',
     'Dubai',

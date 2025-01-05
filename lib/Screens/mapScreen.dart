@@ -26,11 +26,10 @@ class MapScreen extends StatefulWidget {
   final Function(double longitude, double latitude) onLocationChanged;
 
   const MapScreen(
-      {Key? key,
+      {super.key,
       required this.onLocationChanged,
       this.longitude,
-      this.latitude})
-      : super(key: key);
+      this.latitude});
 
   @override
   State<MapScreen> createState() => MapScreenState();
@@ -45,15 +44,11 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   late MapController _mapController;
   bool _mapReady = false;
   TextEditingController _searchController = TextEditingController();
-  // List<String> _suggestions = [];
   List<Map<String, String>> _suggestionsGoongMap = [];
   LatLng? _searchedLocation;
-  // List<LatLng> _routePolyline = [];
-  // List<List<LatLng>> _routePolylines = [];
   List<Map<String, dynamic>> _routePolylines = [];
   List<List<String>> _routeInstructions = [];
   String _travelTime = "";
-  // String _transportMode = "driving";
   bool _showRouteInstructions = true;
   bool _isDialogShown = false;
   double _markerSize = 30;
@@ -79,16 +74,13 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
 
 void _changeDisplayImage({bool? change}) {
   setState(() {
-    // Truyền giá trị change vào phương thức changeDisplayImage của MapdisplayKey
     MapdisplayKey.currentState?.changeDisplayImage(value: change);
   });
 }
   void _clearSearch() {
     setState(() {
       _searchController.clear();
-      // _suggestions.clear();
       _suggestionsGoongMap.clear();
-      // _routePolyline.clear();
       _routePolylines.clear();
       _showRouteInstructions = false;
       _startPosition = null;
@@ -112,7 +104,6 @@ void _changeDisplayImage({bool? change}) {
     super.dispose();
   }
 
-  // This method will update the current location
   void updateLocation(double longitude, double latitude) {
     setState(() {
       _currentLocation = LatLng(latitude, longitude);
@@ -294,7 +285,6 @@ void _changeDisplayImage({bool? change}) {
         places = result.data;
       });
     } catch (e) {
-      print('Error fetching places: $e');
     }
   }
 
@@ -384,7 +374,6 @@ void _changeDisplayImage({bool? change}) {
 
       setState(() {
         _routePolylines = routesWithInstructions.map((route) {
-          // Directly use the 'coordinates' (which should be a List<LatLng>)
           final coordinates = route['coordinates']
               as List<LatLng>; // No need to map to LatLng again
           final recommended = route['recommended'] as bool;
@@ -406,7 +395,6 @@ void _changeDisplayImage({bool? change}) {
         _showRouteInstructions = true;
       });
     } catch (e) {
-      print("Error fetching route and instructions: $e");
     }
   }
 
@@ -425,16 +413,12 @@ void _changeDisplayImage({bool? change}) {
   Future<void> _selectSuggestion(String suggestion) async {
     topSuggeslist = 90;
     FocusScope.of(context).unfocus();
-    // Tìm kiếm place_id từ _suggestionsGoongMap dựa trên description
     final selectedItem = _suggestionsGoongMap.firstWhere(
       (item) => item['description'] == suggestion,
       orElse: () => {},
     );
     final placeId = selectedItem['place_id'];
-    // _searchController.text = suggestion;
-    // _suggestions.clear();
     _suggestionsGoongMap.clear();
-    // await _searchLocation(suggestion);
     if (placeId != null) {
       _searchController.text = suggestion;
       _suggestionsGoongMap.clear();
@@ -452,7 +436,6 @@ void _changeDisplayImage({bool? change}) {
             MapDisplay(
               key: MapdisplayKey,
               currentLocation: _currentLocation,
-              // routePolyline: _routePolyline,
               routePolylines: _routePolylines,
               mapController: _mapController,
               mapReady: _mapReady,

@@ -31,7 +31,6 @@ class _ReportScreenState extends State<ReportScreen> {
         limit: 10, // Limit to 10 items
       );
     });
-    print(_futureReports);
   }
 
   @override

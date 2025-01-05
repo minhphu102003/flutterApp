@@ -68,14 +68,10 @@ Future<void> _initializeLocationAndFetchData() async {
       userLatitude = latitude;
       userLongitude = longitude;
     });
-    print(userLatitude);
-    print(userLongitude);
-
     // Gọi các hàm API
     await fetchPlaces(latitude, longitude);
     await fetchTopPlaces(latitude, longitude);
   } catch (e) {
-    print('Error initializing location: $e');
   }
 }
 Future<void> fetchPlaces(double latitude, double longitude) async {
@@ -88,7 +84,6 @@ Future<void> fetchPlaces(double latitude, double longitude) async {
       places = result.data;
     });
   } catch (e) {
-    print('Error fetching places: $e');
   }
 }
 
@@ -103,7 +98,6 @@ Future<void> fetchTopPlaces(double latitude, double longitude) async {
       topPlaces = result.data;
     });
   } catch (e) {
-    print('Error fetching top places: $e');
   }
 }
 
@@ -128,7 +122,6 @@ Future<void> fetchPlaceByCategory(String type) async {
       );
     }
   } catch (e) {
-    print('Error fetching places by category: $e');
   }
 }
 
@@ -150,7 +143,6 @@ Future<void> fetchPlaceByCategory(String type) async {
         );
       }
     } catch (e) {
-      print('Error searching places: $e');
     }
   }
 

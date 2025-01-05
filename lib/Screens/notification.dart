@@ -12,14 +12,13 @@ class NotificationCus extends StatefulWidget {
 }
 
 class NotificationCusState extends State<NotificationCus> {
-  // GlobalKey<NotificationCusState> notificationKey = GlobalKey<NotificationCusState>();
   late List<TrafficNotification> _notifications;
   String formatDate(DateTime? dateTime) {
   if (dateTime == null) {
     return 'N/A'; // Return a placeholder if dateTime is null
   }
   // Cộng thêm 7 giờ trước khi format
-  final adjustedDateTime = dateTime.add(Duration(hours: 7));
+  final adjustedDateTime = dateTime.add(const Duration(hours: 7));
   return DateFormat('HH:mm dd/MM/yyyy').format(adjustedDateTime);
 }
     @override
@@ -178,7 +177,7 @@ class NotificationCusState extends State<NotificationCus> {
                         ],
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 60,
                       child: Center(
                         child: Icon(

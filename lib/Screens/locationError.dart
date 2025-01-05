@@ -50,8 +50,16 @@ class LocationPermissionErrrorDisplay extends StatelessWidget {
                       backgroundColor: primaryBlue,
                       textStyle: mediumText,
                       padding: const EdgeInsets.all(12.0),
-                      shape: StadiumBorder(),
+                      shape: const StadiumBorder(),
                     ),
+                    onPressed: weatherProv.isLoading ? null : () async {
+                      // Mở cài đặt ứng dụng nếu quyền bị từ chối vĩnh viễn, hoặc yêu cầu quyền nếu chưa được cấp
+                      if (weatherProv.locationPermission == LocationPermission.deniedForever) {
+                        await Geolocator.openAppSettings();
+                      } else {
+                        weatherProv.getWeatherData(context, notify: true);
+                      }
+                    },
                     child: weatherProv.isLoading 
                       ? const SizedBox(
                           width: 16.0,
@@ -66,14 +74,6 @@ class LocationPermissionErrrorDisplay extends StatelessWidget {
                             ? 'Open App Setting'
                             : 'Request Permission',
                         ),
-                    onPressed: weatherProv.isLoading ? null : () async {
-                      // Mở cài đặt ứng dụng nếu quyền bị từ chối vĩnh viễn, hoặc yêu cầu quyền nếu chưa được cấp
-                      if (weatherProv.locationPermission == LocationPermission.deniedForever) {
-                        await Geolocator.openAppSettings();
-                      } else {
-                        weatherProv.getWeatherData(context, notify: true);
-                      }
-                    },
                   ),
                   const SizedBox(height: 4.0),
                   // Nút để khởi động lại yêu cầu nếu quyền bị từ chối vĩnh viễn
@@ -82,10 +82,10 @@ class LocationPermissionErrrorDisplay extends StatelessWidget {
                       style: TextButton.styleFrom(
                         foregroundColor: primaryBlue
                       ),
-                      child: Text('Restart'),
                       onPressed: weatherProv.isLoading 
                         ? null 
                         : () => weatherProv.getWeatherData(context, notify: true),
+                      child: const Text('Restart'),
                     )
                 ],
               ),
@@ -99,7 +99,7 @@ class LocationPermissionErrrorDisplay extends StatelessWidget {
 
 // Lớp để hiển thị thông báo lỗi khi dịch vụ vị trí bị tắt
 class LocationServiceErrorDisplay extends StatefulWidget {
-  const LocationServiceErrorDisplay({Key? key}) : super(key: key);
+  const LocationServiceErrorDisplay({super.key});
   
   @override
   State<LocationServiceErrorDisplay> createState() {
@@ -118,7 +118,6 @@ class _LocationServiceErrorDisplayState extends State<LocationServiceErrorDispla
     serviceStatusStream.onData((ServiceStatus status) {
       // Nếu dịch vụ vị trí được bật, yêu cầu dữ liệu thời tiết
       if (status == ServiceStatus.enabled) {
-        print('Enable');
         Provider.of<Weatherprovider>(context, listen: false)
             .getWeatherData(context);
       }
@@ -165,10 +164,10 @@ class _LocationServiceErrorDisplayState extends State<LocationServiceErrorDispla
                   backgroundColor: primaryBlue,
                   textStyle: mediumText,
                   padding: const EdgeInsets.all(12.0),
-                  shape: StadiumBorder(),
+                  shape: const StadiumBorder(),
                 ),
                 // Nút để mở cài đặt dịch vụ vị trí
-                child: Text('Turn of Service'),
+                child: const Text('Turn of Service'),
                 onPressed: () async {
                   await Geolocator.openLocationSettings(); // Mở cài đặt vị trí
                 },
