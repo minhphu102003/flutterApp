@@ -103,7 +103,7 @@ class _CustomDialogWeatherState extends State<CustomDialogWeather> {
           const SizedBox(height: 8),
           Text(
             "Current temperature: ${widget.temperature.toStringAsFixed(1)}°C",
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 16.0,
               fontWeight: FontWeight.bold,
               color: Colors.black87,

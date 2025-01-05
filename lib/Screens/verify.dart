@@ -1,6 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutterApp/pages/resetPassword.dart';
+import 'package:flutterApp/screens/resetPassword.dart';
 import 'package:flutterApp/theme/colors.dart';
 import 'package:flutterApp/services/authService.dart';
 import 'package:flutterApp/widgets/customDialog.dart';

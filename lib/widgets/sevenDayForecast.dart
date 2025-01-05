@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutterApp/helper/extentisions.dart';
 import 'package:flutterApp/models/dailyWeather.dart';
 import 'package:flutterApp/provider/weatherProvider.dart';
-import 'package:flutterApp/Screens/sevenDayForecastDetailScreen.dart';
+import 'package:flutterApp/screens/sevenDayForecastDetailScreen.dart';
 import 'package:flutterApp/theme/colors.dart';
 import 'package:flutterApp/theme/textStyle.dart';
 import 'package:flutterApp/widgets/customShimer.dart';

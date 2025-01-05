@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutterApp/pages/forgot_password.dart';
-import 'package:flutterApp/pages/sign.dart';
+import 'package:flutterApp/screens/forgot_password.dart';
+import 'package:flutterApp/screens/sign.dart';
 import 'package:flutterApp/helper/validators.dart';
 import 'package:flutterApp/widgets/customTextFormField.dart';
 import 'package:flutterApp/services/authService.dart';
@@ -8,7 +8,7 @@ import 'package:flutterApp/models/auth.dart';
 import 'package:flutterApp/services/apiRespone.dart';
 import 'package:flutterApp/widgets/customDialog.dart';
 import 'package:flutterApp/theme/colors.dart';
-import "package:flutterApp/bottom/bottomnav.dart";
+import "package:flutterApp/screens/bottomnav.dart";
 import 'package:flutterApp/helper/appConfig.dart';
 
 class Login extends StatefulWidget {

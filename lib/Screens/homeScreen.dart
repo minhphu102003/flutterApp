@@ -3,7 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:material_floating_search_bar_2/material_floating_search_bar_2.dart';
 import 'package:provider/provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:flutterApp/Screens/locationError.dart';
+import 'package:flutterApp/screens/locationError.dart';
 
 import '../provider/weatherProvider.dart';
 import '../theme/colors.dart';

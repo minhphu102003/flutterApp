@@ -7,16 +7,17 @@ class CommentCard extends StatelessWidget {
   final Comment comment;
   final String baseURL;
   final String? currentUsername; // Username của người dùng hiện tại
-  final Future<void> Function(Comment) onDeleteComment; // Callback cho xóa bình luận
+  final Future<void> Function(Comment)
+      onDeleteComment; // Callback cho xóa bình luận
   final void Function(Comment) onUpdateComment;
   const CommentCard({
-    Key? key,
+    super.key,
     required this.comment,
     required this.baseURL,
     this.currentUsername,
     required this.onDeleteComment,
     required this.onUpdateComment,
-  }) : super(key: key);
+  });
 
   // Hàm định dạng ngày tháng
   String formatDate(String date) {
@@ -28,7 +29,8 @@ class CommentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<CommentImage> images = comment.listImg;
     final String formattedDate = formatDate(comment.updatedAt);
-    final bool isOwner = currentUsername != null && comment.username == currentUsername;
+    final bool isOwner =
+        currentUsername != null && comment.username == currentUsername;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 5),
@@ -93,12 +95,7 @@ class CommentCard extends StatelessWidget {
                     children: images.asMap().entries.map((entry) {
                       final index = entry.key;
                       final image = entry.value;
-
-                      // Tạo URL đầy đủ từ baseURL và tên ảnh
-                      // final imageUrl = '$baseURL${image.image}';
                       final imageUrl = image.image;
-
-                      // Nếu là ảnh thứ 4 và có nhiều hơn 4 ảnh
                       if (index == 3 && images.length > 4) {
                         return Stack(
                           alignment: Alignment.center,
@@ -126,8 +123,6 @@ class CommentCard extends StatelessWidget {
                           ],
                         );
                       }
-
-                      // Hiển thị các ảnh khác
                       if (index < 4) {
                         return Image.network(
                           imageUrl,
@@ -137,7 +132,8 @@ class CommentCard extends StatelessWidget {
                         );
                       }
 
-                      return const SizedBox.shrink(); // Không hiển thị ảnh sau ảnh thứ 4
+                      return const SizedBox
+                          .shrink(); // Không hiển thị ảnh sau ảnh thứ 4
                     }).toList(),
                   )
                 : const Text(

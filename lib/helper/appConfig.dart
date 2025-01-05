@@ -5,4 +5,11 @@ class AppConfig {
   static const String baseMapBoxGeo = 'https://api.mapbox.com/geocoding/v5/mapbox.places';
   static const String baseMapBoxDir = 'https://api.mapbox.com/directions/v5/mapbox/driving';
   static const String dirImg = 'assets/images';
+  static const String urlLocalUploadWed = 'http://127.0.0.1:8000/uploads/';
+  static const String urlLocalUploadAndroi = 'http://10.0.2.2:8000/uploads/';
+  static const double markerSize = 30.0;
+  static const double imageSize = 50.0;
+  static const double imageSizeClick = 80.0;
+  static const int timeHideTrafficJam = 5;
+  static const String baseMapDisplay = 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}';
 }

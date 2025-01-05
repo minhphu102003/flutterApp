@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:flutterApp/bottom/bottomnav.dart';
+import 'package:flutterApp/screens/bottomnav.dart';
 import 'package:flutterApp/models/notification.dart';
 
 class NotificationCus extends StatefulWidget {

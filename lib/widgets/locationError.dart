@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/weatherProvider.dart';
 
-// Widget LocationError hiển thị thông báo lỗi khi dịch vụ vị trí (GPS) bị tắt.
-// Kèm theo đó là một nút bấm để người dùng bật lại dịch vụ vị trí.
 class LocationError extends StatefulWidget {
   @override
-  // Tạo State tương ứng cho Widget LocationError.
-  // ignore: library_private_types_in_public_api
   _LocationErrorState createState() => _LocationErrorState();
 }
 

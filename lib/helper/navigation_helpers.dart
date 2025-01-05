@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutterApp/Screens/homeScreen.dart';
+import 'package:flutterApp/screens/homeScreen.dart';
 
 void onWeatherButtonPressed(BuildContext context) {
   final screenSize = MediaQuery.of(context).size;

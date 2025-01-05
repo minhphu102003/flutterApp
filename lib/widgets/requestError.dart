@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutterApp/provider/weatherProvider.dart';
 import 'package:provider/provider.dart';
 
-// Widget hiển thị thông báo lỗi khi không tìm thấy kết quả
 class RequestError extends StatelessWidget {
   const RequestError({super.key});
 

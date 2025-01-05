@@ -5,15 +5,14 @@ import 'package:flutterApp/config.dart';
 import 'package:flutterApp/models/place.dart';
 import 'package:flutterApp/helper/location.dart';
 import 'package:flutterApp/services/locationService.dart';
-import 'package:flutterApp/Screens/placeDetail.dart';
+import 'package:flutterApp/screens/placeDetail.dart';
 import 'package:flutterApp/models/notification.dart';
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutterApp/helper/appConfig.dart';
 
 class MapDisplay extends StatefulWidget {
   final LatLng currentLocation;
-  // final List<List<LatLng>> routePolylines;
   final List<Map<String, dynamic>> routePolylines;
   final MapController mapController;
   final bool mapReady;
@@ -25,8 +24,8 @@ class MapDisplay extends StatefulWidget {
   final Function(LatLng start, LatLng destination) onDirectionPressed;
   final List<TrafficNotification> notifications;
 
-  MapDisplay({
-    Key? key,
+  const MapDisplay({
+    super.key,
     required this.currentLocation,
     required this.routePolylines,
     required this.mapController,
@@ -34,11 +33,11 @@ class MapDisplay extends StatefulWidget {
     required this.onMapReady,
     required this.onMapTap,
     this.additionalMarkers = const [], // Khởi tạo danh sách rỗng
-    this.markerSize = 30.0,
+    this.markerSize = AppConfig.markerSize,
     this.places = const [],
     required this.onDirectionPressed,
     this.notifications = const [], // Khởi tạo danh sách places
-  }) : super(key: key);
+  });
 
   @override
   MapDisplayState createState() => MapDisplayState();
@@ -46,20 +45,21 @@ class MapDisplay extends StatefulWidget {
 
 class MapDisplayState extends State<MapDisplay> {
   String serverUrl = kIsWeb
-      ? 'http://127.0.0.1:8000/uploads/'
-      : 'http://10.0.2.2:8000/uploads/';
-  double _imageSize = 50.0;
+      ? AppConfig.urlLocalUploadWed
+      : AppConfig.urlLocalUploadAndroi;
+  final double _imageSize = AppConfig.imageSize;
+  final double _imageSizeClick = AppConfig.imageSizeClick;
   int? _selectedMarkerIndex;
   bool firstRecommend = false;
   List<Map<String, dynamic>> previousRoutePolylines = [];
   Timer? _timer;
   List<TrafficNotification> notifications = [];
   bool displayImage = false;
+  String baseMapDisplay = AppConfig.baseMapDisplay;
 
   @override
   void didUpdateWidget(covariant MapDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Kiểm tra xem widget.routePolylines có thay đổi không
     if (widget.routePolylines != oldWidget.routePolylines) {
       firstRecommend = false;
       previousRoutePolylines = widget.routePolylines;
@@ -73,10 +73,9 @@ class MapDisplayState extends State<MapDisplay> {
   void initState() {
     super.initState();
     notifications = widget.notifications;
-    _timer = Timer.periodic(Duration(minutes: 1), (timer) {
-      // print("1 phút");
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
       if (mounted) {
-        removeExpiredNotifications(); // Gọi hàm kiểm tra và loại bỏ notifications
+        removeExpiredNotifications(); 
       }
     });
   }
@@ -89,18 +88,17 @@ class MapDisplayState extends State<MapDisplay> {
 
   void changeDisplayImage({bool? value}) {
     setState(() {
-      // Nếu value là null thì mặc định là đảo ngược giá trị của displayImage
       displayImage = value ?? !displayImage;
     });
   }
 
   void removeExpiredNotifications() {
-    DateTime currentTime = DateTime.now(); // Thời gian hiện tại
+    DateTime currentTime = DateTime.now();
     if (mounted) {
       setState(() {
         widget.notifications.removeWhere((notification) {
           Duration diff = currentTime.difference(notification.timestamp);
-          return diff.inMinutes > 5; // Kiểm tra xem đã qua 2 phút chưa
+          return diff.inMinutes > AppConfig.timeHideTrafficJam; 
         });
       });
     }
@@ -250,7 +248,6 @@ class MapDisplayState extends State<MapDisplay> {
                     ),
                     IconButton(
                       onPressed: () {
-                        // Navigator.pop(context);
                         widget.onDirectionPressed(
                             widget.currentLocation, destination);
                       },
@@ -289,9 +286,9 @@ class MapDisplayState extends State<MapDisplay> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             width: (_selectedMarkerIndex == index)
-                ? 80.0
+                ? _imageSizeClick
                 : _imageSize, // Chỉ thay đổi kích thước của marker được chọn
-            height: (_selectedMarkerIndex == index) ? 80.0 : _imageSize,
+            height: (_selectedMarkerIndex == index) ? _imageSizeClick : _imageSize,
             decoration: displayImage
                 ? null // Không có BoxDecoration nếu hiển thị biểu tượng warning
                 : BoxDecoration(
@@ -299,7 +296,7 @@ class MapDisplayState extends State<MapDisplay> {
                     border:
                         Border.all(color: Colors.red, width: 3.0), // Viền đỏ
                     image: DecorationImage(
-                      image: NetworkImage('${report.img}'), // Hiển thị ảnh
+                      image: NetworkImage(report.img), // Hiển thị ảnh
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -322,7 +319,7 @@ class MapDisplayState extends State<MapDisplay> {
                               .withOpacity(0.5), // Hiệu ứng đổ bóng
                           spreadRadius: 4, // Độ lan tỏa bóng
                           blurRadius: 6, // Độ mờ bóng
-                          offset: Offset(0, 3), // Độ lệch bóng
+                          offset: const Offset(0, 3), // Độ lệch bóng
                         ),
                       ],
                     ),
@@ -370,26 +367,22 @@ class MapDisplayState extends State<MapDisplay> {
       children: [
         TileLayer(
           urlTemplate:
-              "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=$api",
+              "$baseMapDisplay?access_token=$api",
         ),
         if (widget.routePolylines.isNotEmpty)
           PolylineLayer(
             polylines: widget.routePolylines.map((route) {
-              // Determine the color based on the recommendation status
               Color polylineColor;
               if (route['recommended'] == true && !firstRecommend) {
-                // If it's the first recommended route, color it blue
                 polylineColor = Colors.blue;
                 firstRecommend =
-                    true; // Set the flag to true after coloring the first recommended route
+                    true;
               } else if (route['recommended'] == false) {
                 // If it's not recommended, color it red
                 polylineColor = Colors.red;
               } else {
-                // All other routes (not the first recommended or non-recommended) will be colored brown
-                polylineColor = Colors.brown;
+                polylineColor = const Color.fromARGB(255, 96, 141, 196);
               }
-
               return Polyline(
                 points: route['coordinates'], // Get coordinates
                 strokeWidth: 4.0,
@@ -411,11 +404,8 @@ class MapDisplayState extends State<MapDisplay> {
                 size: widget.markerSize * 0.6,
               ),
             ),
-            // Marker tùy chỉnh từ danh sách
             ...widget.additionalMarkers,
-            // Marker cho các địa điểm
             ...placeMarkers,
-
             ...reportMarkers,
           ],
         ),

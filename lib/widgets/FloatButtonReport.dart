@@ -10,14 +10,14 @@ class FloatingReportButton extends StatefulWidget {
   final double left;
 
   const FloatingReportButton({
-    Key? key,
+    super.key,
     required this.changeScreen,
     required this.openCamera,
     required this.poststatus,
     required this.changeHidden, // Thêm tham số bắt buộc
     this.left = 10,
     this.bottom = 50,
-  }) : super(key: key);
+  });
 
   @override
   _FloatingReportButtonState createState() => _FloatingReportButtonState();

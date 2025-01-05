@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutterApp/pages/sign.dart';
 import 'package:provider/provider.dart';
 import './provider/weatherProvider.dart';
-import 'Screens/homeScreen.dart';
-import 'bottom/bottomnav.dart';
+import 'screens/homeScreen.dart';
+import 'screens/bottomnav.dart';
 
 void main() {
   // Hàm main khởi chạy ứng dụng Flutter
   runApp(
-    MyApp(),
+    const MyApp(),
   );
 }
 
 // Widget chính của ứng dụng
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
                 ColorScheme.fromSwatch().copyWith(secondary: Colors.white),
           ),
           // Màn hình khởi đầu của ứng dụng là BottomNav
-          home: BottomNav(),
+          home: const BottomNav(),
 
           // Cấu hình cho việc điều hướng trong ứng dụng
           onGenerateRoute: (setting) {
@@ -126,7 +127,7 @@ class MyApp extends StatelessWidget {
               );
             }
             // Mặc định điều hướng về HomeScreen nếu không có route phù hợp
-            return MaterialPageRoute(builder: (_) => HomeScreen());
+            return MaterialPageRoute(builder: (_) => const HomeScreen());
           }),
     );
   }
@@ -134,15 +135,17 @@ class MyApp extends StatelessWidget {
 
 // Màn hình MapScreen với routeName được định nghĩa
 class MapScreen extends StatelessWidget {
-  static const routeName = '/map'; // Thêm routeName cho MapScreen
+  static const routeName = '/map';
+
+  const MapScreen({super.key}); // Thêm routeName cho MapScreen
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Map Screen'),
+        title: const Text('Map Screen'),
       ),
-      body: Center(child: Text('Map Screen Content')),
+      body: const Center(child: Text('Map Screen Content')),
     );
   }
 }
@@ -153,13 +156,13 @@ class SevenDayForecastDetail extends StatelessWidget {
 
   final int initialIndex;
 
-  SevenDayForecastDetail({required this.initialIndex});
+  const SevenDayForecastDetail({super.key, required this.initialIndex});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('7-Day Forecast'),
+        title: const Text('7-Day Forecast'),
       ),
       body: Center(
         child: Text('Forecast for Day $initialIndex'),

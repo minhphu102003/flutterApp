@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutterApp/services/placeService.dart';
 import 'package:flutterApp/models/place.dart';
-import 'package:flutterApp/Screens/placeDetail.dart';
+import 'package:flutterApp/screens/placeDetail.dart';
 import 'package:geolocator/geolocator.dart';
 
 class Dulich extends StatefulWidget {
