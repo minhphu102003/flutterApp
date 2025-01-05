@@ -48,12 +48,12 @@ Future<PaginatedData<TrafficNotification>> getNotifications({
             final notification = TrafficNotification.fromJson(json);
 
             // Tính toán khoảng cách từ vị trí người dùng đến vị trí thông báo
-            notification.distance = calculateDistances(
+            notification.distance = '${calculateDistances(
               userLatitude,
               userLongitude,
               notification.latitude,
               notification.longitude,
-            ).toStringAsFixed(2) + ' km'; // Giữ 2 chữ số thập phân
+            ).toStringAsFixed(2)} km'; // Giữ 2 chữ số thập phân
             return notification;
           },
         );

@@ -12,4 +12,7 @@ class AppConfig {
   static const double imageSizeClick = 80.0;
   static const int timeHideTrafficJam = 5;
   static const String baseMapDisplay = 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}';
+  static const String baseOpenCage = 'https://api.opencagedata.com/geocode/v1/json';
+  static const String baseUrlGoongMap = 'https://rsapi.goong.io/Place';
+  static const String baseUrlOpenStreet ="https://router.project-osrm.org/route/v1/driving";
 }

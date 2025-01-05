@@ -8,13 +8,12 @@ import 'package:dio/dio.dart';
 import './apiClient.dart';
 
 class MapApiService {
-  static final String apiMapboxKey = Config.api_mapbox_key;
-  static final String baseMapBoxGeo = AppConfig.baseMapBoxGeo;
-  static final String baseMapBoxDir = AppConfig.baseMapBoxDir;
+  static const String apiMapboxKey = Config.api_mapbox_key;
+  static const String baseMapBoxGeo = AppConfig.baseMapBoxGeo;
+  static const String baseMapBoxDir = AppConfig.baseMapBoxDir;
   static const String apiKeyGongMap = Config.api_gongmap_key;
-  static const String baseUrlGoongMap = 'https://rsapi.goong.io/Place';
-  static const String _baseUrl =
-      "https://router.project-osrm.org/route/v1/driving";
+  static const String baseUrlGoongMap = AppConfig.baseUrlGoongMap;
+  static const String _baseUrl = AppConfig.baseUrlOpenStreet;
   final ApiClient _apiClient = ApiClient.instance;
 
   static Future<LatLng?> searchLocation(String query) async {

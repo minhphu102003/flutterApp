@@ -1,6 +1,7 @@
 import 'package:flutterApp/services/apiClient.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import './constants.dart';
 
 class AccountService {
   final ApiClient _apiClient = ApiClient.instance;
@@ -14,7 +15,7 @@ class AccountService {
         throw Exception('Token not found');
       }
       Response response = await _apiClient.dio.get(
-        '/account/profile',
+        ACCOUNT_PROIFLE,
         options: Options(
           headers: {'x-access-token': token},
         ),
@@ -25,7 +26,6 @@ class AccountService {
         throw Exception('Failed to fetch profile');
       }
     } catch (e) {
-      print('Error fetching profile: $e');
       return {
         'success': false,
         'message': 'Error fetching profile',

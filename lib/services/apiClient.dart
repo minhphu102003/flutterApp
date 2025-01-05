@@ -14,8 +14,8 @@ class ApiClient {
       BaseOptions(
         baseUrl: baseUrl,
         responseType: ResponseType.json,
-        connectTimeout: Duration(seconds: 15),
-        receiveTimeout: Duration(seconds: 15),
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
         validateStatus: (int? code) {
           return true;
         },

@@ -1,5 +1,6 @@
 import 'package:flutterApp/services/apiClient.dart';
 import 'package:dio/dio.dart';
+import './constants.dart';
 
 class WeatherService{
   final ApiClient _apiClient = ApiClient.instance;
@@ -10,7 +11,7 @@ class WeatherService{
         'longitude': longitude.toString(), 
       };
       Response response = await _apiClient.dio.get(
-        '/weather/suggestion',
+        WEATHER_SUGGESTION,
         queryParameters: queryParams
       );
       if(response.statusCode == 200){
@@ -19,7 +20,6 @@ class WeatherService{
         throw Exception('Failed to fetch weather suggestion');
       }
     }catch(e){
-      print('Error fetching weather suggestion: $e');
       return {
         'success': false,
         'message':'Error fetching weather suggestion',
