@@ -46,74 +46,59 @@ class _CameraState extends State<Camera> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text('Camera DaNa Hub'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(10.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Tìm kiếm...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Colors.grey[200],
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      centerTitle: true,
+      title: const Text('Camera DaNa Hub'),
+    ),
+    body: Column(
+      children: [
+        // Thanh tìm kiếm cố định
+        Container(
+          padding: const EdgeInsets.all(10),
+          color: Colors.white, // Giữ nền cố định
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Tìm kiếm...',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
               ),
-              onChanged: (value) {
-                print("Tìm kiếm: $value");
-              },
+              filled: true,
+              fillColor: Colors.grey[200],
             ),
-            const SizedBox(height: 16),
-
-            // Display each info box with its own YouTube player controller
-            _buildInfoBox(
-              0,
-              'Vị trí: Công Trình bệnh viện Đà Nẵng',
-              'Quận: Hải Châu',
-              'Địa chỉ: ...',
-            ),
-            const SizedBox(height: 16),
-            _buildInfoBox(
-              1,
-              'Vị trí: Trang Phục biểu diễn Phương Trần Đà Nẵng',
-              'Quận: Thanh Khê',
-              'Địa chỉ: 200 Lê Duẩn',
-            ),
-            const SizedBox(height: 16),
-            _buildInfoBox(
-              2,
-              'Vị trí: Cổng trường Nguyễn Huệ Đà Nẵng',
-              'Quận: Sơn Trà',
-              'Địa chỉ: 50 Ngô Quyền',
-            ),
-            const SizedBox(height: 16),
-            _buildInfoBox(
-              3,
-              'Vị trí: Cổng Sau bệnh viện C Đà Nẵng',
-              'Quận: Sơn Trà',
-              'Địa chỉ: 50 Ngô Quyền',
-            ),
-            const SizedBox(height: 16),
-            _buildInfoBox(
-              4,
-              'Vị trí: Nút giao thông tây Cầu Rồng Đà Nẵng',
-              'Quận: Sơn Trà',
-              'Địa chỉ: 50 Ngô Quyền',
-            ),
-          ],
+            onChanged: (value) {
+              print("Tìm kiếm: $value");
+            },
+          ),
         ),
-      ),
-    );
-  }
+
+        // Danh sách info box cuộn được
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(10.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildInfoBox(0, 'Vị trí: Công Trình bệnh viện Đà Nẵng', 'Quận: Hải Châu', 'Địa chỉ: ...'),
+                const SizedBox(height: 16),
+                _buildInfoBox(1, 'Vị trí: Trang Phục biểu diễn Phương Trần Đà Nẵng', 'Quận: Thanh Khê', 'Địa chỉ: 200 Lê Duẩn'),
+                const SizedBox(height: 16),
+                _buildInfoBox(2, 'Vị trí: Cổng trường Nguyễn Huệ Đà Nẵng', 'Quận: Sơn Trà', 'Địa chỉ: 50 Ngô Quyền'),
+                const SizedBox(height: 16),
+                _buildInfoBox(3, 'Vị trí: Cổng Sau bệnh viện C Đà Nẵng', 'Quận: Sơn Trà', 'Địa chỉ: 50 Ngô Quyền'),
+                const SizedBox(height: 16),
+                _buildInfoBox(4, 'Vị trí: Nút giao thông tây Cầu Rồng Đà Nẵng', 'Quận: Sơn Trà', 'Địa chỉ: 50 Ngô Quyền'),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
 Widget _buildInfoBox(int index, String position, String district, String address) {
   return GestureDetector(

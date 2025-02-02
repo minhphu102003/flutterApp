@@ -158,13 +158,6 @@ Future<void> fetchPlaceByCategory(String type) async {
         title: Center(
           child: Column(
             children: [
-              const Text(
-                'Location',
-                style: TextStyle(
-                  color: Colors.black54,
-                  fontSize: 12,
-                ),
-              ),
               Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
