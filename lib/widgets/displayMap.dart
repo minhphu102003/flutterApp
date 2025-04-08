@@ -44,9 +44,8 @@ class MapDisplay extends StatefulWidget {
 }
 
 class MapDisplayState extends State<MapDisplay> {
-  String serverUrl = kIsWeb
-      ? AppConfig.urlLocalUploadWed
-      : AppConfig.urlLocalUploadAndroi;
+  String serverUrl =
+      kIsWeb ? AppConfig.urlLocalUploadWed : AppConfig.urlLocalUploadAndroi;
   final double _imageSize = AppConfig.imageSize;
   final double _imageSizeClick = AppConfig.imageSizeClick;
   int? _selectedMarkerIndex;
@@ -75,7 +74,7 @@ class MapDisplayState extends State<MapDisplay> {
     notifications = widget.notifications;
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
       if (mounted) {
-        removeExpiredNotifications(); 
+        removeExpiredNotifications();
       }
     });
   }
@@ -98,7 +97,7 @@ class MapDisplayState extends State<MapDisplay> {
       setState(() {
         widget.notifications.removeWhere((notification) {
           Duration diff = currentTime.difference(notification.timestamp);
-          return diff.inMinutes > AppConfig.timeHideTrafficJam; 
+          return diff.inMinutes > AppConfig.timeHideTrafficJam;
         });
       });
     }
@@ -288,7 +287,8 @@ class MapDisplayState extends State<MapDisplay> {
             width: (_selectedMarkerIndex == index)
                 ? _imageSizeClick
                 : _imageSize, // Chỉ thay đổi kích thước của marker được chọn
-            height: (_selectedMarkerIndex == index) ? _imageSizeClick : _imageSize,
+            height:
+                (_selectedMarkerIndex == index) ? _imageSizeClick : _imageSize,
             decoration: displayImage
                 ? null // Không có BoxDecoration nếu hiển thị biểu tượng warning
                 : BoxDecoration(
@@ -366,8 +366,7 @@ class MapDisplayState extends State<MapDisplay> {
       ),
       children: [
         TileLayer(
-          urlTemplate:
-              "$baseMapDisplay?access_token=$api",
+          urlTemplate: "$baseMapDisplay?access_token=$api",
         ),
         if (widget.routePolylines.isNotEmpty)
           PolylineLayer(
@@ -375,8 +374,7 @@ class MapDisplayState extends State<MapDisplay> {
               Color polylineColor;
               if (route['recommended'] == true && !firstRecommend) {
                 polylineColor = Colors.blue;
-                firstRecommend =
-                    true;
+                firstRecommend = true;
               } else if (route['recommended'] == false) {
                 // If it's not recommended, color it red
                 polylineColor = Colors.red;

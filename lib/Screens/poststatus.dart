@@ -18,10 +18,9 @@ class CreatePostScreen extends StatefulWidget {
 class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _postController = TextEditingController();
   String? _typeReport = 'Traffic Jam';
-  final List<File> _images = []; // Danh sách chứa các ảnh
+  final List<File> _images = []; 
   final ImagePicker _picker = ImagePicker();
   bool isLoading = false;
-  // Ánh xạ các loại báo cáo từ người dùng sang mã API
   Map<String, String> reportTypeMap = {
     'Traffic Jam': 'TRAFFIC_JAM',
     'Flood': 'FLOOD',
@@ -36,7 +35,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     if (token == null || token.isEmpty) {
       showErrorDialog(context, 'You must be logged in to submit a report.');
-      return; // Dừng lại nếu không có token
+      return;
     }
 
     String reportTypeApiValue =
@@ -50,7 +49,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       return; // Dừng lại nếu không có ảnh
     }
 
-    // Bắt đầu quá trình gửi báo cáo, hiển thị nút loading
     setState(() {
       isLoading = true;
     });
@@ -64,16 +62,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         imageFiles: _images,
       );
 
-      _postController.clear(); // Xóa nội dung TextField
-      _typeReport = 'Traffic Jam'; // Đặt lại loại báo cáo
-      _images.clear(); // Xóa danh sách ảnh
-      setState(() {}); // Cập nhật lại giao diện
+      _postController.clear(); 
+      _typeReport = 'Traffic Jam'; 
+      _images.clear(); 
+      setState(() {}); 
 
       showErrorDialog(context, result);
     } catch (e) {
       showErrorDialog(context, 'Error occurred: $e');
     } finally {
-      // Sau khi báo cáo được gửi hoặc có lỗi, ẩn nút loading
       setState(() {
         isLoading = false;
       });
@@ -82,12 +79,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Future<void> _pickImages() async {
     final List<XFile>? pickedFiles =
-        await _picker.pickMultiImage(); // Chọn nhiều ảnh
+        await _picker.pickMultiImage(); 
     if (pickedFiles != null) {
       setState(() {
-        // Kiểm tra số lượng ảnh đã chọn
         if (pickedFiles.length > 5) {
-          // Hiển thị thông báo SnackBar nếu số lượng ảnh vượt quá 5
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('You can only select up to 5 photos.'),
@@ -108,9 +103,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         await _picker.pickImage(source: ImageSource.camera); // Sử dụng camera
     if (capturedFile != null) {
       setState(() {
-        // Kiểm tra số lượng ảnh đã chọn
         if (_images.length >= 5) {
-          // Hiển thị thông báo SnackBar nếu số lượng ảnh vượt quá 5
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('You can only capture up to 5 photos.'),
@@ -119,7 +112,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           );
         } else {
           _images
-              .add(File(capturedFile.path)); // Thêm ảnh vừa chụp vào danh sách
+              .add(File(capturedFile.path)); 
         }
       });
     }
@@ -144,7 +137,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Phần trên cùng: Người dùng đăng bài
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(

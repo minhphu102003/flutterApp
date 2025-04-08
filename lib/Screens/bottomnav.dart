@@ -132,13 +132,13 @@ class BottomNavState extends State<BottomNav> {
 
     pages = [homepage, dulich, camera, notification, profile];
     _webSocketService = WebSocketService();
-    // _webSocketService.connect(
-    //   'ws://10.0.2.2:8000', // Mobile (Android Emulator)
-    //   'ws://localhost:8000', // Web
-    // );
     _webSocketService.connect(
-    'wss://express001-73c0dfd0a958.herokuapp.com/', // Heroku WebSocket URL
+      'ws://10.0.2.2:8000', // Mobile (Android Emulator)
+      'ws://localhost:8000', // Web
     );
+    // _webSocketService.connect(
+    // 'ws://10.0.2.2:8000', // Heroku WebSocket URL
+    // );
       // Gửi ping mỗi 30 giây
     _webSocketService.onNotificationReceived =
         (TrafficNotification newNotification) {
