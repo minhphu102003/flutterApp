@@ -40,7 +40,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   late TextEditingController
       _commentController; // Danh sách các đường dẫn hình ảnh
 
-  // Thông tin người dùng
   String? name;
   String? email;
   String? phone;
@@ -59,7 +58,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     _loadProfile();
   }
 
-  // Callback để xóa bình luận
   Future<void> onDeleteComment(Comment comment) async {
     try {
       await _commentService.deleteComment(id: comment.id);

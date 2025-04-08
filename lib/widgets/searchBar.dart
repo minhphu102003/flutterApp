@@ -16,9 +16,9 @@ class SearchBar extends StatelessWidget {
     required this.onSearchChanged,
     required this.onSearchSubmitted,
     required this.onClear,
-    this.top = 40.0, // Vị trí mặc định cách cạnh trên 40px
-    this.left = 10.0, // Vị trí mặc định cách cạnh trái 10px
-    this.right = 10.0, // Vị trí mặc định cách cạnh phải 10px
+    this.top = 40.0, 
+    this.left = 10.0, 
+    this.right = 10.0,
   }) : super(key: key);
 
   @override

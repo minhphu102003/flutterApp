@@ -78,7 +78,6 @@ class MapApiService {
     return [];
   }
 
-  // Phương thức để lấy thời gian di chuyển (travelTime)
   static Future<String> getTravelTime(LatLng start, LatLng destination) async {
     final url =
         '$baseMapBoxDir/${start.longitude},${start.latitude};${destination.longitude},${destination.latitude}?geometries=geojson&steps=true&access_token=$apiMapboxKey';
@@ -112,7 +111,6 @@ class MapApiService {
         final data = json.decode(response.body);
         final predictions = data['predictions'] as List;
 
-        // Trả về danh sách các Map chứa description và place_id
         return predictions.map<Map<String, String>>((item) {
           return {
             'description': item['description'],
@@ -306,7 +304,6 @@ Future<Map<String, dynamic>> getRoutesWithInstructions(
     LatLng start, LatLng destination,
     {String vehicleType = 'drive'}) async {
   try {
-    // Gửi yêu cầu API
     final response = await _apiClient.dio.get(
       '/routes',
       queryParameters: {
@@ -323,7 +320,6 @@ Future<Map<String, dynamic>> getRoutesWithInstructions(
         List<Map<String, dynamic>> routesWithInstructions = [];
 
         for (var route in data['routes']) {
-          // Giải mã polyline
           List<LatLng> routeCoordinates = [];
           String encodedPolyline = route['geometry'];
           final decodedPoints =
@@ -333,13 +329,11 @@ Future<Map<String, dynamic>> getRoutesWithInstructions(
                 .map((point) => LatLng(point.latitude, point.longitude)),
           );
 
-          // Lấy danh sách intersections
           List<LatLng> intersections = [];
           List<String> instructions = [];
 
           for (var leg in route['legs']) {
             for (var step in leg['steps']) {
-              // Xử lý intersection
               for (var intersection in step['intersections']) {
                 intersections.add(
                   LatLng(intersection['location'][1],
@@ -347,7 +341,6 @@ Future<Map<String, dynamic>> getRoutesWithInstructions(
                 );
               }
 
-              // Xử lý instructions
               String name = step['name'] as String;
               if (name.contains(' ')) {
                 name = name.substring(name.indexOf(' ') + 1).trim();
@@ -360,7 +353,6 @@ Future<Map<String, dynamic>> getRoutesWithInstructions(
 
           final bool recommended = route['recommended'] ?? false;
 
-          // Safely handle the 'report' field
           List<Map<String, dynamic>> report = [];
           if (!recommended && route['report'] != null) {
             final reportList = route['report'] as List<dynamic>;
@@ -381,7 +373,6 @@ Future<Map<String, dynamic>> getRoutesWithInstructions(
             }).toList();
           }
 
-          // Lưu kết quả cho mỗi route
           routesWithInstructions.add({
             'coordinates': routeCoordinates,
             'instructions': instructions,

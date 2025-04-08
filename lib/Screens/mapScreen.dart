@@ -278,7 +278,7 @@ void _changeDisplayImage({bool? change}) {
     try {
       final result = await PlaceService().fetchNearestPlaces(
           longitude:
-              _currentLocation.longitude, // Truyền longitude đúng tham số
+              _currentLocation.longitude, 
           latitude: _currentLocation.latitude,
           radius: 1);
       setState(() {
@@ -400,7 +400,6 @@ void _changeDisplayImage({bool? change}) {
 
   Future<void> _onSearchChanged(String query) async {
     if (query.isNotEmpty) {
-      // List<String> suggestions = await MapApiService.getSuggestions(query);
       List<Map<String, String>> suggestions =
           await MapApiService.getSuggestionsVerGoongMap(
               query, _currentLocation.latitude, _currentLocation.longitude);
@@ -456,7 +455,7 @@ void _changeDisplayImage({bool? change}) {
             onSearchChanged: _onSearchChanged,
             onSearchSubmitted: () => _searchLocation(_searchController.text),
             onClear: _clearSearch,
-            top: 40, // Định vị theo yêu cầu
+            top: 40,
             left: 10,
             right: 10,
           ),
