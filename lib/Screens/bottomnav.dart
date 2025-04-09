@@ -26,11 +26,10 @@ class BottomNavState extends State<BottomNav> {
   late MapScreen homepage;
   late Dulich dulich;
   late Profile profile;
-  late Camera camera;
+  late CameraScreen camera;
   late NotificationCus notification;
   late WebSocketService _webSocketService;
 
-  // Callback function to add new notification
   void addNewNotification(TrafficNotification newNotification) {
     setState(() {
       if (currentLatitude != null && currentLongitude != null) {
@@ -40,12 +39,10 @@ class BottomNavState extends State<BottomNav> {
           newNotification.latitude,
           newNotification.longitude,
         );
-        // Kiểm tra nếu khoảng cách nhỏ hơn 10 km
         if (distance < 10) {
           newNotification.distance = "${distance.toStringAsFixed(1)} km";
-          // Thêm thông báo vào danh sách
           notificationKey.currentState?.addNotification(newNotification);
-          newNotificationCount++; // Increment the count of new notifications
+          newNotificationCount++;
         }
         if(distance< 30){
           mapKey.currentState?.addNotification(newNotification);
@@ -97,18 +94,14 @@ class BottomNavState extends State<BottomNav> {
 
   Future<void> fetchNotifications() async {
   try {
-    // Gọi NotificationService để lấy thông báo
     final NotificationService notificationService = NotificationService();
     final paginatedData = await notificationService.getNotifications(page: 1, limit: 10);
 
-    // Cập nhật danh sách thông báo
     setState(() {
       notifications = paginatedData.data;
       newNotificationCount = paginatedData.data.length;
     });
     notificationKey.currentState?.addNotificationsInit(notifications);
-    // // Thêm vào NotificationCus widget
-    // notificationKey.currentState?.addNotifications(notifications);
   } catch (error) {
     print('Failed to fetch notifications: $error');
   }
@@ -122,12 +115,11 @@ class BottomNavState extends State<BottomNav> {
     homepage = MapScreen(key: mapKey, onLocationChanged: onLocationChanged);
     dulich = const Dulich();
     profile = const Profile();
-    camera = const Camera();
+    camera = const CameraScreen();
 
-    // Pass notificationKey to NotificationCus so its state can be accessed
     notification = NotificationCus(
-      key: notificationKey, // Pass the GlobalKey here
-      notifications: notifications, // Pass notifications list
+      key: notificationKey, 
+      notifications: notifications,
     );
 
     pages = [homepage, dulich, camera, notification, profile];
@@ -136,14 +128,10 @@ class BottomNavState extends State<BottomNav> {
       'ws://10.0.2.2:8000', // Mobile (Android Emulator)
       'ws://localhost:8000', // Web
     );
-    // _webSocketService.connect(
-    // 'ws://10.0.2.2:8000', // Heroku WebSocket URL
-    // );
-      // Gửi ping mỗi 30 giây
     _webSocketService.onNotificationReceived =
         (TrafficNotification newNotification) {
       addNewNotification(
-          newNotification); // Call the callback to add new notification
+          newNotification);
     };
     _webSocketService.sendMessage('Client connected');
   }
@@ -168,7 +156,7 @@ class BottomNavState extends State<BottomNav> {
           setState(() {
             currentTabIndex = index;
             if (index == 3) {
-              newNotificationCount = 0; // Reset thông báo khi vào Notification
+              newNotificationCount = 0;
             }
           });
         },
@@ -211,7 +199,7 @@ class BottomNavState extends State<BottomNav> {
       ),
       body: IndexedStack(
         index: currentTabIndex,
-        children: pages, // Giữ trạng thái của tất cả các màn hình
+        children: pages,
       ),
     );
   }
