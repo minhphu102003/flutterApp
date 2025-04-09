@@ -43,12 +43,12 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   double _zoomLevel = 16.0;
   late MapController _mapController;
   bool _mapReady = false;
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   List<Map<String, String>> _suggestionsGoongMap = [];
   LatLng? _searchedLocation;
   List<Map<String, dynamic>> _routePolylines = [];
   List<List<String>> _routeInstructions = [];
-  String _travelTime = "";
+  final String _travelTime = "";
   bool _showRouteInstructions = true;
   bool _isDialogShown = false;
   double _markerSize = 30;
@@ -62,8 +62,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   List<Place> places = [];
   List<TrafficNotification> notifications = [];
   GlobalKey<MapDisplayState> MapdisplayKey = GlobalKey<MapDisplayState>();
-  MapApiService _mapApiService = MapApiService();
-  int _selectedRouteIndex = 0;
+  final MapApiService _mapApiService = MapApiService();
 
   void addNotification(TrafficNotification notification) {
     setState(() {
@@ -72,11 +71,12 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     });
   }
 
-void _changeDisplayImage({bool? change}) {
-  setState(() {
-    MapdisplayKey.currentState?.changeDisplayImage(value: change);
-  });
-}
+  void _changeDisplayImage({bool? change}) {
+    setState(() {
+      MapdisplayKey.currentState?.changeDisplayImage(value: change);
+    });
+  }
+
   void _clearSearch() {
     setState(() {
       _searchController.clear();
@@ -138,8 +138,8 @@ void _changeDisplayImage({bool? change}) {
 
   void _closeOverlay() {
     if (_currentOverlayEntry != null) {
-      _currentOverlayEntry!.remove(); // Loại bỏ overlay khỏi màn hình
-      _currentOverlayEntry = null; // Xóa tham chiếu
+      _currentOverlayEntry!.remove();
+      _currentOverlayEntry = null;
     }
   }
 
@@ -220,7 +220,6 @@ void _changeDisplayImage({bool? change}) {
                   setState(() {
                     _isSelectingStart = isStart;
                     _findRoutes = true;
-                    // _suggestions.clear();
                     _suggestionsGoongMap.clear();
                   });
                   _toggleCameraOverlay(context);
@@ -233,7 +232,6 @@ void _changeDisplayImage({bool? change}) {
     );
     overlayState.insert(_currentOverlayEntry!);
   }
-
 
   void _onMapTap(TapPosition position, LatLng latLng) {
     if (_currentOverlayEntry == null && _findRoutes) {
@@ -277,15 +275,13 @@ void _changeDisplayImage({bool? change}) {
   Future<void> fetchPlaces() async {
     try {
       final result = await PlaceService().fetchNearestPlaces(
-          longitude:
-              _currentLocation.longitude, 
+          longitude: _currentLocation.longitude,
           latitude: _currentLocation.latitude,
           radius: 1);
       setState(() {
         places = result.data;
       });
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   void _onMapReady() {
@@ -341,7 +337,6 @@ void _changeDisplayImage({bool? change}) {
   }
 
   Future<void> _searchLocation(String query) async {
-    // LatLng? location = await MapApiService.searchLocation(query);
     LatLng? location = await MapApiService.getPlaceCoordinates(query);
     topSuggeslist = 90;
     if (location != null) {
@@ -360,7 +355,6 @@ void _changeDisplayImage({bool? change}) {
     }
     if (_startPosition != null && _endPosition != null) {
       _closeOverlay();
-      // _suggestions.clear();
       _suggestionsGoongMap.clear();
       _getRoute(_startPosition!, _endPosition!);
     }
@@ -385,7 +379,7 @@ void _changeDisplayImage({bool? change}) {
           };
         }).toList();
 
-        if(_routePolylines != null){
+        if (_routePolylines != null) {
           _changeDisplayImage(change: true);
         }
 
@@ -394,8 +388,7 @@ void _changeDisplayImage({bool? change}) {
             .toList();
         _showRouteInstructions = true;
       });
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   Future<void> _onSearchChanged(String query) async {
@@ -449,7 +442,6 @@ void _changeDisplayImage({bool? change}) {
               },
               notifications: notifications,
             ),
-          
           custom.SearchBar(
             searchController: _searchController,
             onSearchChanged: _onSearchChanged,
@@ -467,7 +459,7 @@ void _changeDisplayImage({bool? change}) {
             ),
           WeatherIcon(
             onPressed: () => onWeatherButtonPressed(context),
-            top: 160, // Định vị trí theo yêu cầu
+            top: 160,
             left: 20,
           ),
           FloatingActionButtons(
@@ -484,7 +476,7 @@ void _changeDisplayImage({bool? change}) {
               });
             },
             onCurrentLocation: _getCurrentLocation,
-            bottom: 50, // Định vị theo yêu cầu
+            bottom: 50,
             right: 10,
           ),
           FloatingReportButton(
