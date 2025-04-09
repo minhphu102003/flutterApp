@@ -16,7 +16,7 @@ class LocationService {
         final data = json.decode(response.body);
         final results = data['results'];
         if (results.isNotEmpty) {
-          return results[0]['formatted']; // Lấy địa chỉ từ `formatted`.
+          return results[0]['formatted'];
         }
         return 'No address found';
       } else {

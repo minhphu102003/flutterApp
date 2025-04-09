@@ -18,16 +18,16 @@ class PaginatedData<T> extends RestResponse {
           currentPage: currentPage,
         );
 
-  factory PaginatedData.fromJson(
-      Map<String, dynamic> json, T Function(Map<String, dynamic>) fromJsonT) {
-    var dataList = (json['data'] as List).map((item) => fromJsonT(item)).toList();
-    return PaginatedData(
-      success: json['success'],
-      total: json['total'],
-      count: json['count'],
-      totalPages: json['totalPages'],
-      currentPage: json['currentPage'],
-      data: dataList,
-    );
-  }
+factory PaginatedData.fromJson(
+    Map<String, dynamic> json, T Function(Map<String, dynamic>) fromJsonT) {
+  var dataList = (json['data'] as List).map((item) => fromJsonT(item)).toList();
+  return PaginatedData(
+    success: json['success'] ?? false,
+    total: json['total'] ?? 0,
+    count: json['count'] ?? dataList.length,
+    totalPages: json['totalPages'] ?? 1,
+    currentPage: json['currentPage'] ?? 1,
+    data: dataList,
+  );
+}
 }
