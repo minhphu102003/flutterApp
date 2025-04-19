@@ -2,7 +2,7 @@ import 'package:latlong2/latlong.dart';
 import 'dart:math';
 
 double calculateDistance(LatLng from, LatLng to) {
-  const double radiusEarth = 6371; // Bán kính Trái Đất (km)
+  const double radiusEarth = 6371;
   double lat1 = from.latitude;
   double lon1 = from.longitude;
   double lat2 = to.latitude;
@@ -25,7 +25,7 @@ double calculateDistance(LatLng from, LatLng to) {
 bool areLatLngEqual(LatLng a, LatLng b) {
   return a.latitude == b.latitude && a.longitude == b.longitude;
 }
-// // Kiểm tra xem route A có phải là tập con của route B không
+
 bool isSubsetRoute(List<LatLng> routeA, List<LatLng> routeB) {
   if (routeA.length > routeB.length) {
     return false;
@@ -58,7 +58,7 @@ void addUniqueRoutes(List<List<LatLng>> existingRoutes, List<List<LatLng>> addit
 }
 
 double calculateDistances(double lat1, double lon1, double lat2, double lon2) {
-  const double R = 6371; // Bán kính Trái đất (km)
+  const double R = 6371;
   final double dLat = (lat2 - lat1) * (3.141592653589793 / 180.0);
   final double dLon = (lon2 - lon1) * (3.141592653589793 / 180.0);
 
