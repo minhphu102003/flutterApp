@@ -66,63 +66,61 @@ class Weatherprovider with ChangeNotifier {
     return await Geolocator.getCurrentPosition();
   }
 
-  // Lấy dữ liệu thời tiết
   Future<void> getWeatherData(BuildContext context, {bool notify = false}) async {
-    isLoading = true; // Bắt đầu quá trình tải
+    isLoading = true;
     isRequestError = false;
     isSearchError = false;
     if (notify) notifyListeners();
 
-    Position? locData = await requestLocation(context); // Yêu cầu vị trí
+    Position? locData = await requestLocation(context); 
 
     if (locData == null) {
       isLoading = false;
       notifyListeners();
-      return; // Nếu không có vị trí, thoát khỏi hàm
+      return; 
     }
 
     try {
-      // Lưu vị trí và lấy dữ liệu thời tiết
       currentLocation = LatLng(locData.latitude, locData.longitude);
       await getCurrentWeather(currentLocation!);
       await getDailyWeather(currentLocation!);
       await getHourlyWeather(currentLocation!);
     } catch (e) {
       print(e);
-      isRequestError = true; // Ghi nhận lỗi yêu cầu
+      isRequestError = true;
     } finally {
-      isLoading = false; // Kết thúc quá trình tải
+      isLoading = false;
       notifyListeners();
     }
   }
 
-  // Lấy thời tiết hiện tại
   Future<void> getCurrentWeather(LatLng location) async {
     Uri url = Uri.parse(
       'https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&units=metric&appid=$apiKey&lang=vi',
     );
     try {
-      final response = await http.get(url); // Gửi yêu cầu đến API
-      final extractedData = json.decode(response.body) as Map<String, dynamic>; // Giải mã JSON
-      weather = Weather.fromJson(extractedData); // Tạo đối tượng Weather từ dữ liệu
+      final response = await http.get(url);
+      final extractedData = json.decode(response.body) as Map<String, dynamic>;
+      weather = Weather.fromJson(extractedData); 
       print('Fetched Weather for: ${weather.city}/${weather.countryCode}');
     } catch (error) {
       print(error);
-      isLoading = false; // Kết thúc quá trình tải
-      this.isRequestError = true; // Ghi nhận lỗi yêu cầu
+      isLoading = false; 
+      this.isRequestError = true;
     }
   }
 
-  // Lấy thời tiết theo ngày
+
   Future<void> getDailyWeather(LatLng location) async {
-    int count = 7; // Số lượng ngày để lấy
-    isLoading = true; // Bắt đầu quá trình tải
+    int count = 7; 
+    isLoading = true; 
     notifyListeners();
 
     Uri url = Uri.parse(
         'https://api.openweathermap.org/data/2.5/forecast/daily?lat=${location.latitude}&lon=${location.longitude}&cnt=$count&appid=$apiKey&units=metric');
 
     try {
+      print(url);
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final extractedData =

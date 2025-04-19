@@ -249,7 +249,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
           height: 30,
           child: const Icon(
             Icons.location_on,
-            color: Colors.green, // Marker màu xanh lá cho điểm bắt đầu
+            color: Colors.green,
             size: 40,
           ),
         ),
@@ -263,7 +263,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
           height: 30,
           child: const Icon(
             Icons.location_on,
-            color: Colors.blue, // Marker màu xanh dương cho điểm kết thúc
+            color: Colors.blue,
             size: 40,
           ),
         ),
@@ -432,15 +432,16 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
               mapController: _mapController,
               mapReady: _mapReady,
               onMapReady: _onMapReady,
-              onMapTap: _onMapTap, // Gọi khi nhấn vào bản đồ
+              onMapTap: _onMapTap,
               markerSize: _markerSize,
               additionalMarkers: _buildMarkers(),
               places: places,
               onDirectionPressed: (LatLng start, LatLng destination) {
-                Navigator.pop(context); // Đóng modal
-                _getRoute(start, destination); // Gọi hàm ở widget cha
+                Navigator.pop(context); 
+                _getRoute(start, destination);
               },
               notifications: notifications,
+              zoomLevel: _zoomLevel,
             ),
           custom.SearchBar(
             searchController: _searchController,

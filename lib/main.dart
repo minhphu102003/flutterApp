@@ -9,8 +9,6 @@ void main() {
     const MyApp(),
   );
 }
-
-// Widget chính của ứng dụng
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -94,7 +92,6 @@ class MyApp extends StatelessWidget {
                       curve: curve,
                     ),
                   );
-                  // Hoạt ảnh mờ dần màn hình
                   var opacityAnimation =
                       Tween<double>(begin: 0.0, end: 1.0).animate(
                     CurvedAnimation(
@@ -120,12 +117,10 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-// Màn hình MapScreen với routeName được định nghĩa
 class MapScreen extends StatelessWidget {
   static const routeName = '/map';
 
-  const MapScreen({super.key}); // Thêm routeName cho MapScreen
+  const MapScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +133,6 @@ class MapScreen extends StatelessWidget {
   }
 }
 
-// Đảm bảo màn hình SevenDayForecastDetail cũng có routeName
 class SevenDayForecastDetail extends StatelessWidget {
   static const routeName = '/sevenDayForecastDetail';
 
