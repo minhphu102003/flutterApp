@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutterApp/helper/navigation_helpers.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:flutterApp/services/locationService.dart';
+import 'package:flutterApp/utils/mapUtils.dart';
+import 'package:flutterApp/utils/overlayUtils.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutterApp/config.dart';
@@ -161,7 +163,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
 
   void _adjustZoomAndMarker() {
     setState(() {
-      _zoomLevel += 1; // Tăng zoom lên 1
+      _zoomLevel += 1;
       _markerSize = 50.0;
     });
     if (_mapReady) {
@@ -174,64 +176,33 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     _adjustZoomAndMarker();
   }
 
-  void _openCamera(BuildContext context) {
-    OverlayState overlayState = Overlay.of(context)!;
+void _openCamera(BuildContext context) {
+  OverlayState overlayState = Overlay.of(context)!;
 
-    _currentOverlayEntry = OverlayEntry(
-      builder: (BuildContext context) {
-        return Positioned(
-          top: 30,
-          left: 0,
-          right: 0,
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              height: 225,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius:
-                    BorderRadius.vertical(bottom: Radius.circular(16)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ChoseDirection(
-                onClose: _handleCloseOverlayAndAdjustMap,
-                isStartPosition: _isSelectingStart,
-                startPosition: _startPosition,
-                endPosition: _endPosition,
-                onTextChanged: (isStart, query) {
-                  setState(() {
-                    _isSelectingStart = isStart;
-                    _findRoutes = true;
-                    if (isStart) {
-                      topSuggeslist = 170;
-                    } else {
-                      topSuggeslist = 170;
-                    }
-                  });
-                  _onSearchChanged(query);
-                },
-                onMapIconPressed: (isStart) {
-                  setState(() {
-                    _isSelectingStart = isStart;
-                    _findRoutes = true;
-                    _suggestionsGoongMap.clear();
-                  });
-                  _toggleCameraOverlay(context);
-                },
-              ),
-            ),
-          ),
-        );
-      },
-    );
-    overlayState.insert(_currentOverlayEntry!);
-  }
+  _currentOverlayEntry = OverlayUtils.buildCameraOverlay(
+    context: context,
+    isSelectingStart: _isSelectingStart,
+    startPosition: _startPosition,
+    endPosition: _endPosition,
+    onClose: _handleCloseOverlayAndAdjustMap,
+    onTextChanged: (isStart, query) {
+      _onSearchChanged(query);
+    },
+    onMapIconPressed: (isStart) {
+      _toggleCameraOverlay(context);
+    },
+    onStateUpdate: (isStart, findRoutes, topSuggestList) {
+      setState(() {
+        _isSelectingStart = isStart;
+        _findRoutes = findRoutes;
+        topSuggeslist = topSuggestList as double;
+        if (!findRoutes) _suggestionsGoongMap.clear();
+      });
+    },
+  );
+
+  overlayState.insert(_currentOverlayEntry!);
+}
 
   void _onMapTap(TapPosition position, LatLng latLng) {
     if (_currentOverlayEntry == null && _findRoutes) {
@@ -240,36 +211,10 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   }
 
   List<Marker> _buildMarkers() {
-    List<Marker> markers = [];
-    if (_startPosition != null) {
-      markers.add(
-        Marker(
-          point: _startPosition!,
-          width: 30,
-          height: 30,
-          child: const Icon(
-            Icons.location_on,
-            color: Colors.green,
-            size: 40,
-          ),
-        ),
-      );
-    }
-    if (_endPosition != null) {
-      markers.add(
-        Marker(
-          point: _endPosition!,
-          width: 30,
-          height: 30,
-          child: const Icon(
-            Icons.location_on,
-            color: Colors.blue,
-            size: 40,
-          ),
-        ),
-      );
-    }
-    return markers;
+    return buildStartEndMarkers(
+      startPosition: _startPosition,
+      endPosition: _endPosition,
+    );
   }
 
   Future<void> fetchPlaces() async {
@@ -310,29 +255,18 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _getCurrentLocation() async {
-    if (!await Geolocator.isLocationServiceEnabled()) {
-      return Future.error('Location services are disabled.');
-    }
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied.');
+    try {
+      LatLng current = await LocationService.getCurrentLocation();
+      if (mounted) {
+        setState(() {
+          _currentLocation = current;
+          widget.onLocationChanged(current.longitude, current.latitude);
+          _locationLoaded = true;
+          if (_mapReady) _mapController.move(current, _zoomLevel);
+        });
       }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error('Location permissions are permanently denied.');
-    }
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-    if (mounted) {
-      setState(() {
-        _currentLocation = LatLng(position.latitude, position.longitude);
-        widget.onLocationChanged(
-            _currentLocation.longitude!, _currentLocation.latitude!);
-        _locationLoaded = true;
-        if (_mapReady) _mapController.move(_currentLocation, _zoomLevel);
-      });
+    } catch (e) {
+      print('Lỗi lấy vị trí: $e');
     }
   }
 
@@ -437,7 +371,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
               additionalMarkers: _buildMarkers(),
               places: places,
               onDirectionPressed: (LatLng start, LatLng destination) {
-                Navigator.pop(context); 
+                Navigator.pop(context);
                 _getRoute(start, destination);
               },
               notifications: notifications,
