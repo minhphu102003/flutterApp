@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutterApp/services/reportService.dart';
+import 'package:flutterApp/utils/reportConverter.dart';
 import 'package:flutterApp/widgets/reportMarker.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -49,8 +51,6 @@ class MapDisplayState extends State<MapDisplay>
     with SingleTickerProviderStateMixin {
   String serverUrl =
       kIsWeb ? AppConfig.urlLocalUploadWed : AppConfig.urlLocalUploadAndroi;
-  final double _imageSize = AppConfig.imageSize;
-  final double _imageSizeClick = AppConfig.imageSizeClick;
   int? _selectedMarkerIndex;
   bool firstRecommend = false;
   List<Map<String, dynamic>> previousRoutePolylines = [];
@@ -61,6 +61,7 @@ class MapDisplayState extends State<MapDisplay>
   bool _showCircle = true;
   late AnimationController _rippleController;
   late Animation<double> _rippleAnimation;
+  late final ReportService _reportService;
 
   @override
   void didUpdateWidget(covariant MapDisplay oldWidget) {
@@ -98,6 +99,40 @@ class MapDisplayState extends State<MapDisplay>
         removeExpiredNotifications();
       }
     });
+    _reportService = ReportService();
+    _fetchInitialReports();
+  }
+
+
+  Future<List<TrafficNotification>> _fetchInitialReports() async {
+    final DateTime endDate = DateTime.now();
+    final DateTime now = DateTime.now();
+    final DateTime startDate = endDate.subtract(const Duration(minutes: 30));
+
+    try {
+      final data = await _reportService.fetchAccountReport(
+        startDate: startDate,
+        endDate: endDate,
+      );
+
+      final List<TrafficNotification> filteredNotifications = [];
+      for (final report in data.data) {
+        final bool startsWithT = report.typeReport.startsWith('T');
+        final Duration difference = now.difference(report.timestamp);
+
+        if (startsWithT) {
+          if (difference.inMinutes <= 5) {
+            filteredNotifications.add(convertReportToNotification(report, widget.currentLocation.latitude, widget.currentLocation.longitude));
+          }
+        } else {
+          filteredNotifications.add(convertReportToNotification(report, widget.currentLocation.latitude, widget.currentLocation.longitude));
+        }
+      }
+      return filteredNotifications;
+    } catch (e) {
+      debugPrint("Failed to load recent reports: $e");
+      return [];
+    }
   }
 
   void addNotifications(TrafficNotification notification) {
@@ -154,8 +189,9 @@ class MapDisplayState extends State<MapDisplay>
       final report = notifications[index];
       final isSelected = _selectedMarkerIndex == index;
       final double baseSize = isSelected ? 50.0 : 36.0;
-      const double scaleFactor = 1.2; 
-      final double scaledSize = baseSize * (widget.zoomLevel / 15 * scaleFactor).clamp(0.5, 2.0);
+      const double scaleFactor = 1.2;
+      final double scaledSize =
+          baseSize * (widget.zoomLevel / 15 * scaleFactor).clamp(0.5, 2.0);
 
       return Marker(
         point: LatLng(report.latitude, report.longitude),
