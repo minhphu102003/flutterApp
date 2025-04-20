@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutterApp/models/comment.dart';
 import 'package:flutterApp/models/paginated_data.dart';
 import './apiClient.dart';
-import './constants.dart'; // Import file chứa endpoint constants
+import './constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CommentService {
