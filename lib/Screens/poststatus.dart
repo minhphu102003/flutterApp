@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutterApp/constants/reportTypeMap.dart';
 import 'package:flutterApp/models/mediaFile.dart';
-import 'package:flutterApp/utils/permissionsUtil.dart';
+import 'package:flutterApp/services/reportServiceV2.dart';
 import 'package:flutterApp/widgets/actionButtonsReport.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:flutterApp/services/reportService.dart';
 import 'package:flutterApp/helper/image_utils.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutterApp/widgets/typeReportDropdown.dart';
-import 'package:get_thumbnail_video/video_thumbnail.dart';
-import 'dart:typed_data';
 
 class CreatePostScreen extends StatefulWidget {
   final double longitude;
@@ -27,15 +24,21 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _postController = TextEditingController();
   String? _typeReport = 'Traffic Jam';
-  final List<File> _images = [];
   List<MediaFile> _mediaFiles = [];
   final ImagePicker _picker = ImagePicker();
   bool isLoading = false;
   bool _isExpanded = false;
   final ReportService _reportService = ReportService();
+  final ReportServiceV2 _reportServiceV2 = ReportServiceV2();
   late Animation<double> _rippleAnimation;
   late AnimationController _rippleController;
   late FocusNode _focusNode;
+
+  bool get isUploadingImage =>
+      _mediaFiles.any((media) => media.type == MediaType.image);
+
+  bool get isUploadingVideo =>
+      _mediaFiles.any((media) => media.type == MediaType.video);
 
   @override
   void initState() {
@@ -71,33 +74,54 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       return;
     }
 
+    if (_mediaFiles.isEmpty) {
+      showErrorDialog(
+          context, 'You must upload at least one image or a video.');
+      return;
+    }
+
+    if (isUploadingImage && isUploadingVideo) {
+      showErrorDialog(
+          context, 'Cannot submit both images and video. Please choose one.');
+      return;
+    }
+
     String reportTypeApiValue =
         reportTypeMap[_typeReport ?? 'Traffic Jam'] ?? 'TRAFFIC_JAM';
     String? description =
         _postController.text.isEmpty ? null : _postController.text;
-
-    if (_images == null || _images.isEmpty) {
-      showErrorDialog(
-          context, 'You must upload at least one image to submit a report.');
-      return;
-    }
 
     setState(() {
       isLoading = true;
     });
 
     try {
-      String result = await _reportService.createAccountReport(
-        description: description ?? '',
-        typeReport: reportTypeApiValue,
-        longitude: widget.longitude,
-        latitude: widget.latitude,
-        imageFiles: _images,
-      );
+      String result;
+
+      if (isUploadingImage) {
+        result = await _reportService.createAccountReport(
+          description: description ?? '',
+          typeReport: reportTypeApiValue,
+          longitude: widget.longitude,
+          latitude: widget.latitude,
+          imageFiles: _mediaFiles.map((m) => m.file).toList(),
+        );
+      } else if (isUploadingVideo) {
+        result = await _reportServiceV2.createVideoReport(
+          description: description ?? '',
+          typeReport: reportTypeApiValue,
+          longitude: widget.longitude,
+          latitude: widget.latitude,
+          videoFile:
+              _mediaFiles.first.file,
+        );
+      } else {
+        throw Exception("No valid media file selected.");
+      }
 
       _postController.clear();
       _typeReport = 'Traffic Jam';
-      _images.clear();
+      _mediaFiles.clear();
       setState(() {});
 
       showErrorDialog(context, result);
@@ -111,29 +135,47 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 
   Future<void> _captureImage() async {
+    if (isUploadingVideo) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                'You can only upload images or a single video, not both.')),
+      );
+      return;
+    }
+
     final XFile? capturedFile =
         await _picker.pickImage(source: ImageSource.camera);
+
     if (capturedFile != null) {
-      setState(() async {
-        if (_mediaFiles.length >= 5) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('You can only add up to 5 materials.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        } else {
-          final mediaFile = await MediaFile.create(
-            file: File(capturedFile.path),
-            type: MediaType.image,
-          );
-          _mediaFiles.add(mediaFile);
-        }
+      if (_mediaFiles.where((m) => m.type == MediaType.image).length >= 5) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You can only add up to 5 images.')),
+        );
+        return;
+      }
+
+      final mediaFile = await MediaFile.create(
+        file: File(capturedFile.path),
+        type: MediaType.image,
+      );
+
+      setState(() {
+        _mediaFiles.add(mediaFile);
       });
     }
   }
 
   Future<void> _pickVideo(BuildContext context) async {
+    if (_mediaFiles.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content:
+                Text('You can only upload a single video OR up to 5 images.')),
+      );
+      return;
+    }
+
     final picker = ImagePicker();
     final pickedVideo = await picker.pickVideo(
       source: ImageSource.camera,
@@ -142,24 +184,13 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     );
 
     if (pickedVideo != null) {
-      final file = File(pickedVideo.path);
-
       final mediaFile = await MediaFile.create(
-        file: file,
+        file: File(pickedVideo.path),
         type: MediaType.video,
       );
 
       setState(() {
-        if (_mediaFiles.length >= 5) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('You can only add up to 5 materials.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        } else {
-          _mediaFiles.add(mediaFile);
-        }
+        _mediaFiles.add(mediaFile);
       });
     }
   }
