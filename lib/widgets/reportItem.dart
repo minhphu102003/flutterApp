@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import '../../models/report.dart';
 import 'package:flutterApp/utils/time.dart';
 import '../widgets/reportDropdown.dart';
+import 'package:flutterApp/services/reviewReportService.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ReportItem extends StatelessWidget {
   final Report report;
@@ -11,9 +13,50 @@ class ReportItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final DateTime adjustedTimestamp = report.timestamp.add(Duration(hours: 7));
+    final DateTime adjustedTimestamp =
+        report.timestamp.add(const Duration(hours: 7));
     final String formattedTime =
         DateFormat('HH:mm dd/MM/yyyy').format(adjustedTimestamp);
+    final String reportId = report.reportId;
+    final ReportReviewService _reportReview = ReportReviewService();
+
+    void _handleReportReview(
+        BuildContext context, String reason, String reportId) async {
+      try {
+        final SharedPreferences prefs = await SharedPreferences.getInstance();
+        final String? token = prefs.getString('token');
+
+        if (token == null || token.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('You must be logged in to post a review.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          return;
+        }
+
+        final message = await _reportReview.createAccountReportReview(
+          accountReportId: reportId,
+          reason: reason,
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } catch (e) {
+        debugPrint('Error submitting review: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error submitting review'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -135,7 +178,7 @@ class ReportItem extends StatelessWidget {
                 IntrinsicWidth(
                   child: ReportDropdown(
                     onSelected: (reason) {
-                      debugPrint('User selected: $reason');
+                      _handleReportReview(context, reason, reportId);
                       // Gửi API hoặc hiển thị xác nhận
                     },
                   ),

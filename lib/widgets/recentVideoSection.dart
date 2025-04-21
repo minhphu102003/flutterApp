@@ -79,17 +79,17 @@ class RecentVideosSection extends StatelessWidget {
                             left: 10,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 3, vertical: 1),
+                                  horizontal: 5, vertical: 1),
                               decoration: BoxDecoration(
                                 color: Colors.grey
-                                    .withOpacity(0.6), // Màu xám trong suốt
+                                    .withOpacity(0.6), 
                                 borderRadius:
                                     BorderRadius.circular(30), // Bo tròn
                               ),
                               child: Row(
                                 children: [
                                   const CircleAvatar(
-                                    radius: 20,
+                                    radius: 12,
                                     backgroundImage: AssetImage(
                                         'assets/images/defaultAvatar.png'),
                                   ),
