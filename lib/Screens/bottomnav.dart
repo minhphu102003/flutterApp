@@ -125,8 +125,8 @@ class BottomNavState extends State<BottomNav> {
     pages = [homepage, dulich, camera, notification, profile];
     _webSocketService = WebSocketService();
     _webSocketService.connect(
-      'ws://10.0.2.2:8000', // Mobile (Android Emulator)
-      'ws://localhost:8000', // Web
+      'wss://danahub-backend-4ccd2faffe40.herokuapp.com/ws',
+      'wss://danahub-backend-4ccd2faffe40.herokuapp.com/ws', // Web
     );
     _webSocketService.onNotificationReceived =
         (TrafficNotification newNotification) {

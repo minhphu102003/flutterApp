@@ -87,7 +87,7 @@ class MapDisplayState extends State<MapDisplay>
       CurvedAnimation(parent: _rippleController, curve: Curves.easeOut),
     );
     notifications = widget.notifications;
-    Future.delayed(const Duration(minutes: 45), () {
+    Future.delayed(const Duration(minutes: 1), () {
       if (mounted) {
         setState(() {
           _showCircle = false;

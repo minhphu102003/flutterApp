@@ -185,17 +185,13 @@ void _openCamera(BuildContext context) {
     startPosition: _startPosition,
     endPosition: _endPosition,
     onClose: _handleCloseOverlayAndAdjustMap,
-    onTextChanged: (isStart, query) {
-      _onSearchChanged(query);
-    },
     onMapIconPressed: (isStart) {
       _toggleCameraOverlay(context);
     },
-    onStateUpdate: (isStart, findRoutes, topSuggestList) {
+    onStateUpdate: (isStart, findRoutes) {
       setState(() {
         _isSelectingStart = isStart;
         _findRoutes = findRoutes;
-        topSuggeslist = topSuggestList as double;
         if (!findRoutes) _suggestionsGoongMap.clear();
       });
     },
@@ -303,7 +299,7 @@ void _openCamera(BuildContext context) {
       setState(() {
         _routePolylines = routesWithInstructions.map((route) {
           final coordinates = route['coordinates']
-              as List<LatLng>; // No need to map to LatLng again
+              as List<LatLng>;
           final recommended = route['recommended'] as bool;
           final report = route['report'] as List<Map<String, dynamic>>;
           return {
