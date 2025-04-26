@@ -9,9 +9,8 @@ class OverlayUtils {
     required LatLng? startPosition,
     required LatLng? endPosition,
     required void Function() onClose,
-    required void Function(bool, String) onTextChanged,
     required void Function(bool) onMapIconPressed,
-    required void Function(bool isSelectingStart, bool findRoutes, int topSuggestList) onStateUpdate,
+    required void Function(bool isSelectingStart, bool findRoutes) onStateUpdate,
   }) {
     return OverlayEntry(
       builder: (BuildContext context) {
@@ -40,11 +39,10 @@ class OverlayUtils {
                 startPosition: startPosition,
                 endPosition: endPosition,
                 onTextChanged: (isStart, query) {
-                  onStateUpdate(isStart, true, 170);
-                  onTextChanged(isStart, query);
+                  onStateUpdate(isStart, true);
                 },
                 onMapIconPressed: (isStart) {
-                  onStateUpdate(isStart, true, 0);
+                  onStateUpdate(isStart, true);
                   onMapIconPressed(isStart);
                 },
               ),
