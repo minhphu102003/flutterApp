@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutterApp/helper/navigation_helpers.dart';
+import 'package:flutterApp/models/camera.dart';
 import 'package:flutterApp/services/locationService.dart';
 import 'package:flutterApp/utils/mapUtils.dart';
 import 'package:flutterApp/utils/overlayUtils.dart';
@@ -21,6 +22,7 @@ import 'package:flutterApp/screens/poststatus.dart';
 import 'package:flutterApp/models/place.dart';
 import 'package:flutterApp/services/placeService.dart';
 import 'package:flutterApp/models/notification.dart';
+import 'package:flutterApp/services/cameraService.dart';
 
 class MapScreen extends StatefulWidget {
   final double? longitude;
@@ -65,6 +67,8 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   List<TrafficNotification> notifications = [];
   GlobalKey<MapDisplayState> MapdisplayKey = GlobalKey<MapDisplayState>();
   final MapApiService _mapApiService = MapApiService();
+  final CameraService _cameraService = CameraService();
+  List<Camera> _cameras = [];
 
   void addNotification(TrafficNotification notification) {
     setState(() {
@@ -225,6 +229,21 @@ void _openCamera(BuildContext context) {
     } catch (e) {}
   }
 
+    Future<void> _fetchCameras() async {
+    try {
+      final paginatedData = await _cameraService.fetchNearbyCameras(
+          longitude: _currentLocation.longitude,
+          latitude: _currentLocation.latitude,
+      );
+
+      setState(() {
+        _cameras = paginatedData.data;
+      });
+    } catch (e) {
+      print('Error loading cameras: $e');
+    }
+  }
+
   void _onMapReady() {
     setState(() {
       _mapReady = true;
@@ -248,6 +267,7 @@ void _openCamera(BuildContext context) {
       await _getCurrentLocation();
     }
     await fetchPlaces();
+    await _fetchCameras();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -366,6 +386,7 @@ void _openCamera(BuildContext context) {
               markerSize: _markerSize,
               additionalMarkers: _buildMarkers(),
               places: places,
+              cameras: _cameras,
               onDirectionPressed: (LatLng start, LatLng destination) {
                 Navigator.pop(context);
                 _getRoute(start, destination);

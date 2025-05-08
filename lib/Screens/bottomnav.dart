@@ -44,7 +44,7 @@ class BottomNavState extends State<BottomNav> {
           notificationKey.currentState?.addNotification(newNotification);
           newNotificationCount++;
         }
-        if(distance< 30){
+        if (distance < 30) {
           mapKey.currentState?.addNotification(newNotification);
         }
       }
@@ -93,20 +93,20 @@ class BottomNavState extends State<BottomNav> {
   }
 
   Future<void> fetchNotifications() async {
-  try {
-    final NotificationService notificationService = NotificationService();
-    final paginatedData = await notificationService.getNotifications(page: 1, limit: 10);
+    try {
+      final NotificationService notificationService = NotificationService();
+      final paginatedData =
+          await notificationService.getNotifications(page: 1, limit: 10);
 
-    setState(() {
-      notifications = paginatedData.data;
-      newNotificationCount = paginatedData.data.length;
-    });
-    notificationKey.currentState?.addNotificationsInit(notifications);
-  } catch (error) {
-    print('Failed to fetch notifications: $error');
+      setState(() {
+        notifications = paginatedData.data;
+        newNotificationCount = paginatedData.data.length;
+      });
+      notificationKey.currentState?.addNotificationsInit(notifications);
+    } catch (error) {
+      print('Failed to fetch notifications: $error');
+    }
   }
-}
-
 
   @override
   void initState() {
@@ -118,7 +118,7 @@ class BottomNavState extends State<BottomNav> {
     camera = const CameraScreen();
 
     notification = NotificationCus(
-      key: notificationKey, 
+      key: notificationKey,
       notifications: notifications,
     );
 
@@ -130,8 +130,7 @@ class BottomNavState extends State<BottomNav> {
     );
     _webSocketService.onNotificationReceived =
         (TrafficNotification newNotification) {
-      addNewNotification(
-          newNotification);
+      addNewNotification(newNotification);
     };
     _webSocketService.sendMessage('Client connected');
   }
