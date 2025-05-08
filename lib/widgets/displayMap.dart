@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutterApp/models/camera.dart';
 import 'package:flutterApp/services/reportService.dart';
 import 'package:flutterApp/utils/reportConverter.dart';
 import 'package:flutterApp/widgets/reportMarker.dart';
@@ -12,6 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutterApp/helper/appConfig.dart';
 import 'package:flutterApp/widgets/placeInfor.dart';
 import 'package:flutterApp/utils/scaleMap.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class MapDisplay extends StatefulWidget {
   final LatLng currentLocation;
@@ -26,6 +28,7 @@ class MapDisplay extends StatefulWidget {
   final Function(LatLng start, LatLng destination) onDirectionPressed;
   final List<TrafficNotification> notifications;
   final double zoomLevel;
+  final List<Camera> cameras;
 
   const MapDisplay({
     super.key,
@@ -41,6 +44,7 @@ class MapDisplay extends StatefulWidget {
     required this.onDirectionPressed,
     this.notifications = const [],
     required this.zoomLevel,
+    required this.cameras,
   });
 
   @override
@@ -49,8 +53,6 @@ class MapDisplay extends StatefulWidget {
 
 class MapDisplayState extends State<MapDisplay>
     with SingleTickerProviderStateMixin {
-  String serverUrl =
-      kIsWeb ? AppConfig.urlLocalUploadWed : AppConfig.urlLocalUploadAndroi;
   int? _selectedMarkerIndex;
   bool firstRecommend = false;
   List<Map<String, dynamic>> previousRoutePolylines = [];
@@ -103,7 +105,6 @@ class MapDisplayState extends State<MapDisplay>
     _fetchInitialReports();
   }
 
-
   Future<List<TrafficNotification>> _fetchInitialReports() async {
     final DateTime endDate = DateTime.now();
     final DateTime now = DateTime.now();
@@ -122,10 +123,16 @@ class MapDisplayState extends State<MapDisplay>
 
         if (startsWithT) {
           if (difference.inMinutes <= 5) {
-            filteredNotifications.add(convertReportToNotification(report, widget.currentLocation.latitude, widget.currentLocation.longitude));
+            filteredNotifications.add(convertReportToNotification(
+                report,
+                widget.currentLocation.latitude,
+                widget.currentLocation.longitude));
           }
         } else {
-          filteredNotifications.add(convertReportToNotification(report, widget.currentLocation.latitude, widget.currentLocation.longitude));
+          filteredNotifications.add(convertReportToNotification(
+              report,
+              widget.currentLocation.latitude,
+              widget.currentLocation.longitude));
         }
       }
       return filteredNotifications;
@@ -183,6 +190,45 @@ class MapDisplayState extends State<MapDisplay>
     );
   }
 
+  void showYoutubeDialog(BuildContext context, String youtubeUrl) {
+    final videoId = YoutubePlayer.convertUrlToId(youtubeUrl);
+    if (videoId == null) {
+      showDialog(
+        context: context,
+        builder: (_) => const AlertDialog(
+          title: Text("Invalid YouTube URL"),
+          content: Text("Cannot load video."),
+        ),
+      );
+      return;
+    }
+
+    YoutubePlayerController _controller = YoutubePlayerController(
+      initialVideoId: videoId,
+      flags: const YoutubePlayerFlags(
+        autoPlay: true,
+        mute: false,
+      ),
+    );
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        contentPadding: const EdgeInsets.all(8),
+        content: AspectRatio(
+          aspectRatio: 16 / 9,
+          child: YoutubePlayer(
+            controller: _controller,
+            showVideoProgressIndicator: true,
+          ),
+        ),
+      ),
+    ).then((_) {
+      _controller.pause(); // Pause when dialog is closed
+      _controller.dispose(); // Clean up
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     List<Marker> reportMarkers = List.generate(notifications.length, (index) {
@@ -213,6 +259,31 @@ class MapDisplayState extends State<MapDisplay>
 
     String api = Config.api_mapbox_key;
     List<Marker> placeMarkers = widget.places.map((place) {
+      IconData markerIcon;
+      Color markerColor;
+
+      switch (place.type) {
+        case 'Restaurant':
+          markerIcon = Icons.restaurant;
+          markerColor = Colors.red;
+          break;
+        case 'Tourist destination':
+          markerIcon = Icons.location_city;
+          markerColor = Colors.blue;
+          break;
+        case 'Hotel':
+          markerIcon = Icons.hotel;
+          markerColor = Colors.green;
+          break;
+        case 'Museum':
+          markerIcon = Icons.museum;
+          markerColor = Colors.purple;
+          break;
+        default:
+          markerIcon = Icons.location_on;
+          markerColor = Colors.orangeAccent;
+      }
+
       return Marker(
         point: LatLng(place.latitude, place.longitude),
         width: widget.markerSize,
@@ -221,10 +292,46 @@ class MapDisplayState extends State<MapDisplay>
           onTap: () {
             showPlaceInfo(context, place);
           },
-          child: const Icon(
-            Icons.location_on,
-            color: Colors.orangeAccent,
+          child: Icon(
+            markerIcon,
+            color: markerColor, // Áp dụng màu sắc tương ứng
             size: 30,
+          ),
+        ),
+      );
+    }).toList();
+
+    List<Marker> cameraMarkers = widget.cameras.map((camera) {
+      return Marker(
+        point: LatLng(camera.latitude, camera.longitude),
+        width: widget.markerSize,
+        height: widget.markerSize,
+        child: GestureDetector(
+          onTap: () {
+            showYoutubeDialog(context, camera.link);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: camera.status
+                      ? const Color.fromARGB(255, 242, 237, 216)
+                          .withOpacity(0.8)
+                      : const Color.fromARGB(255, 129, 108, 112)
+                          .withOpacity(0.8),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.videocam,
+              color: camera.status
+                  ? const Color.fromARGB(255, 204, 181, 67)
+                  : const Color(0xFFFF1744),
+              size: 26,
+            ),
           ),
         ),
       );
@@ -299,6 +406,7 @@ class MapDisplayState extends State<MapDisplay>
             ...widget.additionalMarkers,
             ...placeMarkers,
             ...reportMarkers,
+            ...cameraMarkers,
           ],
         ),
       ],

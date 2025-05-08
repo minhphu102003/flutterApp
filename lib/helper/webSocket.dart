@@ -11,8 +11,6 @@ class WebSocketService {
   Function(TrafficNotification)? onNotificationReceived;
 
   void connect(String mobileUrl, String webUrl){
-  // void connect(String serverUrl) {
-    // Chọn URL dựa trên nền tảng
     String serverUrl = kIsWeb ? webUrl : mobileUrl;
 
     channel = WebSocketChannel.connect(
@@ -22,7 +20,6 @@ class WebSocketService {
     channel.stream.listen(
       (message) {
         try {
-          // Chuyển đổi JSON thành TrafficNotification
           Map<String, dynamic> data = json.decode(message);
           TrafficNotification notification = TrafficNotification.fromJson(data);
           onNotificationReceived?.call(notification);
