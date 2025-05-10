@@ -190,7 +190,6 @@ class ReportItem extends StatelessWidget {
                   child: ReportDropdown(
                     onSelected: (reason) {
                       _handleReportReview(context, reason, reportId);
-                      // Gửi API hoặc hiển thị xác nhận
                     },
                   ),
                 ),

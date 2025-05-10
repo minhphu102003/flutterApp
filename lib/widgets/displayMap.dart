@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutterApp/models/camera.dart';
 import 'package:flutterApp/services/reportService.dart';
 import 'package:flutterApp/utils/reportConverter.dart';
-import 'package:flutterApp/widgets/reportMarker.dart';
+import 'package:flutterApp/widgets/markerBuilders.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutterApp/config.dart';
 import 'package:flutterApp/models/place.dart';
 import 'package:flutterApp/models/notification.dart';
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutterApp/helper/appConfig.dart';
 import 'package:flutterApp/widgets/placeInfor.dart';
 import 'package:flutterApp/utils/scaleMap.dart';
@@ -64,6 +63,7 @@ class MapDisplayState extends State<MapDisplay>
   late AnimationController _rippleController;
   late Animation<double> _rippleAnimation;
   late final ReportService _reportService;
+  String api = Config.api_mapbox_key;
 
   @override
   void didUpdateWidget(covariant MapDisplay oldWidget) {
@@ -231,110 +231,86 @@ class MapDisplayState extends State<MapDisplay>
 
   @override
   Widget build(BuildContext context) {
-    List<Marker> reportMarkers = List.generate(notifications.length, (index) {
-      final report = notifications[index];
-      final isSelected = _selectedMarkerIndex == index;
-      final double baseSize = isSelected ? 50.0 : 36.0;
-      const double scaleFactor = 1.2;
-      final double scaledSize =
-          baseSize * (widget.zoomLevel / 15 * scaleFactor).clamp(0.5, 2.0);
+    final hasRoutes = widget.routePolylines.isNotEmpty;
 
-      return Marker(
-        point: LatLng(report.latitude, report.longitude),
-        width: scaledSize,
-        height: scaledSize,
-        child: ReportMarkerWidget(
-          zoom: widget.zoomLevel,
-          isSelected: isSelected,
-          displayImage: displayImage,
-          imageUrl: report.img,
-          onTap: () {
-            setState(() {
-              _selectedMarkerIndex = isSelected ? null : index;
-            });
-          },
-        ),
-      );
-    });
+    final currentLocationMarker = Marker(
+      point: widget.currentLocation,
+      width: widget.markerSize,
+      height: widget.markerSize,
+      child: hasRoutes
+          ? Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.blue,
+                border: Border.all(color: Colors.white, width: 4),
+              ),
+              child: const Center(
+                child: Icon(Icons.person_pin_circle, color: Colors.white),
+              ),
+            )
+          : Icon(
+              Icons.location_on,
+              color: Colors.red,
+              size: widget.markerSize * 0.6,
+            ),
+    );
 
-    String api = Config.api_mapbox_key;
-    List<Marker> placeMarkers = widget.places.map((place) {
-      IconData markerIcon;
-      Color markerColor;
+    final reportMarkers = buildReportMarkers(
+      notifications: notifications,
+      selectedIndex: _selectedMarkerIndex,
+      zoomLevel: widget.zoomLevel,
+      displayImage: displayImage,
+      onTap: (index) {
+        setState(() {
+          _selectedMarkerIndex = _selectedMarkerIndex == index ? null : index;
+        });
+      },
+    );
 
-      switch (place.type) {
-        case 'Restaurant':
-          markerIcon = Icons.restaurant;
-          markerColor = Colors.red;
-          break;
-        case 'Tourist destination':
-          markerIcon = Icons.location_city;
-          markerColor = Colors.blue;
-          break;
-        case 'Hotel':
-          markerIcon = Icons.hotel;
-          markerColor = Colors.green;
-          break;
-        case 'Museum':
-          markerIcon = Icons.museum;
-          markerColor = Colors.purple;
-          break;
-        default:
-          markerIcon = Icons.location_on;
-          markerColor = Colors.orangeAccent;
-      }
+    final placeMarkers = buildPlaceMarkers(
+      places: widget.places,
+      markerSize: widget.markerSize,
+      showPlaceInfo: showPlaceInfo,
+      context: context,
+    );
 
-      return Marker(
-        point: LatLng(place.latitude, place.longitude),
-        width: widget.markerSize,
-        height: widget.markerSize,
-        child: GestureDetector(
-          onTap: () {
-            showPlaceInfo(context, place);
-          },
-          child: Icon(
-            markerIcon,
-            color: markerColor, // Áp dụng màu sắc tương ứng
-            size: 30,
-          ),
-        ),
-      );
-    }).toList();
+    final cameraMarkers = buildCameraMarkers(
+      cameras: widget.cameras,
+      markerSize: widget.markerSize,
+      showYoutubeDialog: showYoutubeDialog,
+      context: context,
+    );
 
-    List<Marker> cameraMarkers = widget.cameras.map((camera) {
-      return Marker(
-        point: LatLng(camera.latitude, camera.longitude),
-        width: widget.markerSize,
-        height: widget.markerSize,
-        child: GestureDetector(
-          onTap: () {
-            showYoutubeDialog(context, camera.link);
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: camera.status
-                      ? const Color.fromARGB(255, 242, 237, 216)
-                          .withOpacity(0.8)
-                      : const Color.fromARGB(255, 129, 108, 112)
-                          .withOpacity(0.8),
-                  blurRadius: 12,
-                  spreadRadius: 2,
+    List<Marker> interceptorMarkers = widget.routePolylines.expand((route) {
+      List<Marker> markers = [];
+      for (int i = 0; i < route['coordinates'].length; i++) {
+        LatLng coord = route['coordinates'][i];
+
+        if (i % 1 == 0) {
+          markers.add(Marker(
+            point: coord,
+            width: 16.0,
+            height: 16.0,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black12,
+                border: Border.all(
+                  color: Colors.white,
+                  width: 1,
                 ),
-              ],
+              ),
+              child: const Icon(
+                Icons.circle,
+                color: Color.fromARGB(255, 58, 58, 58),
+                size: 8,
+              ),
             ),
-            child: Icon(
-              Icons.videocam,
-              color: camera.status
-                  ? const Color.fromARGB(255, 204, 181, 67)
-                  : const Color(0xFFFF1744),
-              size: 26,
-            ),
-          ),
-        ),
-      );
+          ));
+        }
+      }
+      return markers;
     }).toList();
 
     return FlutterMap(
@@ -351,22 +327,48 @@ class MapDisplayState extends State<MapDisplay>
         ),
         if (widget.routePolylines.isNotEmpty)
           PolylineLayer(
-            polylines: widget.routePolylines.map((route) {
-              Color polylineColor;
-              if (route['recommended'] == true && !firstRecommend) {
-                polylineColor = Colors.blue;
-                firstRecommend = true;
-              } else if (route['recommended'] == false) {
-                polylineColor = Colors.red;
-              } else {
-                polylineColor = const Color.fromARGB(255, 96, 141, 196);
-              }
-              return Polyline(
-                points: route['coordinates'],
-                strokeWidth: 4.0,
-                color: polylineColor,
-              );
-            }).toList(),
+            polylines: widget.routePolylines
+                .map((route) {
+                  Color polylineColor;
+                  double strokeWidth;
+
+                  if (route['recommended'] == true && !firstRecommend) {
+                    polylineColor = Colors.blue;
+                    strokeWidth = 6.0;
+                    firstRecommend = true;
+
+                    final outlinePolyline = Polyline(
+                      points: route['coordinates'],
+                      strokeWidth: 7.0,
+                      color: Colors.blueAccent,
+                    );
+
+                    return [
+                      outlinePolyline,
+                      Polyline(
+                        points: route['coordinates'],
+                        strokeWidth: strokeWidth,
+                        color: polylineColor,
+                      )
+                    ];
+                  } else if (route['recommended'] == false) {
+                    polylineColor = Colors.red;
+                    strokeWidth = 4.0;
+                  } else {
+                    polylineColor = const Color.fromARGB(255, 156, 194, 239);
+                    strokeWidth = 5.0;
+                  }
+
+                  return [
+                    Polyline(
+                      points: route['coordinates'],
+                      strokeWidth: strokeWidth,
+                      color: polylineColor,
+                    ),
+                  ];
+                })
+                .expand((polyline) => polyline)
+                .toList(),
           ),
         if (_showCircle)
           AnimatedBuilder(
@@ -393,20 +395,12 @@ class MapDisplayState extends State<MapDisplay>
         MarkerLayer(
           key: ValueKey(_selectedMarkerIndex),
           markers: [
-            Marker(
-              point: widget.currentLocation,
-              width: widget.markerSize,
-              height: widget.markerSize,
-              child: Icon(
-                Icons.location_on,
-                color: Colors.red,
-                size: widget.markerSize * 0.6,
-              ),
-            ),
+            currentLocationMarker,
             ...widget.additionalMarkers,
             ...placeMarkers,
             ...reportMarkers,
             ...cameraMarkers,
+            ...interceptorMarkers,
           ],
         ),
       ],

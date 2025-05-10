@@ -398,7 +398,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     );
   }
 
-  // Widget để tạo nút bộ lọc
   Widget _buildSortButton(String label) {
     return GestureDetector(
       onTap: () {

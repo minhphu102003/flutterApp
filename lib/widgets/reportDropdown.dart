@@ -35,7 +35,47 @@ class ReportDropdown extends StatelessWidget {
         );
 
         if (selected != null) {
-          onSelected(selected);
+          if (selected == 'other') {
+            final customReason = await showDialog<String>(
+              context: context,
+              builder: (context) {
+                final TextEditingController controller =
+                    TextEditingController();
+                return AlertDialog(
+                  title: const Text('Enter report reason'),
+                  content: TextFormField(
+                    controller: controller,
+                    maxLines: 3,
+                    minLines: 3,
+                    decoration: const InputDecoration(
+                      hintText: 'Type your reason',
+                      border: OutlineInputBorder(),
+                    ),
+                    autofocus: true,
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        final input = controller.text.trim();
+                        Navigator.pop(context, input);
+                      },
+                      child: const Text('Submit'),
+                    ),
+                  ],
+                );
+              },
+            );
+
+            if (customReason != null && customReason.isNotEmpty) {
+              onSelected(customReason);
+            }
+          } else {
+            onSelected(selected);
+          }
         }
       },
       child: const Row(

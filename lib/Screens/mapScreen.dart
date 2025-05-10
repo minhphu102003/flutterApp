@@ -17,7 +17,6 @@ import 'package:flutterApp/widgets/routeInstruction.dart';
 import 'package:flutterApp/widgets/suggestionList.dart';
 import 'package:flutterApp/widgets/FloatButtonReport.dart';
 import 'package:flutterApp/screens/reportScreen.dart';
-import 'package:flutterApp/widgets/choseDirection.dart';
 import 'package:flutterApp/screens/poststatus.dart';
 import 'package:flutterApp/models/place.dart';
 import 'package:flutterApp/services/placeService.dart';
@@ -239,9 +238,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
       setState(() {
         _cameras = paginatedData.data;
       });
-    } catch (e) {
-      print('Error loading cameras: $e');
-    }
+    } catch (e) {}
   }
 
   void _onMapReady() {
@@ -281,9 +278,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
           if (_mapReady) _mapController.move(current, _zoomLevel);
         });
       }
-    } catch (e) {
-      print('Lỗi lấy vị trí: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> _searchLocation(String query) async {
@@ -402,12 +397,6 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
             left: 10,
             right: 10,
           ),
-          if (_showRouteInstructions && _routeInstructions.isNotEmpty)
-            RouteInstructions(
-              routeInstructions: _routeInstructions[0],
-              travelTime: _travelTime,
-              bottomPosition: 50, // Định vị trí tính từ đáy màn hình
-            ),
           WeatherIcon(
             onPressed: () => onWeatherButtonPressed(context),
             top: 160,
@@ -427,7 +416,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
               });
             },
             onCurrentLocation: _getCurrentLocation,
-            bottom: 50,
+            bottom: 60,
             right: 10,
           ),
           FloatingReportButton(
@@ -439,12 +428,17 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
           ),
           if (_suggestionsGoongMap.isNotEmpty)
             SuggestionsList(
-              // suggestions: _suggestions,
               suggestions: _suggestionsGoongMap
                   .map((item) => item['description'] ?? '')
                   .toList(),
               onSuggestionSelected: _selectSuggestion,
               top: topSuggeslist,
+            ),
+          if (_showRouteInstructions && _routeInstructions.isNotEmpty)
+            RouteInstructions(
+              routeInstructions: _routeInstructions[0],
+              travelTime: _travelTime,
+              bottomPosition: 50,
             ),
         ],
       ),

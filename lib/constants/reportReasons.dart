@@ -11,4 +11,5 @@ const reportReasons = [
     'label': 'Exaggerated or misleading description'
   },
   {'value': 'spam', 'label': 'Spam or fake news'},
+  {'value': 'other', 'label': 'Other...'},
 ];
