@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutterApp/models/reportV2.dart';
 import 'package:flutterApp/services/reportServiceV2.dart';
+import 'package:flutterApp/widgets/shimmerRecentVideoList.dart';
+import 'package:flutterApp/widgets/videoFullScreenPage.dart';
 import 'package:flutterApp/widgets/videoPreview.dart';
 
 class RecentVideosSection extends StatelessWidget {
@@ -19,7 +21,17 @@ class RecentVideosSection extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Padding(
             padding: EdgeInsets.all(16.0),
-            child: Center(child: CircularProgressIndicator()),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Recent Videos',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                SizedBox(height: 10),
+                ShimmerRecentVideoList(),
+              ],
+            ),
           );
         }
 
@@ -57,64 +69,58 @@ class RecentVideosSection extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final report = reports[index];
                     final videoUrl = report.mediaFile?.url ?? '';
-                    final String username = report.username;
-                    return GestureDetector(
-                      onTap: () {
-                        // TODO: Navigate to full video player
-                      },
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: VideoPreview(videoUrl: videoUrl),
-                          ),
-                          const Icon(
-                            Icons.play_circle_outline,
-                            color: Color.fromARGB(255, 175, 174, 172),
-                            size: 50,
-                          ),
-                          Positioned(
-                            top: 10,
-                            left: 10,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: Colors.grey
-                                    .withOpacity(0.6), 
-                                borderRadius:
-                                    BorderRadius.circular(30), // Bo tròn
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        VideoPreview(
+                          videoUrl: videoUrl,
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    VideoFullScreenPage(videoUrl: videoUrl),
                               ),
-                              child: Row(
-                                children: [
-                                  const CircleAvatar(
-                                    radius: 12,
-                                    backgroundImage: AssetImage(
-                                        'assets/images/defaultAvatar.png'),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    report.username,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      shadows: [
-                                        Shadow(
-                                          offset: Offset(1, 1),
-                                          blurRadius: 2,
-                                          color: Colors.black54,
-                                        )
-                                      ],
-                                    ),
-                                  ),
+                            );
+                          },
+                        ),
+                        const Positioned(
+                          top: 10,
+                          left: 10,
+                          child: CircleAvatar(
+                            radius: 14,
+                            backgroundImage:
+                                AssetImage('assets/images/defaultAvatar.png'),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 10,
+                          left: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withOpacity(0.6),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              report.username,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    offset: Offset(1, 1),
+                                    blurRadius: 2,
+                                    color: Colors.black54,
+                                  )
                                 ],
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     );
                   },
                 ),

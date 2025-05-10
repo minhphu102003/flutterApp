@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutterApp/widgets/reportItemShimmer.dart';
 import '../../models/report.dart';
 import '../../models/paginated_data.dart';
 import 'reportItem.dart';
@@ -14,7 +15,9 @@ class ReportList extends StatelessWidget {
       future: futureReports,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Column(
+            children: List.generate(3, (_) => const ReportItemShimmer()),
+          );
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData || snapshot.data!.data.isEmpty) {
@@ -22,7 +25,8 @@ class ReportList extends StatelessWidget {
         } else {
           final reports = snapshot.data!.data;
           return Column(
-            children: reports.map((report) => ReportItem(report: report)).toList(),
+            children:
+                reports.map((report) => ReportItem(report: report)).toList(),
           );
         }
       },

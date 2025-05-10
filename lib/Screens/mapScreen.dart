@@ -180,29 +180,29 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     _adjustZoomAndMarker();
   }
 
-void _openCamera(BuildContext context) {
-  OverlayState overlayState = Overlay.of(context)!;
+  void _openCamera(BuildContext context) {
+    OverlayState overlayState = Overlay.of(context)!;
 
-  _currentOverlayEntry = OverlayUtils.buildCameraOverlay(
-    context: context,
-    isSelectingStart: _isSelectingStart,
-    startPosition: _startPosition,
-    endPosition: _endPosition,
-    onClose: _handleCloseOverlayAndAdjustMap,
-    onMapIconPressed: (isStart) {
-      _toggleCameraOverlay(context);
-    },
-    onStateUpdate: (isStart, findRoutes) {
-      setState(() {
-        _isSelectingStart = isStart;
-        _findRoutes = findRoutes;
-        if (!findRoutes) _suggestionsGoongMap.clear();
-      });
-    },
-  );
+    _currentOverlayEntry = OverlayUtils.buildCameraOverlay(
+      context: context,
+      isSelectingStart: _isSelectingStart,
+      startPosition: _startPosition,
+      endPosition: _endPosition,
+      onClose: _handleCloseOverlayAndAdjustMap,
+      onMapIconPressed: (isStart) {
+        _toggleCameraOverlay(context);
+      },
+      onStateUpdate: (isStart, findRoutes) {
+        setState(() {
+          _isSelectingStart = isStart;
+          _findRoutes = findRoutes;
+          if (!findRoutes) _suggestionsGoongMap.clear();
+        });
+      },
+    );
 
-  overlayState.insert(_currentOverlayEntry!);
-}
+    overlayState.insert(_currentOverlayEntry!);
+  }
 
   void _onMapTap(TapPosition position, LatLng latLng) {
     if (_currentOverlayEntry == null && _findRoutes) {
@@ -229,11 +229,11 @@ void _openCamera(BuildContext context) {
     } catch (e) {}
   }
 
-    Future<void> _fetchCameras() async {
+  Future<void> _fetchCameras() async {
     try {
       final paginatedData = await _cameraService.fetchNearbyCameras(
-          longitude: _currentLocation.longitude,
-          latitude: _currentLocation.latitude,
+        longitude: _currentLocation.longitude,
+        latitude: _currentLocation.latitude,
       );
 
       setState(() {
@@ -318,8 +318,7 @@ void _openCamera(BuildContext context) {
 
       setState(() {
         _routePolylines = routesWithInstructions.map((route) {
-          final coordinates = route['coordinates']
-              as List<LatLng>;
+          final coordinates = route['coordinates'] as List<LatLng>;
           final recommended = route['recommended'] as bool;
           final report = route['report'] as List<Map<String, dynamic>>;
           return {
