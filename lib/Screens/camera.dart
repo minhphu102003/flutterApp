@@ -64,21 +64,21 @@ class _CameraState extends State<CameraScreen> {
               print("Tìm kiếm: $value");
             },
           ),
+          AddressSelector(
+            selectedCity: selectedCity,
+            cities: cities,
+            onCityChanged: (value) {
+              setState(() {
+                selectedCity = value;
+              });
+              print("Đã chọn thành phố: $value");
+            },
+          ),
           Expanded(
             child: Container(
               color: const Color.fromARGB(221, 86, 86, 86),
               child: Column(
                 children: [
-                  AddressSelector(
-                    selectedCity: selectedCity,
-                    cities: cities,
-                    onCityChanged: (value) {
-                      setState(() {
-                        selectedCity = value;
-                      });
-                      print("Đã chọn thành phố: $value");
-                    },
-                  ),
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.all(10.0),

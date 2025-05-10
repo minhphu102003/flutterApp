@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:chewie/chewie.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPreview extends StatefulWidget {
   final String videoUrl;
+  final VoidCallback onTap;
 
-  const VideoPreview({Key? key, required this.videoUrl}) : super(key: key);
+  const VideoPreview({Key? key, required this.videoUrl, required this.onTap})
+      : super(key: key);
 
   @override
   _VideoPreviewState createState() => _VideoPreviewState();
@@ -19,8 +22,12 @@ class _VideoPreviewState extends State<VideoPreview> {
   @override
   void initState() {
     super.initState();
-    print('Video URL: ${widget.videoUrl}');
     _initializeVideo();
+  }
+
+  void stop() {
+    _chewieController?.pause();
+    _chewieController?.videoPlayerController.pause();
   }
 
   Future<void> _initializeVideo() async {
@@ -32,12 +39,10 @@ class _VideoPreviewState extends State<VideoPreview> {
     }
 
     try {
-      print("Initializing video controller...");
       final videoUri = Uri.parse(widget.videoUrl);
       final videoPlayerController =
           VideoPlayerController.network(videoUri.toString());
 
-      // Đợi video tải xong trước khi khởi tạo ChewieController
       await videoPlayerController.initialize();
 
       setState(() {
@@ -52,7 +57,6 @@ class _VideoPreviewState extends State<VideoPreview> {
 
       videoPlayerController.setVolume(0);
       videoPlayerController.play();
-      print('Video Initialized');
     } catch (error) {
       if (mounted) {
         setState(() {
@@ -93,27 +97,39 @@ class _VideoPreviewState extends State<VideoPreview> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: SizedBox(
-        width: MediaQuery.of(context).size.width / 3 - 16,
-        height: 200,
-        child: FittedBox(
-          fit: BoxFit.cover,
-          clipBehavior: Clip.hardEdge,
-          child: SizedBox(
-            width: _chewieController!.videoPlayerController.value.size.width,
-            height: _chewieController!.videoPlayerController.value.size.height,
-            child: Chewie(controller: _chewieController!),
-          ),
-        ),
-      ),
+          width: MediaQuery.of(context).size.width / 3 - 16,
+          height: 200,
+          child: GestureDetector(
+            onTap: () {
+              widget.onTap.call(); // Gọi callback nếu có
+            },
+            child: FittedBox(
+              fit: BoxFit.cover,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width:
+                    _chewieController!.videoPlayerController.value.size.width,
+                height:
+                    _chewieController!.videoPlayerController.value.size.height,
+                child: Chewie(controller: _chewieController!),
+              ),
+            ),
+          )),
     );
   }
 
   Widget _buildLoadingWidget() {
-    return Container(
-      width: MediaQuery.of(context).size.width / 3 - 16,
-      height: 200,
-      color: Colors.grey[300],
-      child: const Center(child: CircularProgressIndicator()),
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade300,
+      highlightColor: Colors.grey.shade100,
+      child: Container(
+        width: MediaQuery.of(context).size.width / 3 - 16,
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
     );
   }
 }
