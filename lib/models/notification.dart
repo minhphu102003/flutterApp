@@ -1,4 +1,5 @@
 class TrafficNotification {
+  final String id;
   final String title;
   final String content;
   final String status;
@@ -10,6 +11,7 @@ class TrafficNotification {
   final String img;
 
   TrafficNotification({
+    required this.id,
     required this.title,
     required this.content,
     required this.status,
@@ -23,6 +25,7 @@ class TrafficNotification {
 
   factory TrafficNotification.fromJson(Map<String, dynamic> json) {
     return TrafficNotification(
+      id: json['_id'] as String,
       title: json['title'] as String,
       content: json['content'] as String,
       status: json['status'] as String,

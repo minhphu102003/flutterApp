@@ -2,6 +2,9 @@ import 'package:flutterApp/helper/location.dart';
 import 'package:flutterApp/models/notification.dart';
 import 'package:flutterApp/models/report.dart';
 import 'package:flutterApp/utils/reportUtils.dart';
+import 'package:uuid/uuid.dart';
+
+final Uuid uuid = Uuid();
 
 TrafficNotification convertReportToNotification(Report report, double currentLatitude, double currentLongitude) {
   String title = getTitleFromType(report.typeReport);
@@ -20,6 +23,7 @@ TrafficNotification convertReportToNotification(Report report, double currentLat
   String img = report.imgs.isNotEmpty ? report.imgs.first.img : '';
 
   return TrafficNotification(
+    id: uuid.v4(),
     title: title,
     content: content,
     status: status,

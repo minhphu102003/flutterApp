@@ -18,3 +18,4 @@ const String WEATHER_ENDPOINT = '/weather';
 const String WEATHER_SUGGESTION = '$WEATHER_ENDPOINT/suggestion';
 const String CAMERA_ENDPOINT = '/camera';
 const String REPORT_REVIEW_ENDPOINT= '/account-report-review';
+const String NOTIFICATION_ENDPOINT = '/notification';
