@@ -1,3 +1,7 @@
+import 'package:uuid/uuid.dart';
+
+var uuid = Uuid();
+
 class TrafficNotification {
   final String id;
   final String title;
@@ -25,18 +29,16 @@ class TrafficNotification {
 
   factory TrafficNotification.fromJson(Map<String, dynamic> json) {
     return TrafficNotification(
-      id: json['_id'] as String,
+      id: (json['_id'] ?? uuid.v4()) as String,
       title: json['title'] as String,
       content: json['content'] as String,
       status: json['status'] as String,
       isRead: json['isRead'] as bool,
       timestamp: DateTime.parse(json['timestamp'] as String),
-      distance:
-          json['distance'].toString(), 
+      distance: json['distance'].toString(),
       longitude: json['longitude'] is double
           ? json['longitude'] as double
-          : double.parse(json['longitude']
-              .toString()), 
+          : double.parse(json['longitude'].toString()),
       latitude: json['latitude'] is double
           ? json['latitude'] as double
           : double.parse(json['latitude'].toString()),
