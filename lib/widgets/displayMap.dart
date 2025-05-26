@@ -1,65 +1,77 @@
 import 'package:flutter/material.dart';
+import 'package:flutterApp/models/camera.dart';
+import 'package:flutterApp/services/reportService.dart';
+import 'package:flutterApp/utils/reportConverter.dart';
+import 'package:flutterApp/widgets/markerBuilders.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutterApp/config.dart';
 import 'package:flutterApp/models/place.dart';
-import 'package:flutterApp/helper/location.dart';
-import 'package:flutterApp/services/locationService.dart';
-import 'package:flutterApp/Screens/placeDetail.dart';
 import 'package:flutterApp/models/notification.dart';
 import 'dart:async';
-import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'package:flutterApp/helper/appConfig.dart';
+import 'package:flutterApp/widgets/placeInfor.dart';
+import 'package:flutterApp/utils/scaleMap.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import '../models/predictionData.dart';
 
 class MapDisplay extends StatefulWidget {
   final LatLng currentLocation;
-  // final List<List<LatLng>> routePolylines;
   final List<Map<String, dynamic>> routePolylines;
   final MapController mapController;
   final bool mapReady;
   final void Function() onMapReady;
   final double markerSize;
   final void Function(TapPosition, LatLng) onMapTap;
-  final List<Marker> additionalMarkers; // Danh sách marker tùy chỉnh
-  final List<Place> places; // Thêm tham số places
+  final List<Marker> additionalMarkers;
+  final List<Place> places;
   final Function(LatLng start, LatLng destination) onDirectionPressed;
   final List<TrafficNotification> notifications;
+  final double zoomLevel;
+  final List<Camera> cameras;
+  final List<PredictionData> predictions;
 
-  MapDisplay({
-    Key? key,
+  const MapDisplay({
+    super.key,
     required this.currentLocation,
     required this.routePolylines,
     required this.mapController,
     required this.mapReady,
     required this.onMapReady,
     required this.onMapTap,
-    this.additionalMarkers = const [], // Khởi tạo danh sách rỗng
-    this.markerSize = 30.0,
+    this.additionalMarkers = const [],
+    this.markerSize = AppConfig.markerSize,
     this.places = const [],
     required this.onDirectionPressed,
-    this.notifications = const [], // Khởi tạo danh sách places
-  }) : super(key: key);
+    this.notifications = const [],
+    required this.zoomLevel,
+    required this.cameras,
+    this.predictions = const [],
+  });
 
   @override
   MapDisplayState createState() => MapDisplayState();
 }
 
-class MapDisplayState extends State<MapDisplay> {
-  String serverUrl = kIsWeb
-      ? 'http://127.0.0.1:8000/uploads/'
-      : 'http://10.0.2.2:8000/uploads/';
-  double _imageSize = 50.0;
+class MapDisplayState extends State<MapDisplay>
+    with SingleTickerProviderStateMixin {
   int? _selectedMarkerIndex;
   bool firstRecommend = false;
   List<Map<String, dynamic>> previousRoutePolylines = [];
   Timer? _timer;
   List<TrafficNotification> notifications = [];
   bool displayImage = false;
+  String baseMapDisplay = AppConfig.baseMapDisplay;
+  bool _showCircle = true;
+  late AnimationController _rippleController;
+  late Animation<double> _rippleAnimation;
+  late final ReportService _reportService;
+  String api = Config.api_mapbox_key;
+  List<PredictionData> predictions = [];
 
   @override
   void didUpdateWidget(covariant MapDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Kiểm tra xem widget.routePolylines có thay đổi không
     if (widget.routePolylines != oldWidget.routePolylines) {
       firstRecommend = false;
       previousRoutePolylines = widget.routePolylines;
@@ -67,18 +79,76 @@ class MapDisplayState extends State<MapDisplay> {
     if (widget.notifications != oldWidget.notifications) {
       notifications = widget.notifications;
     }
+    if (widget.predictions != oldWidget.predictions) {
+      setState(() {
+        predictions = widget.predictions;
+      });
+    }
   }
 
   @override
   void initState() {
     super.initState();
+    _rippleController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+
+    _rippleAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _rippleController, curve: Curves.easeOut),
+    );
     notifications = widget.notifications;
-    _timer = Timer.periodic(Duration(minutes: 1), (timer) {
-      // print("1 phút");
+    Future.delayed(const Duration(minutes: 1), () {
       if (mounted) {
-        removeExpiredNotifications(); // Gọi hàm kiểm tra và loại bỏ notifications
+        setState(() {
+          _showCircle = false;
+        });
       }
     });
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (mounted) {
+        removeExpiredNotifications();
+      }
+    });
+    _reportService = ReportService();
+    _fetchInitialReports();
+  }
+
+  Future<List<TrafficNotification>> _fetchInitialReports() async {
+    final DateTime endDate = DateTime.now();
+    final DateTime now = DateTime.now();
+    final DateTime startDate = endDate.subtract(const Duration(minutes: 30));
+
+    try {
+      final data = await _reportService.fetchAccountReport(
+        startDate: startDate,
+        endDate: endDate,
+      );
+
+      final List<TrafficNotification> filteredNotifications = [];
+      for (final report in data.data) {
+        final bool startsWithT = report.typeReport.startsWith('T');
+        final Duration difference = now.difference(report.timestamp);
+
+        if (startsWithT) {
+          if (difference.inMinutes <= 5) {
+            filteredNotifications.add(convertReportToNotification(
+                report,
+                widget.currentLocation.latitude,
+                widget.currentLocation.longitude));
+          }
+        } else {
+          filteredNotifications.add(convertReportToNotification(
+              report,
+              widget.currentLocation.latitude,
+              widget.currentLocation.longitude));
+        }
+      }
+      return filteredNotifications;
+    } catch (e) {
+      debugPrint("Failed to load recent reports: $e");
+      return [];
+    }
   }
 
   void addNotifications(TrafficNotification notification) {
@@ -89,18 +159,17 @@ class MapDisplayState extends State<MapDisplay> {
 
   void changeDisplayImage({bool? value}) {
     setState(() {
-      // Nếu value là null thì mặc định là đảo ngược giá trị của displayImage
       displayImage = value ?? !displayImage;
     });
   }
 
   void removeExpiredNotifications() {
-    DateTime currentTime = DateTime.now(); // Thời gian hiện tại
+    DateTime currentTime = DateTime.now();
     if (mounted) {
       setState(() {
         widget.notifications.removeWhere((notification) {
           Duration diff = currentTime.difference(notification.timestamp);
-          return diff.inMinutes > 5; // Kiểm tra xem đã qua 2 phút chưa
+          return diff.inMinutes > AppConfig.timeHideTrafficJam;
         });
       });
     }
@@ -108,20 +177,12 @@ class MapDisplayState extends State<MapDisplay> {
 
   @override
   void dispose() {
-    _timer?.cancel(); // Hủy Timer khi widget bị hủy
+    _rippleController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
   void showPlaceInfo(BuildContext context, Place place) {
-    final distance = calculateDistance(
-      widget.currentLocation,
-      LatLng(place.latitude, place.longitude),
-    );
-    LatLng destination = LatLng(place.latitude, place.longitude);
-    // Gọi API để lấy địa chỉ
-    Future<String> addressFuture =
-        LocationService.fetchAddress(place.latitude, place.longitude);
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -129,235 +190,205 @@ class MapDisplayState extends State<MapDisplay> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
       ),
       builder: (BuildContext context) {
-        return FractionallySizedBox(
-          heightFactor: 0.5,
-          widthFactor: 1,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16.0)),
-                child: Image.network(
-                  place.img,
-                  width: double.infinity,
-                  height: 210,
-                  fit: BoxFit.cover,
-                  errorBuilder: (BuildContext context, Object error,
-                      StackTrace? stackTrace) {
-                    return Image.asset(
-                      'assets/images/placeholder.png',
-                      width: double.infinity,
-                      height: 150,
-                      fit: BoxFit.cover,
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              // Tên của Place
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  place.name,
-                  style: const TextStyle(
-                      fontSize: 20.0, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 8.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    const Icon(Icons.location_on,
-                        size: 16.0, color: Colors.grey),
-                    const SizedBox(width: 4.0),
-                    Expanded(
-                      child: FutureBuilder<String>(
-                        future: addressFuture,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Text(
-                              'Fetching address...',
-                              style:
-                                  TextStyle(fontSize: 14.0, color: Colors.grey),
-                            );
-                          } else if (snapshot.hasError) {
-                            return const Text(
-                              'Error fetching address',
-                              style:
-                                  TextStyle(fontSize: 14.0, color: Colors.grey),
-                            );
-                          } else if (snapshot.hasData) {
-                            return Text(
-                              snapshot.data!,
-                              style: const TextStyle(
-                                  fontSize: 14.0, color: Colors.grey),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            );
-                          } else {
-                            return const Text(
-                              'No address found',
-                              style:
-                                  TextStyle(fontSize: 14.0, color: Colors.grey),
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Type: ${place.type}',
-                      style: const TextStyle(fontSize: 16.0),
-                    ),
-                    Text(
-                      'Distance: ${distance.toStringAsFixed(2)} km',
-                      style: const TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                PlaceDetailScreen(place: place),
-                          ),
-                        );
-                      },
-                      child: const Text('View Details'),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        // Navigator.pop(context);
-                        widget.onDirectionPressed(
-                            widget.currentLocation, destination);
-                      },
-                      icon: const Icon(Icons.directions),
-                      color: Colors.blue,
-                      iconSize: 28.0,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        return PlaceInfoWidget(
+          place: place,
+          currentLocation: widget.currentLocation,
+          onDirectionPressed: widget.onDirectionPressed,
         );
       },
     );
   }
 
+  void showYoutubeDialog(BuildContext context, String youtubeUrl) {
+    final videoId = YoutubePlayer.convertUrlToId(youtubeUrl);
+    if (videoId == null) {
+      showDialog(
+        context: context,
+        builder: (_) => const AlertDialog(
+          title: Text("Invalid YouTube URL"),
+          content: Text("Cannot load video."),
+        ),
+      );
+      return;
+    }
+
+    YoutubePlayerController _controller = YoutubePlayerController(
+      initialVideoId: videoId,
+      flags: const YoutubePlayerFlags(
+        autoPlay: true,
+        mute: false,
+      ),
+    );
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        contentPadding: const EdgeInsets.all(8),
+        content: AspectRatio(
+          aspectRatio: 16 / 9,
+          child: YoutubePlayer(
+            controller: _controller,
+            showVideoProgressIndicator: true,
+          ),
+        ),
+      ),
+    ).then((_) {
+      _controller.pause(); // Pause when dialog is closed
+      _controller.dispose(); // Clean up
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    List<Marker> reportMarkers = List.generate(notifications.length, (index) {
-      final report = notifications[index];
-      return Marker(
-        point: LatLng(report.latitude, report.longitude),
-        width: _imageSize, // Kích thước của marker
-        height: _imageSize, // Kích thước của marker
-        child: GestureDetector(
-          onTap: () {
-            setState(() {
-              if (_selectedMarkerIndex == index) {
-                _selectedMarkerIndex = null; // Nếu đã chọn thì bỏ chọn
-              } else {
-                _selectedMarkerIndex = index;
-              }
-            });
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: (_selectedMarkerIndex == index)
-                ? 80.0
-                : _imageSize, // Chỉ thay đổi kích thước của marker được chọn
-            height: (_selectedMarkerIndex == index) ? 80.0 : _imageSize,
-            decoration: displayImage
-                ? null // Không có BoxDecoration nếu hiển thị biểu tượng warning
-                : BoxDecoration(
-                    borderRadius: BorderRadius.circular(8.0),
-                    border:
-                        Border.all(color: Colors.red, width: 3.0), // Viền đỏ
-                    image: DecorationImage(
-                      image: NetworkImage('${report.img}'), // Hiển thị ảnh
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-            child: displayImage
-                ? Container(
-                    width: _selectedMarkerIndex == index
-                        ? 50.0
-                        : 36.0, // Kích thước vùng chứa
-                    height: _selectedMarkerIndex == index ? 50.0 : 36.0,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle, // Hình tròn
-                      border: Border.all(
-                        color:
-                            const Color.fromARGB(255, 253, 103, 73), // Màu viền
-                        width: 3.0, // Độ dày viền
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color.fromARGB(255, 250, 113, 67)
-                              .withOpacity(0.5), // Hiệu ứng đổ bóng
-                          spreadRadius: 4, // Độ lan tỏa bóng
-                          blurRadius: 6, // Độ mờ bóng
-                          offset: Offset(0, 3), // Độ lệch bóng
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.warning, // Biểu tượng warning
-                        color: const Color.fromARGB(255, 238, 88, 42),
-                        size: _selectedMarkerIndex == index ? 30.0 : 20.0,
-                      ),
-                    ),
-                  )
-                : null, // Không hiển thị `child` nếu có ảnh
-          ),
-        ),
-      );
-    });
+    final hasRoutes = widget.routePolylines.isNotEmpty;
 
-    String api = Config.api_mapbox_key;
-    List<Marker> placeMarkers = widget.places.map((place) {
-      return Marker(
-        point: LatLng(place.latitude, place.longitude),
-        width: widget.markerSize,
-        height: widget.markerSize,
-        child: GestureDetector(
-          onTap: () {
-            showPlaceInfo(context, place);
-          },
-          child: const Icon(
-            Icons.location_on,
-            color: Colors.orangeAccent, // Marker màu cam cho địa điểm
-            size: 30,
-          ),
-        ),
-      );
+    final currentLocationMarker = Marker(
+      point: widget.currentLocation,
+      width: widget.markerSize,
+      height: widget.markerSize,
+      child: hasRoutes
+          ? Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.blue,
+                border: Border.all(color: Colors.white, width: 4),
+              ),
+              child: const Center(
+                child: Icon(Icons.person_pin_circle, color: Colors.white),
+              ),
+            )
+          : Icon(
+              Icons.location_on,
+              color: Colors.red,
+              size: widget.markerSize * 0.6,
+            ),
+    );
+
+    final reportMarkers = buildReportMarkers(
+      notifications: notifications,
+      selectedIndex: _selectedMarkerIndex,
+      zoomLevel: widget.zoomLevel,
+      displayImage: displayImage,
+      onTap: (index) {
+        setState(() {
+          _selectedMarkerIndex = _selectedMarkerIndex == index ? null : index;
+        });
+      },
+    );
+
+    final placeMarkers = buildPlaceMarkers(
+      places: widget.places,
+      markerSize: widget.markerSize,
+      showPlaceInfo: showPlaceInfo,
+      context: context,
+    );
+
+    final cameraMarkers = buildCameraMarkers(
+      cameras: widget.cameras,
+      markerSize: widget.markerSize,
+      showYoutubeDialog: showYoutubeDialog,
+      context: context,
+    );
+
+    List<Marker> interceptorMarkers = widget.routePolylines.expand((route) {
+      List<Marker> markers = [];
+      for (int i = 0; i < route['coordinates'].length; i++) {
+        LatLng coord = route['coordinates'][i];
+
+        if (i % 1 == 0) {
+          markers.add(Marker(
+            point: coord,
+            width: 16.0,
+            height: 16.0,
+            child: Container(
+              padding: const EdgeInsets.all(1),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color.fromARGB(31, 239, 217, 217),
+                border: Border.all(
+                  color: Colors.white,
+                  width: 1,
+                ),
+              ),
+              child: const Icon(
+                Icons.circle,
+                color: Color.fromARGB(255, 58, 58, 58),
+                size: 5,
+              ),
+            ),
+          ));
+        }
+      }
+      return markers;
     }).toList();
+
+    List<LatLng> interpolatePoints(List<LatLng> points, int segmentsPerLine) {
+      List<LatLng> result = [];
+      for (int i = 0; i < points.length - 1; i++) {
+        LatLng start = points[i];
+        LatLng end = points[i + 1];
+        result.add(start);
+        for (int j = 1; j < segmentsPerLine; j++) {
+          double lat = start.latitude +
+              (end.latitude - start.latitude) * (j / segmentsPerLine);
+          double lng = start.longitude +
+              (end.longitude - start.longitude) * (j / segmentsPerLine);
+          result.add(LatLng(lat, lng));
+        }
+      }
+      result.add(points.last);
+      return result;
+    }
+
+    List<Polyline> _buildPredictionPolylinesWithMorePadding() {
+      return widget.predictions.expand((prediction) {
+        final points = prediction.roadSegment.roadSegmentLine.coordinates
+            .map((coord) => LatLng(coord[1], coord[0]))
+            .toList();
+
+        return [
+          Polyline(
+            points: points,
+            color: Colors.yellow.withOpacity(0.03),
+            strokeWidth: 20.0,
+          ),
+          Polyline(
+            points: points,
+            color: Colors.yellow.withOpacity(0.3),
+            strokeWidth: 14.0,
+          ),
+          Polyline(
+            points: points,
+            color: Colors.yellow.withOpacity(0.5),
+            strokeWidth: 10.0,
+          ),
+          Polyline(
+            points: points,
+            color: Colors.yellow.withOpacity(1.0),
+            strokeWidth: 5.0,
+          ),
+        ];
+      }).toList();
+    }
+
+    List<CircleMarker> _buildPredictionCircles() {
+      return widget.predictions.expand((prediction) {
+        final points = prediction.roadSegment.roadSegmentLine.coordinates
+            .map((coord) => LatLng(coord[1], coord[0]))
+            .toList();
+
+        final interpolatedPoints = interpolatePoints(points, 10);
+
+        return interpolatedPoints.map((point) {
+          return CircleMarker(
+            point: point,
+            radius: 8,
+            color: Colors.orange.withOpacity(0.1),
+            useRadiusInMeter: false,
+          );
+        });
+      }).toList();
+    }
 
     return FlutterMap(
       mapController: widget.mapController,
@@ -369,54 +400,128 @@ class MapDisplayState extends State<MapDisplay> {
       ),
       children: [
         TileLayer(
-          urlTemplate:
-              "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=$api",
+          urlTemplate: "$baseMapDisplay?access_token=$api",
         ),
-        if (widget.routePolylines.isNotEmpty)
-          PolylineLayer(
-            polylines: widget.routePolylines.map((route) {
-              // Determine the color based on the recommendation status
-              Color polylineColor;
-              if (route['recommended'] == true && !firstRecommend) {
-                // If it's the first recommended route, color it blue
-                polylineColor = Colors.blue;
-                firstRecommend =
-                    true; // Set the flag to true after coloring the first recommended route
-              } else if (route['recommended'] == false) {
-                // If it's not recommended, color it red
-                polylineColor = Colors.red;
-              } else {
-                // All other routes (not the first recommended or non-recommended) will be colored brown
-                polylineColor = Colors.brown;
-              }
+        Stack(
+          children: [
+            if (widget.routePolylines.isNotEmpty)
+              PolylineLayer(
+                polylines: widget.routePolylines
+                    .map((route) {
+                      final coordinates = route['coordinates'] as List<LatLng>;
+                      final recommended = route['recommended'] as bool;
 
-              return Polyline(
-                points: route['coordinates'], // Get coordinates
-                strokeWidth: 4.0,
-                color: polylineColor,
+                      List<Polyline> polylineList = [];
+
+                      if (recommended && !firstRecommend) {
+                        firstRecommend = true;
+
+                        polylineList.add(
+                          Polyline(
+                            points: coordinates,
+                            strokeWidth: 7.0,
+                            color: Colors.blueAccent,
+                          ),
+                        );
+                        polylineList.add(
+                          Polyline(
+                            points: coordinates,
+                            strokeWidth: 6.0,
+                            color: Colors.blue,
+                          ),
+                        );
+                      } else {
+                        // Tuyến khác
+                        polylineList.add(
+                          Polyline(
+                            points: coordinates,
+                            strokeWidth: recommended ? 5.0 : 4.0,
+                            color: recommended
+                                ? const Color.fromARGB(255, 156, 194, 239)
+                                : const Color.fromARGB(
+                                    255, 185, 221, 255), // xanh nhạt
+                          ),
+                        );
+                      }
+
+                      return polylineList;
+                    })
+                    .expand((polyline) => polyline)
+                    .toList(),
+              ),
+
+            // Layer hiển thị các điểm tắc nghẽn (dùng marker tròn đỏ)
+            MarkerLayer(
+              markers: widget.routePolylines.expand((route) {
+                final reports = route['reports'] as List<Map<String, dynamic>>;
+                return reports.map((report) {
+                  final LatLng reportPoint =
+                      LatLng(report['latitude'], report['longitude']);
+
+                  return Marker(
+                    point: reportPoint,
+                    width: 20.0,
+                    height: 20.0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color.fromARGB(255, 253, 94, 83),
+                        border: Border.all(
+                          color: const Color.fromARGB(255, 248, 165, 165),
+                          width: 4.0,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.circle,
+                        color: Color.fromARGB(255, 227, 6, 6),
+                        size: 12,
+                      ),
+                    ),
+                  );
+                }).toList();
+              }).toList(),
+            ),
+          ],
+        ),
+        if (_showCircle)
+          AnimatedBuilder(
+            animation: _rippleAnimation,
+            builder: (context, child) {
+              final double progress = _rippleAnimation.value;
+              final double radius =
+                  calculateRadius(widget.zoomLevel) * 0.4 * (1 + progress);
+              final double opacity = (1 - progress).clamp(0.0, 1.0);
+
+              return CircleLayer(
+                circles: [
+                  CircleMarker(
+                    point: widget.currentLocation,
+                    color: Colors.blue.withOpacity(0.5 * opacity),
+                    borderStrokeWidth: 0,
+                    borderColor: Colors.transparent,
+                    radius: radius,
+                  ),
+                ],
               );
-            }).toList(),
+            },
           ),
+        PolylineLayer(
+          polylines: [
+            ..._buildPredictionPolylinesWithMorePadding(),
+          ],
+        ),
+        CircleLayer(
+          circles: _buildPredictionCircles(),
+        ),
         MarkerLayer(
           key: ValueKey(_selectedMarkerIndex),
           markers: [
-            // Marker mặc định tại vị trí hiện tại
-            Marker(
-              point: widget.currentLocation,
-              width: widget.markerSize,
-              height: widget.markerSize,
-              child: Icon(
-                Icons.location_on,
-                color: Colors.red,
-                size: widget.markerSize * 0.6,
-              ),
-            ),
-            // Marker tùy chỉnh từ danh sách
+            currentLocationMarker,
             ...widget.additionalMarkers,
-            // Marker cho các địa điểm
             ...placeMarkers,
-
             ...reportMarkers,
+            ...cameraMarkers,
+            ...interceptorMarkers,
           ],
         ),
       ],

@@ -4,33 +4,33 @@ class FloatingReportButton extends StatefulWidget {
   final VoidCallback changeScreen;
   final VoidCallback openCamera;
   final VoidCallback poststatus;
-  final VoidCallback changeHidden; // Thêm tham số
+  final VoidCallback changeHidden;
 
   final double bottom;
   final double left;
 
   const FloatingReportButton({
-    Key? key,
+    super.key,
     required this.changeScreen,
     required this.openCamera,
     required this.poststatus,
-    required this.changeHidden, // Thêm tham số bắt buộc
+    required this.changeHidden,
     this.left = 10,
-    this.bottom = 50,
-  }) : super(key: key);
+    this.bottom = 60,
+  });
 
   @override
   _FloatingReportButtonState createState() => _FloatingReportButtonState();
 }
 
 class _FloatingReportButtonState extends State<FloatingReportButton> {
-  bool _isHidden = true; // Trạng thái để quản lý icon của button "hidden_image"
+  bool _isHidden = true;
 
   void toggleHidden() {
     setState(() {
-      _isHidden = !_isHidden; // Đổi trạng thái khi người dùng nhấn nút
+      _isHidden = !_isHidden;
     });
-    widget.changeHidden(); // Gọi hàm từ widget cha
+    widget.changeHidden();
   }
 
   @override
@@ -49,7 +49,7 @@ class _FloatingReportButtonState extends State<FloatingReportButton> {
         ),
         // Button 2
         Positioned(
-          bottom: widget.bottom + 65, // Điều chỉnh vị trí để xếp các nút
+          bottom: widget.bottom + 65,
           left: widget.left,
           child: FloatingActionButton(
             onPressed: widget.openCamera,
@@ -59,7 +59,7 @@ class _FloatingReportButtonState extends State<FloatingReportButton> {
         ),
         // Button 3
         Positioned(
-          bottom: widget.bottom + 130, // Điều chỉnh vị trí để xếp các nút
+          bottom: widget.bottom + 130,
           left: widget.left,
           child: FloatingActionButton(
             onPressed: widget.poststatus,
@@ -69,13 +69,13 @@ class _FloatingReportButtonState extends State<FloatingReportButton> {
         ),
         // Button 4
         Positioned(
-          bottom: widget.bottom + 195, // Điều chỉnh vị trí để xếp các nút
+          bottom: widget.bottom + 195,
           left: widget.left,
           child: FloatingActionButton(
-            onPressed: toggleHidden, // Gọi hàm đổi trạng thái và hàm cha
+            onPressed: toggleHidden,
             heroTag: "hidden_image",
             child: Icon(
-              _isHidden ? Icons.hide_image : Icons.image, // Thay đổi icon dựa trên trạng thái
+              _isHidden ? Icons.hide_image : Icons.image,
             ),
           ),
         ),

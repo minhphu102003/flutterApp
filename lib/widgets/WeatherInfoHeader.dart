@@ -7,7 +7,6 @@ import 'package:flutterApp/widgets/customShimer.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-// Header widget hiển thị thông tin thời tiết
 class WeatherInfoHeader extends StatelessWidget {
   static const double boxWidth = 52.0;
   static const double boxHeight = 40.0;
@@ -36,7 +35,7 @@ class WeatherInfoHeader extends StatelessWidget {
                         child: RichText(
                           textAlign: TextAlign.start,
                           text: TextSpan(
-                            text: weatherProv.weather.city + ', ',
+                            text: '${weatherProv.weather.city}, ',
                             style: semiboldText,
                             children: [
                               TextSpan(
@@ -68,14 +67,14 @@ class WeatherInfoHeader extends StatelessWidget {
               child: Stack(
                 children: [
                   AnimatedSwitcher(
-                    duration: Duration(milliseconds: 150),
+                    duration: const Duration(milliseconds: 150),
                     transitionBuilder: (Widget child, Animation<double> animation) {
                       return SlideTransition(
                         position: Tween<Offset>(
                           begin: weatherProv.isCelsius
-                              ? Offset(1.0, 0.0)
-                              : Offset(-1.0, 0),
-                          end: Offset(0.0, 0.0),
+                              ? const Offset(1.0, 0.0)
+                              : const Offset(-1.0, 0),
+                          end: const Offset(0.0, 0.0),
                         ).animate(animation),
                         child: child,
                       );
@@ -83,7 +82,7 @@ class WeatherInfoHeader extends StatelessWidget {
                     // Hiển thị các ô chuyển đổi nhiệt độ
                     child: weatherProv.isCelsius
                         ? GestureDetector(
-                            key: ValueKey<int>(0),
+                            key: const ValueKey<int>(0),
                             child: Row(
                               children: [
                                 Container(
@@ -111,7 +110,7 @@ class WeatherInfoHeader extends StatelessWidget {
                             onTap: () => weatherProv.isLoading ? null : weatherProv.switchTempUnit(),
                           )
                         : GestureDetector(
-                            key: ValueKey<int>(1),
+                            key: const ValueKey<int>(1),
                             child: Row(
                               children: [
                                 Container(

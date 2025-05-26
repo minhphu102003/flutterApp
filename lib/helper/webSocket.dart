@@ -2,19 +2,18 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'dart:convert';
 import 'package:flutterApp/models/notification.dart';
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:flutterApp/models/predictionData.dart';
 
 class WebSocketService {
   late WebSocketChannel channel;
   late Timer _pingTimer;
   Function(TrafficNotification)? onNotificationReceived;
+  Function(PredictionData)? onPredictionReceived;
 
-  // void connect(String mobileUrl, String webUrl)
-  void connect(String serverUrl) {
-    // Chọn URL dựa trên nền tảng
-    // String serverUrl = kIsWeb ? webUrl : mobileUrl;
+  void connect(String mobileUrl, String webUrl) {
+    String serverUrl = kIsWeb ? webUrl : mobileUrl;
 
     channel = WebSocketChannel.connect(
       Uri.parse(serverUrl),
@@ -23,10 +22,20 @@ class WebSocketService {
     channel.stream.listen(
       (message) {
         try {
-          // Chuyển đổi JSON thành TrafficNotification
           Map<String, dynamic> data = json.decode(message);
-          TrafficNotification notification = TrafficNotification.fromJson(data);
-          onNotificationReceived?.call(notification);
+          print('Received WebSocket data: $data');
+
+          final String? type = data['type'];
+
+          if (type == 'predict') {
+            PredictionData prediction = PredictionData.fromJson(data['data']);
+            print('Parsed PredictionData: $prediction');
+            onPredictionReceived?.call(prediction);
+          } else {
+            TrafficNotification notification =
+                TrafficNotification.fromJson(data);
+            onNotificationReceived?.call(notification);
+          }
         } catch (e) {
           print('Error parsing WebSocket message: $e');
         }

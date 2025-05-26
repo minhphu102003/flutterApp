@@ -10,21 +10,17 @@ import 'package:flutterApp/theme/colors.dart';
 
 import '../helper/utils.dart';
 
-// Widget MainWeatherDetail hiển thị thông tin thời tiết chính, 
-// bao gồm nhiệt độ cảm nhận, lượng mưa, tốc độ gió, độ ẩm và độ mây.
+
 class MainWeatherDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // Sử dụng Consumer để lấy dữ liệu từ Weatherprovider
     return Consumer<Weatherprovider>(builder: (context, weatherProv, _) {
-      // Kiểm tra trạng thái loading, nếu đang tải thì hiển thị CustomShimmer
       if (weatherProv.isLoading) {
         return CustomShimmer(
           height: 132.0,
           borderRadius: BorderRadius.circular(16.0),
         );
       }
-      // Khi dữ liệu đã sẵn sàng, hiển thị thông tin thời tiết
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         decoration: BoxDecoration(
@@ -63,7 +59,7 @@ class MainWeatherDetail extends StatelessWidget {
                         color: Colors.white,
                       ),
                       title: 'Precipitation',
-                      data: '${weatherProv.dailyWeather[0].precipitation}', // Lượng mưa trong ngày
+                      data: weatherProv.dailyWeather[0].precipitation, // Lượng mưa trong ngày
                     ),
                     const VerticalDivider(
                       thickness: 1.0,

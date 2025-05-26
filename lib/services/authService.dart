@@ -3,6 +3,7 @@ import 'package:flutterApp/models/auth.dart';
 import 'package:flutterApp/services/apiRespone.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import './constants.dart';
 
 class AuthService {
   final ApiClient _apiClient = ApiClient.instance;
@@ -10,14 +11,12 @@ class AuthService {
   Future<ApiResponse<AuthToken?>> login(String email, String password) async {
     try {
       Response response = await _apiClient.dio.post(
-        '/auth/signin',
+        AUTH_SIGNIN,
         data: {'email': email, 'password': password},
       );
-      
+
       if (response.statusCode == 200) {
-        print(response.data);
         final authToken = AuthToken.fromMap(response.data);
-        print("token ${authToken.token}");
         await _apiClient.setToken(authToken.token);
         await _apiClient.saveToken(authToken.token);
         return ApiResponse<AuthToken>(data: authToken, error: null);
@@ -35,7 +34,7 @@ class AuthService {
       String username, String email, String password) async {
     try {
       Response response = await _apiClient.dio.post(
-        '/auth/signup',
+        AUTH_SIGNUP,
         data: {'username': username, 'email': email, 'password': password},
       );
       if (response.statusCode == 201) {
@@ -56,17 +55,14 @@ class AuthService {
   Future<String?> forgotPassword(String email) async {
     try {
       Response response = await _apiClient.dio
-          .post('/auth/forgot-password', data: {'email': email});
+          .post(AUTH_FORGOT_PASSWORD, data: {'email': email});
       if (response.statusCode == 200) {
         return null;
       } else {
-        String errorMessage = response.data['message'] != null
-            ? response.data['message']
-            : 'Send failed';
+        String errorMessage = response.data['message'] ?? 'Send failed';
         return errorMessage;
       }
     } catch (e) {
-      print('error ${e}');
       return 'An error occurred. Please action again!.';
     }
   }
@@ -74,13 +70,11 @@ class AuthService {
   Future<String?> verifyOTP(String email, String otp) async {
     try {
       Response response = await _apiClient.dio
-          .post('/auth/verify-otp', data: {'email': email, 'otp': otp});
+          .post(AUTH_VERIFY_OTP, data: {'email': email, 'otp': otp});
       if (response.statusCode == 200) {
         return null;
       } else {
-        String errorMessage = response.data['message'] != null
-            ? response.data['message']
-            : 'Send failed';
+        String errorMessage = response.data['message'] ?? 'Send failed';
         return errorMessage;
       }
     } catch (e) {
@@ -90,7 +84,7 @@ class AuthService {
 
   Future<String?> resetPassword(String email, String password) async {
     try {
-      Response response = await _apiClient.dio.post('/auth/reset-password',
+      Response response = await _apiClient.dio.post(AUTH_RESET_PASSWORD,
           data: {'email': email, 'newPassword': password});
       if (response.statusCode == 200) {
         return null;
@@ -104,38 +98,31 @@ class AuthService {
       return 'An error occurred. Please action again!.';
     }
   }
-Future<String> logOut() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('token');
 
-  // Kiểm tra token có tồn tại hay không
-  if (token == null) {
-    return 'You are already logged out!';
-  }
+  Future<String> logOut() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
 
-  try {
-    // Gửi request logout tới API
-    Response response = await _apiClient.dio.get(
-      '/auth/logout',
-      options: Options(
-        headers: {'x-access-token': token},
-      ),
-    );
-
-    // Nếu logout thành công
-    if (response.statusCode == 200) {
-      // Xóa token khỏi SharedPreferences
-      await prefs.remove('token');
-      return 'Logout successful!';
+    // Kiểm tra token có tồn tại hay không
+    if (token == null) {
+      return 'You are already logged out!';
     }
 
-    // Nếu có lỗi từ API (nhưng không phải exception)
-    return response.data['message'] ?? 'Logout failed, please try again!';
-  } catch (e) {
-    print('Logout error: $e');
-    return 'An unexpected error occurred, please try again!';
+    try {
+      // Gửi request logout tới API
+      Response response = await _apiClient.dio.get(
+        AUTH_LOGOUT,
+        options: Options(
+          headers: {'x-access-token': token},
+        ),
+      );
+      if (response.statusCode == 200) {
+        await prefs.remove('token');
+        return 'Logout successful!';
+      }
+      return response.data['message'] ?? 'Logout failed, please try again!';
+    } catch (e) {
+      return 'An unexpected error occurred, please try again!';
+    }
   }
-}
-
-  
 }

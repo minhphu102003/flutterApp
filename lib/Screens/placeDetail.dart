@@ -14,6 +14,7 @@ import 'package:flutterApp/widgets/commentInput.dart';
 import 'package:flutterApp/widgets/customDialog.dart';
 import 'package:flutterApp/widgets/comment.dart';
 import 'package:flutterApp/helper/image_utils.dart';
+import 'package:flutterApp/helper/appConfig.dart';
 
 class PlaceDetailScreen extends StatefulWidget {
   final place_model.Place place;
@@ -39,7 +40,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   late TextEditingController
       _commentController; // Danh sách các đường dẫn hình ảnh
 
-  // Thông tin người dùng
   String? name;
   String? email;
   String? phone;
@@ -47,7 +47,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   String? token;
   final ImagePicker _picker = ImagePicker();
   bool _isCommenting = false;
-  final String baseURL = 'http://10.0.2.2:8000/uploads/';
+  final String baseURL = AppConfig.urlLocalUploadAndroi;
 
   @override
   void initState() {
@@ -58,7 +58,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     _loadProfile();
   }
 
-  // Callback để xóa bình luận
   Future<void> onDeleteComment(Comment comment) async {
     try {
       await _commentService.deleteComment(id: comment.id);
@@ -67,7 +66,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
       });
       showErrorDialog(context, 'Comment deleted successfully');
     } catch (e) {
-      print('Error deleting comment: $e');
       showErrorDialog(context, 'Failed to delete comment');
     }
   }
@@ -333,16 +331,19 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                '${comments.length} comments', // Hiển thị số lượng comment
+                '${comments.length} comments',
                 style: const TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 20),
-              Row(
-                children: [
-                  _buildSortButton('Newest'),
-                  _buildSortButton('Highest Rating'),
-                  _buildSortButton('Lowest Rating'),
-                ],
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildSortButton('Newest'),
+                    _buildSortButton('Highest Rating'),
+                    _buildSortButton('Lowest Rating'),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
               const Text(
@@ -400,7 +401,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     );
   }
 
-  // Widget để tạo nút bộ lọc
   Widget _buildSortButton(String label) {
     return GestureDetector(
       onTap: () {

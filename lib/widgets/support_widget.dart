@@ -8,11 +8,11 @@ class AppWidget {
 
   static TextStyle lightTextFeildStyle() {
     return const TextStyle(
-        color: Colors.black54, fontSize: 22.0, fontWeight: FontWeight.w500);
+        color: Colors.black54, fontSize: 18.0, fontWeight: FontWeight.w500);
   }
 
   static TextStyle semiboldTextFeildStyle() {
     return const TextStyle(
-        color: Colors.black, fontSize: 21.0, fontWeight: FontWeight.bold);
+        color: Colors.black, fontSize: 17.0, fontWeight: FontWeight.bold);
   }
 }

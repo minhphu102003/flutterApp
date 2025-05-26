@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/reportService.dart';
 import '../models/report.dart';
 import '../models/paginated_data.dart';
-import 'dart:io';
-import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import '../widgets/recentVideoSection.dart';
+import '../widgets/reportList.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -16,7 +14,6 @@ class ReportScreen extends StatefulWidget {
 class _ReportScreenState extends State<ReportScreen> {
   final ReportService _reportService = ReportService();
   late Future<PaginatedData<Report>> _futureReports;
-  // String serverUrl = kIsWeb ? 'http://127.0.0.1:8000/uploads/' : 'http://10.0.2.2:8000/uploads/';
 
   @override
   void initState() {
@@ -27,204 +24,24 @@ class _ReportScreenState extends State<ReportScreen> {
   void _fetchReports() {
     setState(() {
       _futureReports = _reportService.fetchAccountReport(
-        page: 1, // Default to the first page
-        limit: 10, // Limit to 10 items
+        page: 1,
+        limit: 10,
       );
     });
-    print(_futureReports);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Report Screen'),
-      ),
+      appBar: AppBar(title: const Text('Report Screen')),
       body: SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Phần trên cùng: Người dùng đăng bài
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-            ),
+            const Padding(padding: EdgeInsets.all(16.0)),
             const Divider(),
-            // Danh sách video và bài viết
-            Column(
-              children: [
-                // Phần video gần nhất
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Recent Videos',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        height: 220, // Chiều cao đủ để chứa video và avatar
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: List.generate(10, (index) {
-                              // Hiển thị 10 video mẫu
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 16.0),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    // Logic phát video
-                                  },
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Container(
-                                        width:
-                                            MediaQuery.of(context).size.width /
-                                                    3 -
-                                                16, // Chiều rộng mỗi video
-                                        height: 200,
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          image: const DecorationImage(
-                                            image: NetworkImage(
-                                                'https://kenh14cdn.com/thumb_w/660/2019/1/23/504161573570077317884627585794349414219776n-15482181400081330886703.jpg'), // Ảnh mẫu video
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                      ),
-                                      const Icon(
-                                        Icons.play_circle_outline,
-                                        color:
-                                            Color.fromARGB(255, 175, 174, 172),
-                                        size: 50,
-                                      ),
-                                      const Positioned(
-                                        top: 10,
-                                        left: 10,
-                                        child: CircleAvatar(
-                                          radius: 20,
-                                          backgroundImage: AssetImage(
-                                              'assets/images/defaultAvatar.png'), // Avatar mẫu
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(),
-                FutureBuilder<PaginatedData<Report>>(
-                  future: _futureReports,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(
-                          child: Text('Error: ${snapshot.error.toString()}'));
-                    } else if (!snapshot.hasData ||
-                        snapshot.data!.data.isEmpty) {
-                      return const Center(child: Text('No reports found.'));
-                    } else {
-                      final reports = snapshot.data!.data;
-
-                      return Column(
-                        children: reports.map((report) {
-                          // Định dạng thời gian
-                          DateTime adjustedTimestamp =
-                              report.timestamp.add(Duration(hours: 7));
-                          String formattedTime = DateFormat('HH:mm dd/MM/yyyy')
-                              .format(adjustedTimestamp);
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0, vertical: 8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const CircleAvatar(
-                                      radius: 20,
-                                      backgroundImage: AssetImage(
-                                          'assets/images/defaultAvatar.png'),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      report.username,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  report.description,
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                const SizedBox(height: 10),
-                                // Hiển thị thời gian
-                                Text(
-                                  '$formattedTime',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                if (report.imgs.isNotEmpty)
-                                  Container(
-                                    height: 200,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      image: DecorationImage(
-                                        // image: NetworkImage('$serverUrl${report.imgs.first.img}'),
-                                        image: NetworkImage(
-                                            '${report.imgs.first.img}'),
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  ),
-                                const SizedBox(height: 10),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.directions),
-                                      onPressed: () {
-                                        // Logic chỉ đường
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.report),
-                                      onPressed: () {
-                                        // Logic báo cáo bài viết
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      );
-                    }
-                  },
-                )
-              ],
-            ),
+            const RecentVideosSection(),
+            const Divider(),
+            ReportList(futureReports: _futureReports),
           ],
         ),
       ),

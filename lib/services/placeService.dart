@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutterApp/models/place.dart';
 import 'package:flutterApp/models/paginated_data.dart';
 import './apiClient.dart';
+import './constants.dart';
 
 class PlaceService {
   final ApiClient _apiClient = ApiClient.instance;
@@ -9,10 +10,10 @@ class PlaceService {
   Future<PaginatedData<Place>> fetchNearestPlaces({
     required double longitude,
     required double latitude,
-    int? radius = 20,   // Default radius is 20 km
-    String? type,           // type is optional
-    int? limit = 10,         // Default limit is 5 places
-    int? page = 1,          // Default page is 1
+    int? radius = 20, // Default radius is 20 km
+    String? type, // type is optional
+    int? limit = 10, // Default limit is 5 places
+    int? page = 1, // Default page is 1
     double? minStar,
     double? maxStar,
   }) async {
@@ -37,7 +38,7 @@ class PlaceService {
       }
       // Sending GET request to the API
       Response response = await _apiClient.dio.get(
-        '/place/nearest',
+        PLACE_NEAREST, // API endpoint for fetching nearest places
         queryParameters: queryParams, // Pass query parameters in the request
       );
       // If the response is successful (status code 200)
@@ -48,7 +49,8 @@ class PlaceService {
         // Return PaginatedData object containing the list of places
         return PaginatedData<Place>.fromJson(
           jsonResponse,
-          (json) => Place.fromJson(json), // Convert each item in 'data' to Place object
+          (json) => Place.fromJson(
+              json), // Convert each item in 'data' to Place object
         );
       } else {
         throw Exception('Failed to load places');
@@ -59,11 +61,11 @@ class PlaceService {
     }
   }
 
-    // New function: Search places by name
+  // New function: Search places by name
   Future<PaginatedData<Place>> searchPlaces({
     required String name,
     int? limit = 10, // Default limit is 10
-    int? page = 1,   // Default page is 1
+    int? page = 1, // Default page is 1
   }) async {
     try {
       // Build query parameters
@@ -75,7 +77,7 @@ class PlaceService {
 
       // Send GET request to search API
       Response response = await _apiClient.dio.get(
-        '/place/search',
+        PLACE_SEARCH,
         queryParameters: queryParams,
       );
 
@@ -94,6 +96,4 @@ class PlaceService {
       throw Exception('Error occurred: $e');
     }
   }
-
-  
 }

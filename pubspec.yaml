@@ -2,7 +2,7 @@ name: flutterApp
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 version: 1.0.3+3
 
@@ -12,68 +12,39 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_map: 
+  flutter_map:
   # mapbox_gl: ^0.16.0
-  # Đây là một thư viện để làm việc với tọa độ địa lý, cung cấp các lớp đại diện cho tọa độ như 
-  # LatLng và các phương thức để tính toán khoảng cách giữa các điểm, tính toán hướng, và các phép biến đổi khác.
-  latlong2: 
+  latlong2:
   image: ^4.3.0
-  # Cung cấp khả năng sử dụng các phông chữ của Google Fonts trong ứng dụng Flutter
   google_fonts: ^6.2.1
   web_socket_channel: ^3.0.1
   uuid: ^4.5.1
-
-  # Cung cấp các phương thức để lấy vị trí hiện tại của thiết bị, theo dõi sự thay đổi vị trí và
-  # xác định các thông tin địa lý.
-  geolocator: 
+  get_thumbnail_video: ^0.7.3
+  permission_handler: ^12.0.0
+  mime: ^2.0.0
+  chewie: ^1.2.2
+  geolocator:
   flutter_polyline_points: ^2.1.0
-  # Thư viện để thực hiện các yêu cầu HTTP, thường được sử dụng để gọi các API
-  http: 
-
-  # cung cấp khả năng tải và truy cập các biến môi trường từ file .env. Thường được sử
-  # dụng để lưu trữ các khóa API hoặc thông tin cấu hình bí mật.
+  http:
   flutter_dotenv: ^5.0.2
-
-  # Cung cấp một thanh tìm kiếm nổi trong giao diện Material Design, thường sử dụng cho
-  # các chức năng tìm kiếm trong ứng dụng.
   material_floating_search_bar_2: ^0.5.0
-
-  # Cung cấp một giải pháp quản lý trạng thái đơn giản và linh hoạt cho ứng dụng Flutter
   provider: ^6.0.5
-
-  # Thư viện cung cấp các biểu tượng (icons) từ bộ icon Phosphor cho ứng dụng Flutter
   phosphor_flutter: ^2.0.1
-
-  # Cung cấp hiệu ứng shimmer (hiệu ứng ánh sáng lướt qua) cho các widget, thường được
-  # sử dụng để làm placeholder khi dữ liệu đang được tải.
   shimmer: ^3.0.0
-
-  # Cung cấp một widget picker để chọn quốc gia, hiển thị danh sách quốc gia với tên và cờ
-  # quốc gia tương ứng.
-
   country_picker: ^2.0.20
-
-  # Thư viện để tích hợp Google Maps vào ứng dụng Flutter, google_maps_flutter_web
-  # dùng cho hỗ trợ trên nền web.
-
-  google_maps_flutter: ^2.9.0 
+  google_maps_flutter: ^2.9.0
   google_maps_flutter_web: ^0.5.10
-
   cupertino_icons: ^1.0.8
   dio: ^5.7.0
   shared_preferences: ^2.3.2
   curved_navigation_bar: ^1.0.6
-  
+
   # mapbox_gl: ^0.16.0
   mapbox_maps_flutter: ^2.3.0
   youtube_player_iframe:
   youtube_player_flutter:
   universal_io: ^2.2.2
-
-  #sử lí hình ảnh
   image_picker: ^0.8.5+3
-
-  
 
 dev_dependencies:
   flutter_test:
@@ -88,9 +59,7 @@ flutter_launcher_icons:
   image_path: "assets/icon/icon1.png"
 
 flutter:
-
   uses-material-design: true
-
 
   # To add assets to your application, add an assets section, like this:
   assets:

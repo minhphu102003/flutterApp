@@ -11,11 +11,11 @@ class EditCommentWithImageDialog extends StatefulWidget {
   final void Function(Comment) onUpdateComment;
 
   EditCommentWithImageDialog({
-    Key? key,
+    super.key,
     required this.comment,
     required this.baseURL,
     required this.onUpdateComment,
-  }) : super(key: key);
+  });
 
   @override
   State<EditCommentWithImageDialog> createState() =>
@@ -29,7 +29,7 @@ class _EditCommentWithImageDialogState
   List<String> imagePaths = [];
   List<String> replaceImageId = [];
   List<XFile> newImages = [];
-  CommentService _commentService = CommentService();
+  final CommentService _commentService = CommentService();
 
   @override
   void initState() {

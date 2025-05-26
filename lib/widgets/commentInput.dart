@@ -14,7 +14,7 @@ class CommentInput extends StatelessWidget {
   final Function() onSubmitComment;
 
   const CommentInput({
-    Key? key,
+    super.key,
     this.name,
     this.avatarUrl,
     required this.selectedRating,
@@ -25,7 +25,7 @@ class CommentInput extends StatelessWidget {
     required this.onUploadImage,
     required this.isLoading,
     required this.onSubmitComment,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,6 @@ class CommentInput extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hiển thị avatar và tên người dùng
             Row(
               children: [
                 CircleAvatar(
@@ -55,7 +54,6 @@ class CommentInput extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            // Hiển thị 5 icon ngôi sao để người dùng đánh giá
             Row(
               children: List.generate(5, (index) {
                 return IconButton(

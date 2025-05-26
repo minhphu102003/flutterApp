@@ -27,18 +27,18 @@ class CustomDialogWeather extends StatefulWidget {
 class _CustomDialogWeatherState extends State<CustomDialogWeather> {
   late Color buttonColor;
   late PageController _pageController;
-  int _currentPage = 0; // Theo dõi trang hiện tại
+  int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
     buttonColor = widget.color;
-    _pageController = PageController(); // Khởi tạo PageController
+    _pageController = PageController();
   }
 
   @override
   void dispose() {
-    _pageController.dispose(); // Hủy PageController khi không sử dụng
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -52,9 +52,9 @@ class _CustomDialogWeatherState extends State<CustomDialogWeather> {
           Text(
             widget.title,
             style: const TextStyle(
-              fontSize: 20, // Điều chỉnh cỡ chữ nhỏ hơn
-              fontWeight: FontWeight.bold, // Tuỳ chọn nếu bạn muốn chữ đậm
-              color: Colors.black, // Màu sắc của chữ
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
             ),
           ),
         ],
@@ -103,7 +103,7 @@ class _CustomDialogWeatherState extends State<CustomDialogWeather> {
           const SizedBox(height: 8),
           Text(
             "Current temperature: ${widget.temperature.toStringAsFixed(1)}°C",
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 16.0,
               fontWeight: FontWeight.bold,
               color: Colors.black87,

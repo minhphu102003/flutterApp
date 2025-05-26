@@ -6,11 +6,11 @@ class WeatherIcon extends StatelessWidget {
   final double left; // Vị trí tính từ trái
 
   const WeatherIcon({
-    Key? key,
+    super.key,
     required this.onPressed,
     this.top = 160, // Giá trị mặc định
     this.left = 20, // Giá trị mặc định
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,6 @@ class WeatherIcon extends StatelessWidget {
             ),
           ),
         ),
-      
       ],
     );
   }

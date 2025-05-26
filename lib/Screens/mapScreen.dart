@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutterApp/helper/navigation_helpers.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:flutterApp/models/camera.dart';
+import 'package:flutterApp/services/locationService.dart';
+import 'package:flutterApp/utils/mapUtils.dart';
+import 'package:flutterApp/utils/overlayUtils.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutterApp/config.dart';
@@ -13,12 +16,13 @@ import 'package:flutterApp/widgets/displayMap.dart';
 import 'package:flutterApp/widgets/routeInstruction.dart';
 import 'package:flutterApp/widgets/suggestionList.dart';
 import 'package:flutterApp/widgets/FloatButtonReport.dart';
-import 'package:flutterApp/Screens/reportScreen.dart';
-import 'package:flutterApp/widgets/choseDirection.dart';
-import 'package:flutterApp/Screens/poststatus.dart';
+import 'package:flutterApp/screens/reportScreen.dart';
+import 'package:flutterApp/screens/poststatus.dart';
 import 'package:flutterApp/models/place.dart';
 import 'package:flutterApp/services/placeService.dart';
 import 'package:flutterApp/models/notification.dart';
+import 'package:flutterApp/services/cameraService.dart';
+import '../models/predictionData.dart';
 
 class MapScreen extends StatefulWidget {
   final double? longitude;
@@ -26,11 +30,10 @@ class MapScreen extends StatefulWidget {
   final Function(double longitude, double latitude) onLocationChanged;
 
   const MapScreen(
-      {Key? key,
+      {super.key,
       required this.onLocationChanged,
       this.longitude,
-      this.latitude})
-      : super(key: key);
+      this.latitude});
 
   @override
   State<MapScreen> createState() => MapScreenState();
@@ -44,16 +47,12 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   double _zoomLevel = 16.0;
   late MapController _mapController;
   bool _mapReady = false;
-  TextEditingController _searchController = TextEditingController();
-  // List<String> _suggestions = [];
+  final TextEditingController _searchController = TextEditingController();
   List<Map<String, String>> _suggestionsGoongMap = [];
   LatLng? _searchedLocation;
-  // List<LatLng> _routePolyline = [];
-  // List<List<LatLng>> _routePolylines = [];
   List<Map<String, dynamic>> _routePolylines = [];
   List<List<String>> _routeInstructions = [];
-  String _travelTime = "";
-  // String _transportMode = "driving";
+  final String _travelTime = "";
   bool _showRouteInstructions = true;
   bool _isDialogShown = false;
   double _markerSize = 30;
@@ -67,8 +66,10 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   List<Place> places = [];
   List<TrafficNotification> notifications = [];
   GlobalKey<MapDisplayState> MapdisplayKey = GlobalKey<MapDisplayState>();
-  MapApiService _mapApiService = MapApiService();
-  int _selectedRouteIndex = 0;
+  final MapApiService _mapApiService = MapApiService();
+  final CameraService _cameraService = CameraService();
+  List<Camera> _cameras = [];
+  List<PredictionData> predictions = [];
 
   void addNotification(TrafficNotification notification) {
     setState(() {
@@ -77,18 +78,23 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     });
   }
 
-void _changeDisplayImage({bool? change}) {
-  setState(() {
-    // Truyền giá trị change vào phương thức changeDisplayImage của MapdisplayKey
-    MapdisplayKey.currentState?.changeDisplayImage(value: change);
-  });
-}
+  void addPrediction(PredictionData prediction) {
+    setState(() {
+      
+      predictions.add(prediction);
+    });
+  }
+
+  void _changeDisplayImage({bool? change}) {
+    setState(() {
+      MapdisplayKey.currentState?.changeDisplayImage(value: change);
+    });
+  }
+
   void _clearSearch() {
     setState(() {
       _searchController.clear();
-      // _suggestions.clear();
       _suggestionsGoongMap.clear();
-      // _routePolyline.clear();
       _routePolylines.clear();
       _showRouteInstructions = false;
       _startPosition = null;
@@ -112,7 +118,6 @@ void _changeDisplayImage({bool? change}) {
     super.dispose();
   }
 
-  // This method will update the current location
   void updateLocation(double longitude, double latitude) {
     setState(() {
       _currentLocation = LatLng(latitude, longitude);
@@ -147,8 +152,8 @@ void _changeDisplayImage({bool? change}) {
 
   void _closeOverlay() {
     if (_currentOverlayEntry != null) {
-      _currentOverlayEntry!.remove(); // Loại bỏ overlay khỏi màn hình
-      _currentOverlayEntry = null; // Xóa tham chiếu
+      _currentOverlayEntry!.remove();
+      _currentOverlayEntry = null;
     }
   }
 
@@ -170,7 +175,7 @@ void _changeDisplayImage({bool? change}) {
 
   void _adjustZoomAndMarker() {
     setState(() {
-      _zoomLevel += 1; // Tăng zoom lên 1
+      _zoomLevel += 1;
       _markerSize = 50.0;
     });
     if (_mapReady) {
@@ -186,63 +191,26 @@ void _changeDisplayImage({bool? change}) {
   void _openCamera(BuildContext context) {
     OverlayState overlayState = Overlay.of(context)!;
 
-    _currentOverlayEntry = OverlayEntry(
-      builder: (BuildContext context) {
-        return Positioned(
-          top: 30,
-          left: 0,
-          right: 0,
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              height: 225,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius:
-                    BorderRadius.vertical(bottom: Radius.circular(16)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ChoseDirection(
-                onClose: _handleCloseOverlayAndAdjustMap,
-                isStartPosition: _isSelectingStart,
-                startPosition: _startPosition,
-                endPosition: _endPosition,
-                onTextChanged: (isStart, query) {
-                  setState(() {
-                    _isSelectingStart = isStart;
-                    _findRoutes = true;
-                    if (isStart) {
-                      topSuggeslist = 170;
-                    } else {
-                      topSuggeslist = 170;
-                    }
-                  });
-                  _onSearchChanged(query);
-                },
-                onMapIconPressed: (isStart) {
-                  setState(() {
-                    _isSelectingStart = isStart;
-                    _findRoutes = true;
-                    // _suggestions.clear();
-                    _suggestionsGoongMap.clear();
-                  });
-                  _toggleCameraOverlay(context);
-                },
-              ),
-            ),
-          ),
-        );
+    _currentOverlayEntry = OverlayUtils.buildCameraOverlay(
+      context: context,
+      isSelectingStart: _isSelectingStart,
+      startPosition: _startPosition,
+      endPosition: _endPosition,
+      onClose: _handleCloseOverlayAndAdjustMap,
+      onMapIconPressed: (isStart) {
+        _toggleCameraOverlay(context);
+      },
+      onStateUpdate: (isStart, findRoutes) {
+        setState(() {
+          _isSelectingStart = isStart;
+          _findRoutes = findRoutes;
+          if (!findRoutes) _suggestionsGoongMap.clear();
+        });
       },
     );
+
     overlayState.insert(_currentOverlayEntry!);
   }
-
 
   void _onMapTap(TapPosition position, LatLng latLng) {
     if (_currentOverlayEntry == null && _findRoutes) {
@@ -251,51 +219,35 @@ void _changeDisplayImage({bool? change}) {
   }
 
   List<Marker> _buildMarkers() {
-    List<Marker> markers = [];
-    if (_startPosition != null) {
-      markers.add(
-        Marker(
-          point: _startPosition!,
-          width: 30,
-          height: 30,
-          child: const Icon(
-            Icons.location_on,
-            color: Colors.green, // Marker màu xanh lá cho điểm bắt đầu
-            size: 40,
-          ),
-        ),
-      );
-    }
-    if (_endPosition != null) {
-      markers.add(
-        Marker(
-          point: _endPosition!,
-          width: 30,
-          height: 30,
-          child: const Icon(
-            Icons.location_on,
-            color: Colors.blue, // Marker màu xanh dương cho điểm kết thúc
-            size: 40,
-          ),
-        ),
-      );
-    }
-    return markers;
+    return buildStartEndMarkers(
+      startPosition: _startPosition,
+      endPosition: _endPosition,
+    );
   }
 
   Future<void> fetchPlaces() async {
     try {
       final result = await PlaceService().fetchNearestPlaces(
-          longitude:
-              _currentLocation.longitude, // Truyền longitude đúng tham số
+          longitude: _currentLocation.longitude,
           latitude: _currentLocation.latitude,
           radius: 1);
       setState(() {
         places = result.data;
       });
-    } catch (e) {
-      print('Error fetching places: $e');
-    }
+    } catch (e) {}
+  }
+
+  Future<void> _fetchCameras() async {
+    try {
+      final paginatedData = await _cameraService.fetchNearbyCameras(
+        longitude: _currentLocation.longitude,
+        latitude: _currentLocation.latitude,
+      );
+
+      setState(() {
+        _cameras = paginatedData.data;
+      });
+    } catch (e) {}
   }
 
   void _onMapReady() {
@@ -321,37 +273,24 @@ void _changeDisplayImage({bool? change}) {
       await _getCurrentLocation();
     }
     await fetchPlaces();
+    await _fetchCameras();
   }
 
   Future<void> _getCurrentLocation() async {
-    if (!await Geolocator.isLocationServiceEnabled()) {
-      return Future.error('Location services are disabled.');
-    }
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied.');
+    try {
+      LatLng current = await LocationService.getCurrentLocation();
+      if (mounted) {
+        setState(() {
+          _currentLocation = current;
+          widget.onLocationChanged(current.longitude, current.latitude);
+          _locationLoaded = true;
+          if (_mapReady) _mapController.move(current, _zoomLevel);
+        });
       }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error('Location permissions are permanently denied.');
-    }
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-    if (mounted) {
-      setState(() {
-        _currentLocation = LatLng(position.latitude, position.longitude);
-        widget.onLocationChanged(
-            _currentLocation.longitude!, _currentLocation.latitude!);
-        _locationLoaded = true;
-        if (_mapReady) _mapController.move(_currentLocation, _zoomLevel);
-      });
-    }
+    } catch (e) {}
   }
 
   Future<void> _searchLocation(String query) async {
-    // LatLng? location = await MapApiService.searchLocation(query);
     LatLng? location = await MapApiService.getPlaceCoordinates(query);
     topSuggeslist = 90;
     if (location != null) {
@@ -370,7 +309,6 @@ void _changeDisplayImage({bool? change}) {
     }
     if (_startPosition != null && _endPosition != null) {
       _closeOverlay();
-      // _suggestions.clear();
       _suggestionsGoongMap.clear();
       _getRoute(_startPosition!, _endPosition!);
     }
@@ -384,19 +322,17 @@ void _changeDisplayImage({bool? change}) {
 
       setState(() {
         _routePolylines = routesWithInstructions.map((route) {
-          // Directly use the 'coordinates' (which should be a List<LatLng>)
-          final coordinates = route['coordinates']
-              as List<LatLng>; // No need to map to LatLng again
+          final coordinates = route['coordinates'] as List<LatLng>;
           final recommended = route['recommended'] as bool;
-          final report = route['report'] as List<Map<String, dynamic>>;
+          final reports = route['reports'] as List<Map<String, dynamic>>;
           return {
             'coordinates': coordinates,
             'recommended': recommended,
-            'report': report,
+            'reports': reports,
           };
         }).toList();
 
-        if(_routePolylines != null){
+        if (_routePolylines != null) {
           _changeDisplayImage(change: true);
         }
 
@@ -405,14 +341,11 @@ void _changeDisplayImage({bool? change}) {
             .toList();
         _showRouteInstructions = true;
       });
-    } catch (e) {
-      print("Error fetching route and instructions: $e");
-    }
+    } catch (e) {}
   }
 
   Future<void> _onSearchChanged(String query) async {
     if (query.isNotEmpty) {
-      // List<String> suggestions = await MapApiService.getSuggestions(query);
       List<Map<String, String>> suggestions =
           await MapApiService.getSuggestionsVerGoongMap(
               query, _currentLocation.latitude, _currentLocation.longitude);
@@ -425,16 +358,12 @@ void _changeDisplayImage({bool? change}) {
   Future<void> _selectSuggestion(String suggestion) async {
     topSuggeslist = 90;
     FocusScope.of(context).unfocus();
-    // Tìm kiếm place_id từ _suggestionsGoongMap dựa trên description
     final selectedItem = _suggestionsGoongMap.firstWhere(
       (item) => item['description'] == suggestion,
       orElse: () => {},
     );
     final placeId = selectedItem['place_id'];
-    // _searchController.text = suggestion;
-    // _suggestions.clear();
     _suggestionsGoongMap.clear();
-    // await _searchLocation(suggestion);
     if (placeId != null) {
       _searchController.text = suggestion;
       _suggestionsGoongMap.clear();
@@ -452,40 +381,35 @@ void _changeDisplayImage({bool? change}) {
             MapDisplay(
               key: MapdisplayKey,
               currentLocation: _currentLocation,
-              // routePolyline: _routePolyline,
               routePolylines: _routePolylines,
               mapController: _mapController,
               mapReady: _mapReady,
               onMapReady: _onMapReady,
-              onMapTap: _onMapTap, // Gọi khi nhấn vào bản đồ
+              onMapTap: _onMapTap,
               markerSize: _markerSize,
               additionalMarkers: _buildMarkers(),
               places: places,
+              cameras: _cameras,
               onDirectionPressed: (LatLng start, LatLng destination) {
-                Navigator.pop(context); // Đóng modal
-                _getRoute(start, destination); // Gọi hàm ở widget cha
+                Navigator.pop(context);
+                _getRoute(start, destination);
               },
               notifications: notifications,
+              zoomLevel: _zoomLevel,
+              predictions: predictions, 
             ),
-          
           custom.SearchBar(
             searchController: _searchController,
             onSearchChanged: _onSearchChanged,
             onSearchSubmitted: () => _searchLocation(_searchController.text),
             onClear: _clearSearch,
-            top: 40, // Định vị theo yêu cầu
+            top: 40,
             left: 10,
             right: 10,
           ),
-          if (_showRouteInstructions && _routeInstructions.isNotEmpty)
-            RouteInstructions(
-              routeInstructions: _routeInstructions[0],
-              travelTime: _travelTime,
-              bottomPosition: 50, // Định vị trí tính từ đáy màn hình
-            ),
           WeatherIcon(
             onPressed: () => onWeatherButtonPressed(context),
-            top: 160, // Định vị trí theo yêu cầu
+            top: 160,
             left: 20,
           ),
           FloatingActionButtons(
@@ -502,7 +426,7 @@ void _changeDisplayImage({bool? change}) {
               });
             },
             onCurrentLocation: _getCurrentLocation,
-            bottom: 50, // Định vị theo yêu cầu
+            bottom: 60,
             right: 10,
           ),
           FloatingReportButton(
@@ -514,12 +438,17 @@ void _changeDisplayImage({bool? change}) {
           ),
           if (_suggestionsGoongMap.isNotEmpty)
             SuggestionsList(
-              // suggestions: _suggestions,
               suggestions: _suggestionsGoongMap
                   .map((item) => item['description'] ?? '')
                   .toList(),
               onSuggestionSelected: _selectSuggestion,
               top: topSuggeslist,
+            ),
+          if (_showRouteInstructions && _routeInstructions.isNotEmpty)
+            RouteInstructions(
+              routeInstructions: _routeInstructions[0],
+              travelTime: _travelTime,
+              bottomPosition: 50,
             ),
         ],
       ),

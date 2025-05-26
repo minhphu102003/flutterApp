@@ -11,7 +11,6 @@ import 'package:provider/provider.dart';
 
 import '../helper/utils.dart';
 
-// Widget hiển thị dự báo thời tiết trong 24 giờ
 class TwentyFourHourForecast extends StatelessWidget {
   const TwentyFourHourForecast({super.key});
 
@@ -39,7 +38,6 @@ class TwentyFourHourForecast extends StatelessWidget {
               ],
             ),
           ),
-          // Consumer để theo dõi Weatherprovider
           Consumer<Weatherprovider>(builder: (context, weatherProv, _) {
             // Hiển thị khung dữ liệu nếu đang tải
             if (weatherProv.isLoading) {
@@ -80,7 +78,6 @@ class TwentyFourHourForecast extends StatelessWidget {
   }
 }
 
-// Widget hiển thị thông tin thời tiết cho một giờ cụ thể
 class HourlyWeatherWidget extends StatelessWidget {
   final int index;
   final HourlyWeather data;
@@ -106,7 +103,6 @@ class HourlyWeatherWidget extends StatelessWidget {
               style: semiboldText,
             );
           }),
-          // Dấu phân cách và biểu tượng thời tiết
           Stack(
             children: [
               const Divider(
@@ -129,7 +125,6 @@ class HourlyWeatherWidget extends StatelessWidget {
                 ),
             ],
           ),
-          // Hình ảnh thời tiết
           SizedBox(
             height: 42.0,
             width: 42.0,

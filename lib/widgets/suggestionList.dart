@@ -5,11 +5,11 @@ class SuggestionsList extends StatelessWidget {
   final Function(String) onSuggestionSelected; // Hàm callback khi chọn gợi ý
   final double top;
   const SuggestionsList({
-    Key? key,
+    super.key,
     required this.suggestions,
     required this.onSuggestionSelected,
     this.top = 90,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

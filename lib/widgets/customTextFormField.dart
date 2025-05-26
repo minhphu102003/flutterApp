@@ -16,8 +16,8 @@ class CustomTextFormField extends StatefulWidget {
     this.controller,
     this.onChanged,
     this.obscureText = false,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   _CustomTextFormFieldState createState() => _CustomTextFormFieldState();
@@ -35,13 +35,11 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
 
     focusNode.addListener(() {
       if (focusNode.hasFocus) {
-        // Reset trạng thái lỗi khi trường được focus
         setState(() {
           isError = false; // Đặt trạng thái lỗi về false
           buttonColor = primaryBlue; // Hoặc màu mặc định của bạn
         });
       } else {
-        // Cập nhật lại màu khi không focus
         setState(() {
           buttonColor = Colors.black;
         });
@@ -80,7 +78,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
               ),
             ),
             labelText: widget.hintText,
-            hintStyle: TextStyle(
+            hintStyle: const TextStyle(
               color: Color(0xFFb2b7bf),
               fontSize: 18.0,
             ),

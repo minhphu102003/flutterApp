@@ -8,13 +8,12 @@ import 'package:dio/dio.dart';
 import './apiClient.dart';
 
 class MapApiService {
-  static final String apiMapboxKey = Config.api_mapbox_key;
-  static final String baseMapBoxGeo = AppConfig.baseMapBoxGeo;
-  static final String baseMapBoxDir = AppConfig.baseMapBoxDir;
+  static const String apiMapboxKey = Config.api_mapbox_key;
+  static const String baseMapBoxGeo = AppConfig.baseMapBoxGeo;
+  static const String baseMapBoxDir = AppConfig.baseMapBoxDir;
   static const String apiKeyGongMap = Config.api_gongmap_key;
-  static const String baseUrlGoongMap = 'https://rsapi.goong.io/Place';
-  static const String _baseUrl =
-      "https://router.project-osrm.org/route/v1/driving";
+  static const String baseUrlGoongMap = AppConfig.baseUrlGoongMap;
+  static const String _baseUrl = AppConfig.baseUrlOpenStreet;
   final ApiClient _apiClient = ApiClient.instance;
 
   static Future<LatLng?> searchLocation(String query) async {
@@ -79,7 +78,6 @@ class MapApiService {
     return [];
   }
 
-  // Phương thức để lấy thời gian di chuyển (travelTime)
   static Future<String> getTravelTime(LatLng start, LatLng destination) async {
     final url =
         '$baseMapBoxDir/${start.longitude},${start.latitude};${destination.longitude},${destination.latitude}?geometries=geojson&steps=true&access_token=$apiMapboxKey';
@@ -113,7 +111,6 @@ class MapApiService {
         final data = json.decode(response.body);
         final predictions = data['predictions'] as List;
 
-        // Trả về danh sách các Map chứa description và place_id
         return predictions.map<Map<String, String>>((item) {
           return {
             'description': item['description'],
@@ -303,28 +300,36 @@ class MapApiService {
     }
   }
 
-Future<Map<String, dynamic>> getRoutesWithInstructions(
-    LatLng start, LatLng destination,
-    {String vehicleType = 'drive'}) async {
-  try {
-    // Gửi yêu cầu API
-    final response = await _apiClient.dio.get(
-      '/routes',
-      queryParameters: {
-        'start': '${start.longitude},${start.latitude}',
-        'end': '${destination.longitude},${destination.latitude}',
-        'vehicleType': vehicleType,
-      },
-    );
+  Future<Map<String, dynamic>> getRoutesWithInstructions(
+      LatLng start, LatLng destination,
+      {String vehicleType = 'drive'}) async {
+    try {
+      final response = await _apiClient.dio.get(
+        '/routes',
+        queryParameters: {
+          'start': '${start.longitude},${start.latitude}',
+          'end': '${destination.longitude},${destination.latitude}',
+          'vehicleType': vehicleType,
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final data = response.data;
-
-      if (data['routes'] != null) {
+      if (response.statusCode == 200) {
+        final data = response.data;
         List<Map<String, dynamic>> routesWithInstructions = [];
 
-        for (var route in data['routes']) {
-          // Giải mã polyline
+        final allRoutes = <Map<String, dynamic>>[];
+
+        if (data['routes'] != null) {
+          allRoutes
+              .addAll((data['routes'] as List).cast<Map<String, dynamic>>());
+        }
+
+        if (data['newRoutes1'] != null) {
+          allRoutes.addAll(
+              (data['newRoutes1'] as List).cast<Map<String, dynamic>>());
+        }
+
+        for (var route in allRoutes) {
           List<LatLng> routeCoordinates = [];
           String encodedPolyline = route['geometry'];
           final decodedPoints =
@@ -334,44 +339,42 @@ Future<Map<String, dynamic>> getRoutesWithInstructions(
                 .map((point) => LatLng(point.latitude, point.longitude)),
           );
 
-          // Lấy danh sách intersections
           List<LatLng> intersections = [];
           List<String> instructions = [];
 
           for (var leg in route['legs']) {
             for (var step in leg['steps']) {
-              // Xử lý intersection
               for (var intersection in step['intersections']) {
                 intersections.add(
-                  LatLng(intersection['location'][1],
-                      intersection['location'][0]),
+                  LatLng(
+                      intersection['location'][1], intersection['location'][0]),
                 );
               }
 
-              // Xử lý instructions
               String name = step['name'] as String;
               if (name.contains(' ')) {
                 name = name.substring(name.indexOf(' ') + 1).trim();
               }
+
               final distance = (step['distance'] as num).toDouble();
-              instructions
-                  .add('Passing $name (${distance.toStringAsFixed(1)} m)');
+              if (distance != 0) {
+                instructions
+                    .add('Passing $name (${distance.toStringAsFixed(1)} m)');
+              }
             }
           }
 
-          final bool recommended = route['recommended'] ?? false;
-
-          // Safely handle the 'report' field
+          bool recommended = true;
           List<Map<String, dynamic>> report = [];
-          if (!recommended && route['report'] != null) {
-            final reportList = route['report'] as List<dynamic>;
-            report = reportList.map((rep) {
+
+          if (data['reports'] != null &&
+              (data['routes'] as List?)?.contains(route) == true) {
+            recommended = false;
+
+            final reports = (data['reports'] as List<dynamic>);
+            report = reports.map((rep) {
               if (rep is Map<String, dynamic>) {
                 return {
-                  'trafficVolume': rep['trafficVolume'],
-                  'congestionLevel': rep['congestionLevel'],
-                  'typeReport': rep['typeReport'],
-                  'img': rep['img'],
                   'timestamp': rep['timestamp'],
                   'latitude': rep['latitude'],
                   'longitude': rep['longitude'],
@@ -382,26 +385,24 @@ Future<Map<String, dynamic>> getRoutesWithInstructions(
             }).toList();
           }
 
-          // Lưu kết quả cho mỗi route
           routesWithInstructions.add({
             'coordinates': routeCoordinates,
             'instructions': instructions,
             'intersections': intersections,
             'recommended': recommended,
-            'report': report,
+            'reports': report,
           });
         }
-        return {'routesWithInstructions': routesWithInstructions};
-      } else {
-        throw Exception("No routes found");
-      }
-    } else {
-      throw Exception("Failed to fetch routes: ${response.statusCode}");
-    }
-  } catch (error) {
-    print("Error fetching routes and instructions: $error");
-    throw error;
-  }
-}
 
+        return {
+          'routesWithInstructions': routesWithInstructions,
+        };
+      } else {
+        throw Exception("Failed to fetch routes: ${response.statusCode}");
+      }
+    } catch (error) {
+      print("Error fetching routes and instructions: $error");
+      throw error;
+    }
+  }
 }

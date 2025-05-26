@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutterApp/models/comment.dart';
 import 'package:flutterApp/models/paginated_data.dart';
 import './apiClient.dart';
-import './constants.dart'; // Import file chứa endpoint constants
+import './constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CommentService {
@@ -33,13 +33,9 @@ class CommentService {
           (json) => Comment.fromJson(json as Map<String, dynamic>),
         );
       } else {
-        print('Failed request. Status code: ${response.statusCode}');
-        print('Response body: ${response.data}');
         throw Exception('Failed to fetch comments from $endpoint');
       }
-    } catch (e, stacktrace) {
-      print('Error occurred in $endpoint: $e');
-      print('Stacktrace: $stacktrace');
+    } catch (e) {
       rethrow;
     }
   }
@@ -65,15 +61,12 @@ class CommentService {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
-      // Kiểm tra và lọc những ảnh hợp lệ
       final validImagePaths = imagePaths?.where((path) {
         final file = File(path);
         return file.existsSync() &&
             ['jpg', 'jpeg', 'png', 'gif']
                 .contains(path.split('.').last.toLowerCase());
       }).toList();
-
-      // Chỉ thêm 'files' vào formData nếu có ảnh hợp lệ
       final formData = FormData.fromMap({
         'place_id': placeId,
         'star': star,
@@ -85,7 +78,6 @@ class CommentService {
             : [],
       });
 
-      // Gửi yêu cầu đến backend
       Response response = await _apiClient.dio.post(
         COMMENT_BASE,
         data: formData,
@@ -101,15 +93,11 @@ class CommentService {
       if (response.statusCode == 201) {
         return Comment.fromJson(response.data['data']);
       } else if (response.statusCode == 400) {
-        print('Failed to create comment: ${response.data['errors']}');
         throw Exception('Failed to create comment');
       } else {
-        print('Failed to create comment. Status code: ${response.statusCode}');
         throw Exception('Failed to create comment');
       }
-    } catch (e, stacktrace) {
-      print('Error occurred: $e');
-      print('Stacktrace: $stacktrace');
+    } catch (e) {
       rethrow;
     }
   }
@@ -131,18 +119,13 @@ class CommentService {
       );
       // Kiểm tra phản hồi
       if (response.statusCode == 200) {
-        // Ánh xạ dữ liệu trả về thành đối tượng Comment
         return Comment.fromJson(response.data['data']);
       } else if (response.statusCode == 400) {
-        print('Failed to create comment: ${response.data['errors']}');
         throw Exception('Failed to create comment');
       } else {
-        print('Failed to delete comment. Status code: ${response.statusCode}');
         throw Exception('Failed to delete comment');
       }
-    } catch (e, stacktrace) {
-      print('Error occurred while deleting comment: $e');
-      print('Stacktrace: $stacktrace');
+    } catch (e) {
       rethrow;
     }
   }
@@ -170,7 +153,9 @@ class CommentService {
         if (replaceImageIds != null && replaceImageIds.isNotEmpty)
           'replaceImageId': replaceImageIds,
         if (validImagePaths != null && validImagePaths.isNotEmpty)
-          'files': validImagePaths.map((path) => MultipartFile.fromFileSync(path)).toList(),
+          'files': validImagePaths
+              .map((path) => MultipartFile.fromFileSync(path))
+              .toList(),
       });
       // Gửi yêu cầu API
       Response response = await _apiClient.dio.put(
@@ -187,17 +172,13 @@ class CommentService {
       if (response.statusCode == 200) {
         return Comment.fromJson(response.data['data']);
       } else if (response.statusCode == 400) {
-        print('Failed to create comment: ${response.data['errors']}');
         throw Exception('Failed to create comment');
       } else {
-        throw Exception('Failed to update comment. Status code: ${response.statusCode} ${response.data}');
+        throw Exception(
+            'Failed to update comment. Status code: ${response.statusCode} ${response.data}');
       }
-    } catch (e, stacktrace) {
-      print('Error occurred: $e');
-      print('Stacktrace: $stacktrace');
+    } catch (e) {
       rethrow;
     }
   }
-
-
 }

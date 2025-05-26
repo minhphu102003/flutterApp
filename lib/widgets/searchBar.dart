@@ -6,7 +6,6 @@ class SearchBar extends StatelessWidget {
   final void Function() onSearchSubmitted;
   final void Function() onClear;
 
-  // Thêm tham số để định vị
   final double top;
   final double left;
   final double right;
@@ -17,9 +16,9 @@ class SearchBar extends StatelessWidget {
     required this.onSearchChanged,
     required this.onSearchSubmitted,
     required this.onClear,
-    this.top = 40.0, // Vị trí mặc định cách cạnh trên 40px
-    this.left = 10.0, // Vị trí mặc định cách cạnh trái 10px
-    this.right = 10.0, // Vị trí mặc định cách cạnh phải 10px
+    this.top = 40.0, 
+    this.left = 10.0, 
+    this.right = 10.0,
   }) : super(key: key);
 
   @override
@@ -35,7 +34,7 @@ class SearchBar extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
             ),
             child: Row(
               children: [

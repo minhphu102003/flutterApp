@@ -1,4 +1,9 @@
+import 'package:uuid/uuid.dart';
+
+var uuid = Uuid();
+
 class TrafficNotification {
+  final String id;
   final String title;
   final String content;
   final String status;
@@ -10,6 +15,7 @@ class TrafficNotification {
   final String img;
 
   TrafficNotification({
+    required this.id,
     required this.title,
     required this.content,
     required this.status,
@@ -21,21 +27,22 @@ class TrafficNotification {
     required this.img,
   });
 
-factory TrafficNotification.  fromJson(Map<String, dynamic> json) {
-  return TrafficNotification(
-    title: json['title'] as String,
-    content: json['content'] as String,
-    status: json['status'] as String,
-    isRead: json['isRead'] as bool,
-    timestamp: DateTime.parse(json['timestamp'] as String),
-    distance: json['distance'].toString(), // Đảm bảo chuyển thành String nếu cần
-    longitude: json['longitude'] is double
-        ? json['longitude'] as double
-        : double.parse(json['longitude'].toString()), // Xử lý cả trường hợp kiểu double và String
-    latitude: json['latitude'] is double
-        ? json['latitude'] as double
-        : double.parse(json['latitude'].toString()), // Tương tự cho latitude
-    img: json['img'] as String,
-  );
-}
+  factory TrafficNotification.fromJson(Map<String, dynamic> json) {
+    return TrafficNotification(
+      id: (json['_id'] ?? uuid.v4()) as String,
+      title: json['title'] as String,
+      content: json['content'] as String,
+      status: json['status'] as String,
+      isRead: json['isRead'] as bool,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      distance: json['distance'].toString(),
+      longitude: json['longitude'] is double
+          ? json['longitude'] as double
+          : double.parse(json['longitude'].toString()),
+      latitude: json['latitude'] is double
+          ? json['latitude'] as double
+          : double.parse(json['latitude'].toString()),
+      img: json['img'] as String,
+    );
+  }
 }

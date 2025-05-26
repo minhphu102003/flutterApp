@@ -10,13 +10,13 @@ class FloatingActionButtons extends StatelessWidget {
   final double right;
 
   const FloatingActionButtons({
-    Key? key,
+    super.key,
     required this.onZoomIn,
     required this.onZoomOut,
     required this.onCurrentLocation,
     this.bottom = 50.0, // Vị trí mặc định cách cạnh dưới 50px
     this.right = 10.0,  // Vị trí mặc định cách cạnh phải 10px
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
