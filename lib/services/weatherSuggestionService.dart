@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 
-import '../widgets/customDialogWeather.dart'; // Đường dẫn này phải chính xác tới CustomDialogWeather của bạn.
-import './weatherService.dart'; // Thay đổi thành đường dẫn thật của file service lấy thông tin thời tiết.
+import '../widgets/customDialogWeather.dart';
+import './weatherService.dart'; 
 import '../helper/appConfig.dart';
 
 class WeatherSuggestionService {
   final _weatherService =
-      WeatherService(); // Thay đổi thành class quản lý gọi API của bạn.
+      WeatherService(); 
   final String _dirImg = AppConfig.dirImg;
 
   void showWeatherSuggestion(
       double longitude, double latitude, BuildContext context) async {
     try {
       String dirImg = _dirImg;
-      // Gọi API để lấy thông tin thời tiết
       Map<String, dynamic> response =
           await _weatherService.getSuggestion(longitude, latitude);
       if (response['success'] == true) {
@@ -34,8 +33,8 @@ class WeatherSuggestionService {
             title: "Weather Suggestion",
             message: message,
             typeIcon: Icons
-                .wb_sunny_outlined, // Có thể tùy chỉnh dựa trên mã thời tiết
-            color: Colors.orange, // Cũng có thể tùy chỉnh
+                .wb_sunny_outlined,
+            color: Colors.orange, 
             imagePaths: img,
             temperature: temperature,
             onDialogClose: () {},

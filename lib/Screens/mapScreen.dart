@@ -22,6 +22,7 @@ import 'package:flutterApp/models/place.dart';
 import 'package:flutterApp/services/placeService.dart';
 import 'package:flutterApp/models/notification.dart';
 import 'package:flutterApp/services/cameraService.dart';
+import '../models/predictionData.dart';
 
 class MapScreen extends StatefulWidget {
   final double? longitude;
@@ -68,11 +69,19 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   final MapApiService _mapApiService = MapApiService();
   final CameraService _cameraService = CameraService();
   List<Camera> _cameras = [];
+  List<PredictionData> predictions = [];
 
   void addNotification(TrafficNotification notification) {
     setState(() {
       MapdisplayKey.currentState?.addNotifications(notification);
       notifications.add(notification);
+    });
+  }
+
+  void addPrediction(PredictionData prediction) {
+    setState(() {
+      
+      predictions.add(prediction);
     });
   }
 
@@ -315,11 +324,11 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
         _routePolylines = routesWithInstructions.map((route) {
           final coordinates = route['coordinates'] as List<LatLng>;
           final recommended = route['recommended'] as bool;
-          final report = route['report'] as List<Map<String, dynamic>>;
+          final reports = route['reports'] as List<Map<String, dynamic>>;
           return {
             'coordinates': coordinates,
             'recommended': recommended,
-            'report': report,
+            'reports': reports,
           };
         }).toList();
 
@@ -387,6 +396,7 @@ class MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
               },
               notifications: notifications,
               zoomLevel: _zoomLevel,
+              predictions: predictions, 
             ),
           custom.SearchBar(
             searchController: _searchController,

@@ -331,16 +331,19 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                '${comments.length} comments', // Hiển thị số lượng comment
+                '${comments.length} comments',
                 style: const TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 20),
-              Row(
-                children: [
-                  _buildSortButton('Newest'),
-                  _buildSortButton('Highest Rating'),
-                  _buildSortButton('Lowest Rating'),
-                ],
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildSortButton('Newest'),
+                    _buildSortButton('Highest Rating'),
+                    _buildSortButton('Lowest Rating'),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
               const Text(
