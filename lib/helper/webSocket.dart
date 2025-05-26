@@ -4,13 +4,15 @@ import 'dart:convert';
 import 'package:flutterApp/models/notification.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutterApp/models/predictionData.dart';
 
 class WebSocketService {
   late WebSocketChannel channel;
   late Timer _pingTimer;
   Function(TrafficNotification)? onNotificationReceived;
+  Function(PredictionData)? onPredictionReceived;
 
-  void connect(String mobileUrl, String webUrl){
+  void connect(String mobileUrl, String webUrl) {
     String serverUrl = kIsWeb ? webUrl : mobileUrl;
 
     channel = WebSocketChannel.connect(
@@ -21,8 +23,19 @@ class WebSocketService {
       (message) {
         try {
           Map<String, dynamic> data = json.decode(message);
-          TrafficNotification notification = TrafficNotification.fromJson(data);
-          onNotificationReceived?.call(notification);
+          print('Received WebSocket data: $data');
+
+          final String? type = data['type'];
+
+          if (type == 'predict') {
+            PredictionData prediction = PredictionData.fromJson(data['data']);
+            print('Parsed PredictionData: $prediction');
+            onPredictionReceived?.call(prediction);
+          } else {
+            TrafficNotification notification =
+                TrafficNotification.fromJson(data);
+            onNotificationReceived?.call(notification);
+          }
         } catch (e) {
           print('Error parsing WebSocket message: $e');
         }

@@ -73,7 +73,7 @@ class NotificationTile extends StatelessWidget {
                       Text(
                         formatDate(notification.timestamp),
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           color: Colors.grey,
                         ),
                       ),

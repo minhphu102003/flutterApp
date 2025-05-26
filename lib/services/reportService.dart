@@ -17,7 +17,8 @@ class ReportService {
     String? accountId,
     DateTime? startDate,
     DateTime? endDate,
-    bool? analysisStatus,
+    bool analysisStatus = true,
+    bool guest = true,
   }) async {
     try {
       final Map<String, dynamic> queryParams = {};
@@ -29,17 +30,22 @@ class ReportService {
         queryParams['congestionLevel'] = congestionLevel;
       }
       if (accountId != null) queryParams['account_id'] = accountId;
-      if (analysisStatus != null) {
-        queryParams['analysisStatus'] = analysisStatus.toString();
-      }
+
+      queryParams['analysisStatus'] = analysisStatus.toString();
+      queryParams['guest'] = guest.toString();
+
       if (startDate != null) {
         queryParams['startDate'] = startDate.toIso8601String();
       }
-      if (endDate != null) queryParams['endDate'] = endDate.toIso8601String();
+      if (endDate != null) {
+        queryParams['endDate'] = endDate.toIso8601String();
+      }
+
       Response response = await _apiClient.dio.get(
         REPORT_ENDPOINT,
         queryParameters: queryParams,
       );
+
       if (response.statusCode == 200) {
         final jsonResponse = response.data as Map<String, dynamic>;
         return PaginatedData<Report>.fromJson(
@@ -60,7 +66,7 @@ class ReportService {
     String congestionLevel = "POSSIBLE_CONGESTION",
     required double longitude,
     required double latitude,
-    required List<File>? imageFiles, 
+    required List<File>? imageFiles,
   }) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -105,8 +111,7 @@ class ReportService {
         return 'Report created successfully';
       } else {
         final jsonResponse = response.data as Map<String, dynamic>;
-        return jsonResponse['message'] ??
-            'Failed to create account report';
+        return jsonResponse['message'] ?? 'Failed to create account report';
       }
     } catch (e) {
       return 'Error occurred: $e';

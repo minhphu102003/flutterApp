@@ -12,6 +12,7 @@ import 'package:flutterApp/helper/user.dart';
 import 'package:flutterApp/models/notification.dart';
 import 'package:flutterApp/helper/location.dart';
 import '../services/notificationService.dart';
+import '../models/predictionData.dart';
 
 class BottomNav extends StatefulWidget {
   const BottomNav({super.key});
@@ -48,6 +49,13 @@ class BottomNavState extends State<BottomNav> {
           mapKey.currentState?.addNotification(newNotification);
         }
       }
+    });
+  }
+
+  void addPredictionDataToMap(PredictionData predictionData) {
+    print('Debug  $predictionData');
+    setState(() {
+      mapKey.currentState?.addPrediction(predictionData);
     });
   }
 
@@ -131,6 +139,9 @@ class BottomNavState extends State<BottomNav> {
     _webSocketService.onNotificationReceived =
         (TrafficNotification newNotification) {
       addNewNotification(newNotification);
+    };
+    _webSocketService.onPredictionReceived = (PredictionData predictionData) {
+      addPredictionDataToMap(predictionData);
     };
     _webSocketService.sendMessage('Client connected');
   }

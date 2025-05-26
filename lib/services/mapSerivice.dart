@@ -315,80 +315,88 @@ class MapApiService {
 
       if (response.statusCode == 200) {
         final data = response.data;
+        List<Map<String, dynamic>> routesWithInstructions = [];
+
+        final allRoutes = <Map<String, dynamic>>[];
 
         if (data['routes'] != null) {
-          List<Map<String, dynamic>> routesWithInstructions = [];
+          allRoutes
+              .addAll((data['routes'] as List).cast<Map<String, dynamic>>());
+        }
 
-          for (var route in data['routes']) {
-            List<LatLng> routeCoordinates = [];
-            String encodedPolyline = route['geometry'];
-            final decodedPoints =
-                PolylinePoints().decodePolyline(encodedPolyline);
-            routeCoordinates.addAll(
-              decodedPoints
-                  .map((point) => LatLng(point.latitude, point.longitude)),
-            );
+        if (data['newRoutes1'] != null) {
+          allRoutes.addAll(
+              (data['newRoutes1'] as List).cast<Map<String, dynamic>>());
+        }
 
-            List<LatLng> intersections = [];
-            List<String> instructions = [];
+        for (var route in allRoutes) {
+          List<LatLng> routeCoordinates = [];
+          String encodedPolyline = route['geometry'];
+          final decodedPoints =
+              PolylinePoints().decodePolyline(encodedPolyline);
+          routeCoordinates.addAll(
+            decodedPoints
+                .map((point) => LatLng(point.latitude, point.longitude)),
+          );
 
-            for (var leg in route['legs']) {
-              for (var step in leg['steps']) {
-                for (var intersection in step['intersections']) {
-                  intersections.add(
-                    LatLng(intersection['location'][1],
-                        intersection['location'][0]),
-                  );
-                }
+          List<LatLng> intersections = [];
+          List<String> instructions = [];
 
-                String name = step['name'] as String;
-                if (name.contains(' ')) {
-                  name = name.substring(name.indexOf(' ') + 1).trim();
-                }
+          for (var leg in route['legs']) {
+            for (var step in leg['steps']) {
+              for (var intersection in step['intersections']) {
+                intersections.add(
+                  LatLng(
+                      intersection['location'][1], intersection['location'][0]),
+                );
+              }
 
-                final distance = (step['distance'] as num).toDouble();
+              String name = step['name'] as String;
+              if (name.contains(' ')) {
+                name = name.substring(name.indexOf(' ') + 1).trim();
+              }
 
-                if (distance != 0) {
-                  instructions
-                      .add('Passing $name (${distance.toStringAsFixed(1)} m)');
-                }
+              final distance = (step['distance'] as num).toDouble();
+              if (distance != 0) {
+                instructions
+                    .add('Passing $name (${distance.toStringAsFixed(1)} m)');
               }
             }
-
-            final bool recommended = route['recommended'] ?? false;
-
-            List<Map<String, dynamic>> report = [];
-            if (!recommended && route['report'] != null) {
-              final reportList = route['report'] as List<dynamic>;
-              report = reportList.map((rep) {
-                if (rep is Map<String, dynamic>) {
-                  return {
-                    'trafficVolume': rep['trafficVolume'],
-                    'congestionLevel': rep['congestionLevel'],
-                    'typeReport': rep['typeReport'],
-                    'img': rep['img'],
-                    'timestamp': rep['timestamp'],
-                    'latitude': rep['latitude'],
-                    'longitude': rep['longitude'],
-                  };
-                } else {
-                  throw Exception("Invalid report format");
-                }
-              }).toList();
-            }
-
-            routesWithInstructions.add({
-              'coordinates': routeCoordinates,
-              'instructions': instructions,
-              'intersections': intersections,
-              'recommended': recommended,
-              'report': report,
-            });
           }
-          return {'routesWithInstructions': routesWithInstructions};
-        } else {
-          throw Exception("No routes found");
+
+          bool recommended = true;
+          List<Map<String, dynamic>> report = [];
+
+          if (data['reports'] != null &&
+              (data['routes'] as List?)?.contains(route) == true) {
+            recommended = false;
+
+            final reports = (data['reports'] as List<dynamic>);
+            report = reports.map((rep) {
+              if (rep is Map<String, dynamic>) {
+                return {
+                  'timestamp': rep['timestamp'],
+                  'latitude': rep['latitude'],
+                  'longitude': rep['longitude'],
+                };
+              } else {
+                throw Exception("Invalid report format");
+              }
+            }).toList();
+          }
+
+          routesWithInstructions.add({
+            'coordinates': routeCoordinates,
+            'instructions': instructions,
+            'intersections': intersections,
+            'recommended': recommended,
+            'reports': report,
+          });
         }
+
+        return {
+          'routesWithInstructions': routesWithInstructions,
+        };
       } else {
         throw Exception("Failed to fetch routes: ${response.statusCode}");
       }

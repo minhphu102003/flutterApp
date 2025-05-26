@@ -13,6 +13,7 @@ import 'package:flutterApp/helper/appConfig.dart';
 import 'package:flutterApp/widgets/placeInfor.dart';
 import 'package:flutterApp/utils/scaleMap.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import '../models/predictionData.dart';
 
 class MapDisplay extends StatefulWidget {
   final LatLng currentLocation;
@@ -28,6 +29,7 @@ class MapDisplay extends StatefulWidget {
   final List<TrafficNotification> notifications;
   final double zoomLevel;
   final List<Camera> cameras;
+  final List<PredictionData> predictions;
 
   const MapDisplay({
     super.key,
@@ -44,6 +46,7 @@ class MapDisplay extends StatefulWidget {
     this.notifications = const [],
     required this.zoomLevel,
     required this.cameras,
+    this.predictions = const [],
   });
 
   @override
@@ -64,6 +67,7 @@ class MapDisplayState extends State<MapDisplay>
   late Animation<double> _rippleAnimation;
   late final ReportService _reportService;
   String api = Config.api_mapbox_key;
+  List<PredictionData> predictions = [];
 
   @override
   void didUpdateWidget(covariant MapDisplay oldWidget) {
@@ -74,6 +78,11 @@ class MapDisplayState extends State<MapDisplay>
     }
     if (widget.notifications != oldWidget.notifications) {
       notifications = widget.notifications;
+    }
+    if (widget.predictions != oldWidget.predictions) {
+      setState(() {
+        predictions = widget.predictions;
+      });
     }
   }
 
@@ -292,10 +301,10 @@ class MapDisplayState extends State<MapDisplay>
             width: 16.0,
             height: 16.0,
             child: Container(
-              padding: const EdgeInsets.all(2),
+              padding: const EdgeInsets.all(1),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.black12,
+                color: const Color.fromARGB(31, 239, 217, 217),
                 border: Border.all(
                   color: Colors.white,
                   width: 1,
@@ -304,7 +313,7 @@ class MapDisplayState extends State<MapDisplay>
               child: const Icon(
                 Icons.circle,
                 color: Color.fromARGB(255, 58, 58, 58),
-                size: 8,
+                size: 5,
               ),
             ),
           ));
@@ -312,6 +321,74 @@ class MapDisplayState extends State<MapDisplay>
       }
       return markers;
     }).toList();
+
+    List<LatLng> interpolatePoints(List<LatLng> points, int segmentsPerLine) {
+      List<LatLng> result = [];
+      for (int i = 0; i < points.length - 1; i++) {
+        LatLng start = points[i];
+        LatLng end = points[i + 1];
+        result.add(start);
+        for (int j = 1; j < segmentsPerLine; j++) {
+          double lat = start.latitude +
+              (end.latitude - start.latitude) * (j / segmentsPerLine);
+          double lng = start.longitude +
+              (end.longitude - start.longitude) * (j / segmentsPerLine);
+          result.add(LatLng(lat, lng));
+        }
+      }
+      result.add(points.last);
+      return result;
+    }
+
+    List<Polyline> _buildPredictionPolylinesWithMorePadding() {
+      return widget.predictions.expand((prediction) {
+        final points = prediction.roadSegment.roadSegmentLine.coordinates
+            .map((coord) => LatLng(coord[1], coord[0]))
+            .toList();
+
+        return [
+          Polyline(
+            points: points,
+            color: Colors.yellow.withOpacity(0.03),
+            strokeWidth: 20.0,
+          ),
+          Polyline(
+            points: points,
+            color: Colors.yellow.withOpacity(0.3),
+            strokeWidth: 14.0,
+          ),
+          Polyline(
+            points: points,
+            color: Colors.yellow.withOpacity(0.5),
+            strokeWidth: 10.0,
+          ),
+          Polyline(
+            points: points,
+            color: Colors.yellow.withOpacity(1.0),
+            strokeWidth: 5.0,
+          ),
+        ];
+      }).toList();
+    }
+
+    List<CircleMarker> _buildPredictionCircles() {
+      return widget.predictions.expand((prediction) {
+        final points = prediction.roadSegment.roadSegmentLine.coordinates
+            .map((coord) => LatLng(coord[1], coord[0]))
+            .toList();
+
+        final interpolatedPoints = interpolatePoints(points, 10);
+
+        return interpolatedPoints.map((point) {
+          return CircleMarker(
+            point: point,
+            radius: 8,
+            color: Colors.orange.withOpacity(0.1),
+            useRadiusInMeter: false,
+          );
+        });
+      }).toList();
+    }
 
     return FlutterMap(
       mapController: widget.mapController,
@@ -325,51 +402,87 @@ class MapDisplayState extends State<MapDisplay>
         TileLayer(
           urlTemplate: "$baseMapDisplay?access_token=$api",
         ),
-        if (widget.routePolylines.isNotEmpty)
-          PolylineLayer(
-            polylines: widget.routePolylines
-                .map((route) {
-                  Color polylineColor;
-                  double strokeWidth;
+        Stack(
+          children: [
+            if (widget.routePolylines.isNotEmpty)
+              PolylineLayer(
+                polylines: widget.routePolylines
+                    .map((route) {
+                      final coordinates = route['coordinates'] as List<LatLng>;
+                      final recommended = route['recommended'] as bool;
 
-                  if (route['recommended'] == true && !firstRecommend) {
-                    polylineColor = Colors.blue;
-                    strokeWidth = 6.0;
-                    firstRecommend = true;
+                      List<Polyline> polylineList = [];
 
-                    final outlinePolyline = Polyline(
-                      points: route['coordinates'],
-                      strokeWidth: 7.0,
-                      color: Colors.blueAccent,
-                    );
+                      if (recommended && !firstRecommend) {
+                        firstRecommend = true;
 
-                    return [
-                      outlinePolyline,
-                      Polyline(
-                        points: route['coordinates'],
-                        strokeWidth: strokeWidth,
-                        color: polylineColor,
-                      )
-                    ];
-                  } else if (route['recommended'] == false) {
-                    polylineColor = Colors.red;
-                    strokeWidth = 4.0;
-                  } else {
-                    polylineColor = const Color.fromARGB(255, 156, 194, 239);
-                    strokeWidth = 5.0;
-                  }
+                        polylineList.add(
+                          Polyline(
+                            points: coordinates,
+                            strokeWidth: 7.0,
+                            color: Colors.blueAccent,
+                          ),
+                        );
+                        polylineList.add(
+                          Polyline(
+                            points: coordinates,
+                            strokeWidth: 6.0,
+                            color: Colors.blue,
+                          ),
+                        );
+                      } else {
+                        // Tuyến khác
+                        polylineList.add(
+                          Polyline(
+                            points: coordinates,
+                            strokeWidth: recommended ? 5.0 : 4.0,
+                            color: recommended
+                                ? const Color.fromARGB(255, 156, 194, 239)
+                                : const Color.fromARGB(
+                                    255, 185, 221, 255), // xanh nhạt
+                          ),
+                        );
+                      }
 
-                  return [
-                    Polyline(
-                      points: route['coordinates'],
-                      strokeWidth: strokeWidth,
-                      color: polylineColor,
+                      return polylineList;
+                    })
+                    .expand((polyline) => polyline)
+                    .toList(),
+              ),
+
+            // Layer hiển thị các điểm tắc nghẽn (dùng marker tròn đỏ)
+            MarkerLayer(
+              markers: widget.routePolylines.expand((route) {
+                final reports = route['reports'] as List<Map<String, dynamic>>;
+                return reports.map((report) {
+                  final LatLng reportPoint =
+                      LatLng(report['latitude'], report['longitude']);
+
+                  return Marker(
+                    point: reportPoint,
+                    width: 20.0,
+                    height: 20.0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color.fromARGB(255, 253, 94, 83),
+                        border: Border.all(
+                          color: const Color.fromARGB(255, 248, 165, 165),
+                          width: 4.0,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.circle,
+                        color: Color.fromARGB(255, 227, 6, 6),
+                        size: 12,
+                      ),
                     ),
-                  ];
-                })
-                .expand((polyline) => polyline)
-                .toList(),
-          ),
+                  );
+                }).toList();
+              }).toList(),
+            ),
+          ],
+        ),
         if (_showCircle)
           AnimatedBuilder(
             animation: _rippleAnimation,
@@ -392,6 +505,14 @@ class MapDisplayState extends State<MapDisplay>
               );
             },
           ),
+        PolylineLayer(
+          polylines: [
+            ..._buildPredictionPolylinesWithMorePadding(),
+          ],
+        ),
+        CircleLayer(
+          circles: _buildPredictionCircles(),
+        ),
         MarkerLayer(
           key: ValueKey(_selectedMarkerIndex),
           markers: [
