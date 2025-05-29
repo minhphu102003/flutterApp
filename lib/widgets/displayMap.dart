@@ -407,11 +407,18 @@ class MapDisplayState extends State<MapDisplay>
             if (widget.routePolylines.isNotEmpty)
               PolylineLayer(
                 polylines: widget.routePolylines
-                    .map((route) {
+                    .asMap()
+                    .entries
+                    .map((entry) {
+                      final index = entry.key;
+                      final route = entry.value;
+
                       final coordinates = route['coordinates'] as List<LatLng>;
                       final recommended = route['recommended'] as bool;
 
                       List<Polyline> polylineList = [];
+
+                      final isLast = index == widget.routePolylines.length - 1;
 
                       if (recommended && !firstRecommend) {
                         firstRecommend = true;
@@ -431,15 +438,16 @@ class MapDisplayState extends State<MapDisplay>
                           ),
                         );
                       } else {
-                        // Tuyến khác
                         polylineList.add(
                           Polyline(
                             points: coordinates,
                             strokeWidth: recommended ? 5.0 : 4.0,
-                            color: recommended
-                                ? const Color.fromARGB(255, 156, 194, 239)
-                                : const Color.fromARGB(
-                                    255, 185, 221, 255), // xanh nhạt
+                            color: isLast
+                                ? Colors
+                                    .blue[900]! // màu xanh đậm cho tuyến cuối
+                                : recommended
+                                    ? const Color.fromARGB(255, 156, 194, 239)
+                                    : const Color.fromARGB(255, 185, 221, 255),
                           ),
                         );
                       }
@@ -449,8 +457,6 @@ class MapDisplayState extends State<MapDisplay>
                     .expand((polyline) => polyline)
                     .toList(),
               ),
-
-            // Layer hiển thị các điểm tắc nghẽn (dùng marker tròn đỏ)
             MarkerLayer(
               markers: widget.routePolylines.expand((route) {
                 final reports = route['reports'] as List<Map<String, dynamic>>;

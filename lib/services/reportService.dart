@@ -18,7 +18,7 @@ class ReportService {
     DateTime? startDate,
     DateTime? endDate,
     bool analysisStatus = true,
-    bool guest = true,
+    bool? guest = true,
   }) async {
     try {
       final Map<String, dynamic> queryParams = {};

@@ -25,7 +25,9 @@ class MainWeatherInfor extends StatelessWidget {
                 width: 148.0,
               ),
             ),
-            SizedBox(width: 16.0,),
+            SizedBox(
+              width: 16.0,
+            ),
             CustomShimmer(
               height: 148.0,
               width: 148.0,
@@ -52,17 +54,20 @@ class MainWeatherInfor extends StatelessWidget {
                         FittedBox(
                           child: Text(
                             weatherProv.isCelsius
-                              ? weatherProv.weather.temp.toStringAsFixed(1) // Nhiệt độ theo Celsius
-                              : weatherProv.weather.temp
-                                .toFahrenheit()
-                                .toStringAsFixed(1), // Chuyển đổi sang Fahrenheit nếu cần
-                            style: boldText.copyWith(fontSize: 86),
+                                ? weatherProv.weather.temp
+                                    .toStringAsFixed(1) // Nhiệt độ theo Celsius
+                                : weatherProv.weather.temp
+                                    .toFahrenheit()
+                                    .toStringAsFixed(
+                                        1), // Chuyển đổi sang Fahrenheit nếu cần
+                            style: boldText.copyWith(fontSize: 50),
                           ),
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0),
                           child: Text(
-                            weatherProv.measurementUnit, // Đơn vị đo (Celsius hoặc Fahrenheit)
+                            weatherProv
+                                .measurementUnit, // Đơn vị đo (Celsius hoặc Fahrenheit)
                             style: mediumText.copyWith(fontSize: 26),
                           ),
                         ),
@@ -71,7 +76,8 @@ class MainWeatherInfor extends StatelessWidget {
                   ),
                   // Hiển thị mô tả thời tiết
                   Text(
-                    weatherProv.weather.description.toTitleCase(), // Mô tả thời tiết với chữ hoa
+                    weatherProv.weather.description
+                        .toTitleCase(), // Mô tả thời tiết với chữ hoa
                     style: lightText.copyWith(fontSize: 16),
                   )
                 ],
@@ -82,7 +88,8 @@ class MainWeatherInfor extends StatelessWidget {
               height: 148.0,
               width: 148.0,
               child: Image.asset(
-                getWeatherImage(weatherProv.weather.weatherCategory), // Lấy hình ảnh tương ứng với thể loại thời tiết
+                getWeatherImage(weatherProv.weather
+                    .weatherCategory), // Lấy hình ảnh tương ứng với thể loại thời tiết
                 fit: BoxFit.cover,
               ),
             )

@@ -38,6 +38,7 @@ dependencies:
   dio: ^5.7.0
   shared_preferences: ^2.3.2
   curved_navigation_bar: ^1.0.6
+  video_player: ^2.7.2
 
   # mapbox_gl: ^0.16.0
   mapbox_maps_flutter: ^2.3.0
